@@ -21,8 +21,7 @@ See [USAGE.md](USAGE.md) for usage instructions.
 
 ## Limitations and Bugs
 
-* vi-like functionality not fully implemented (most notably repeating a command by prefixing it
-  with a number, and some movement verbs like '%' are missing.)
+* vi-like functionality not fully implemented (most notably and some movement verbs like '%' are missing.)
 * Can not open multiple files/windows at a time. (if your workflow is like mine, it means you often
   save and quit, do something in the shell, and then relaunch your editor. The startup time should
   be fast enough to support this style of workflow.)

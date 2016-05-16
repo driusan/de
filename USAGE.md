@@ -5,26 +5,29 @@ de is a modal editor that starts in normal mode. The three modes currently imple
 Normal (biege background), Insert (light green background), and Delete mode (light red/pink
 background). The keybindings are inspired by, but not identical to, vi.
 
-In Normal and Delete modes, the movement commands are similar to vi. hjkl move the cursor.
-Shift-6 (^) moves the cursor to the start of the line, and Shift-4 ($) moves the cursor to the
-end of the line, G moves to end of file (or a line number if you type the line number before hitting
-G). w moves the cursor to the next word. In Delete mode it will delete from the current cursor up
-to that point, and in Normal mode it will either move to, or select up to that point depending on if 
-the ctrl key is pressed. Other movement commands will be implemented, but that's all I've done up to now. 
-Unlike in vi, the h and l keys do not stop at line boundaries. p will insert the most recently
-delete text, replacing the currently selected text.
+de supports the movement commands hjkl, w (next word), b (previous word start), $ (end of line),
+^ (start of line) and G (go to line, or end of file with no prefix.) Movements can be repeated 
+multiple times by prefixing the command with a number (ie 3w to go forwards 3 words.)
 
-Generally, when I find myself typing a keystroke out of muscle-memory enough times as a long
-time vi-user, I implement it, or a close enough approximation to it, here. Ranges with a repeat
-(ie 3dw) are not yet implemented, but will be eventually.
+In Normal mode, typing a movement command moves the cursor to that position, like vi. Unlike
+vi, holding CTRL and typing a movement command instead expands the selection by that much movement
+similar to visual mode in vi.
 
-In Normal mode you can enter Insert mode by pressing 'i' or Delete mode by pressing 'd' and
-the background colour should change to indicate the current mode.
+Delete mode is similar to normal mode, except the selected text plus the movement from the beginning
+or end will be deleted (depending on if it's a forward or backwards movement command. You access delete 
+mode by  typing 'd', just like in vi. (and dd will delete the current line.) You can exit Delete mode 
+without deleting anything by hitting Escape.
+
+The most recently deleted text will be put in the snarf buffer (or "clipboard", if you prefer),
+overwriting what was there previously. It can be pasted by typing 'p' in Normal mode.
+
+You can enter Insert mode by typing either 'i' (insert before current selection) or 'a'
+(insert after current selection)
 
 In Insert mode, the arrow keys take on the same meaning as hjkl in Normal mode, and Escape will
 return to normal mode. Any other key combination that results in a printable unicode character
 being sent to de will insert the utf8 encoding of that character at the current location of the
-file. In all other modes, the arrow keys scroll the viewport without adjusting the cursor.
+file. In all other modes, the arrow keys scroll the viewport without adjusting the text cursor.
 
 In all modes, backspace will delete the currently selected text (or previous character if nothing
 is selected) without changing the mode.
@@ -46,7 +49,8 @@ for the currently selected text is the slash key (although slash will not open a
 
 Clicking with the middle mouse button will "execute" the word clicked on. (see below.)
 
-Chording will probably eventually work similarly to acme, but isn't yet implemented.
+Chording will probably eventually work similarly to acme, but isn't yet implemented, since my
+laptop doesn't have a three button mouse.
 
 ## Executing Words
 
@@ -57,8 +61,9 @@ similarly to searching with the mouse.)
 
 If executing a point in a word instead of a selection, that word will be executed.
 
-If the word is an internal editor command, it will perform that command. Otherwise, the shell command
-will be executed and the output will replace the currently selected text.
+If the word is an internal editor command, it will perform that command. Otherwise, it will be
+executed as a shell command and the output to stdout from that command will replace the currently
+selected text.
 
 Currently understood commands:
 Get (or Discard): Reload the current file from disk and discard changes
