@@ -14,7 +14,7 @@ vi, holding CTRL and typing a movement command instead expands the selection by 
 similar to visual mode in vi.
 
 Delete mode is similar to normal mode, except the selected text plus the movement from the beginning
-or end will be deleted (depending on if it's a forward or backwards movement command. You access delete 
+or end will be deleted (depending on if it's a forward or backwards movement command.) You access delete
 mode by  typing 'd', just like in vi. (and dd will delete the current line.) You can exit Delete mode 
 without deleting anything by hitting Escape.
 

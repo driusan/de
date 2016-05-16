@@ -148,6 +148,13 @@ func EndOfLine(buff demodel.CharBuffer) (uint, error) {
 	return uint(len(buff.Buffer) - 1), nil
 }
 func StartOfLine(buff demodel.CharBuffer) (uint, error) {
+	if len(buff.Buffer) == 0 {
+		return 0, Invalid
+	}
+	if buff.Dot.Start == 0 {
+		return 0, nil
+	}
+
 	for i := buff.Dot.Start - 1; i > 0; i-- {
 		if buff.Buffer[i] == '\n' {
 			return i + 1, nil
