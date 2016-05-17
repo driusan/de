@@ -17,11 +17,11 @@ See [USAGE.md](USAGE.md) for usage instructions.
 * Syntax highlighting (currently Go only)
 * vi-like keybindings and philosophy
 * acme-like mouse bindings and philosophy
-
+* Ability to write plugins in Go. See [PLUGINS.md](PLUGINS.md)
 
 ## Limitations and Bugs
 
-* vi-like functionality not fully implemented (most notably and some movement verbs like '%' are missing.)
+* vi-like functionality not fully implemented (most notably some movement verbs like '%' are missing.)
 * Can not open multiple files/windows at a time. (if your workflow is like mine, it means you often
   save and quit, do something in the shell, and then relaunch your editor. The startup time should
   be fast enough to support this style of workflow.)
