@@ -3,9 +3,7 @@
 There are two types of plugins that can you might want to add to de: things that add new
 commands, and things that change the rendering (ie to add syntax highlighting.)
 
-Currently only the former is possible, though I intend to add support for the latter.
-(Go syntax highlighting is built in, because de is written in Go. It will be refactored
-into a plugin as a test case.)
+## Command Plugins
 
 The easiest way to write a "plugin" for de is to just to write a shell command that can be
 executed with either a middle click or the enter key to insert into the current buffer,
@@ -29,3 +27,19 @@ The callback function should take two parameters:
    See the godoc of the demodel package for more details. You can manipulate the CharBuffer.Buffer
    slice however you want, but the positions package has helpers to calculate positions relative
    to the cursor/selections, and the actions package has helpers to perform common manipulations.
+
+## Rendering Plugins
+
+A rendering plugin changes the way that a character buffer is rendered to the screen. You can
+create a renderer by implementing the github.com/driusan/de/renderer/Renderer interface and
+registering it with renderer.RegisterRenderer in your init function, then adding it to plugins.go
+and recompiling similarly to command plugins.
+
+The Renderer interface requires two functions: a CanRender(demodel.CharBuffer) method which
+determines whether de should use your renderer to attempt to render a character buffer or skip
+to the next available renderer, and a Render(demodel.CharBuffer) method which returns an image.Image
+to be rendered to the screen representing that character buffer, and a renderer.ImageMap which can
+be used to convert points in that image into indexes into CharBuffer.Buffer for the mouse to use.
+
+See renderer/gorenderer/gosyntax.go for a sample renderer that supports syntax highlighting for
+the Go language.

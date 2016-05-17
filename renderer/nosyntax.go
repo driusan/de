@@ -11,6 +11,7 @@ import (
 	"image/draw"
 )
 
+// The default renderer. Performs no syntax highlighting.
 type NoSyntaxRenderer struct{}
 
 func (r NoSyntaxRenderer) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
@@ -35,6 +36,10 @@ func (r NoSyntaxRenderer) calcImageSize(buf demodel.CharBuffer) image.Rectangle 
 	}
 	rt.Max.Y += metrics.Height.Ceil() + 1
 	return rt
+}
+
+func (r NoSyntaxRenderer) CanRender(demodel.CharBuffer) bool {
+	return true
 }
 
 var NoCharacter error = errors.New("No character under the mouse cursor.")

@@ -5,23 +5,28 @@ import (
 	"github.com/driusan/de/demodel"
 	"unicode"
 	//"fmt"
+	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 	"image"
 	//	"image/color"
 	"image/draw"
+	"strings"
 )
 
 type GoSyntax struct{}
 
+func (rd *GoSyntax) CanRender(buf demodel.CharBuffer) bool {
+	return strings.HasSuffix(buf.Filename, ".go")
+}
 func (rd *GoSyntax) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
-	metrics := MonoFontFace.Metrics()
+	metrics := renderer.MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
-	_, MglyphWidth, _ := MonoFontFace.GlyphBounds('M')
+	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
 	rt := image.ZR
 	var lineSize fixed.Int26_6
 	for _, r := range runes {
-		_, glyphWidth, _ := MonoFontFace.GlyphBounds(r)
+		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
 		switch r {
 		case '\t':
 			lineSize += MglyphWidth * 8
@@ -39,76 +44,78 @@ func (rd *GoSyntax) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
 	return rt
 }
 
-func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, ImageMap, error) {
+func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, renderer.ImageMap, error) {
 	dstSize := rd.calcImageSize(buf)
 	dst := image.NewRGBA(dstSize)
-	metrics := MonoFontFace.Metrics()
+	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
 		Dst:  dst,
-		Src:  &image.Uniform{TextColour},
+		Src:  &image.Uniform{renderer.TextColour},
 		Dot:  fixed.P(0, metrics.Ascent.Floor()),
-		Face: MonoFontFace,
+		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
 
-	// it's a monospace font, so only do this once outside of the for loop..
-	// use an M so that space characters are based on an em-quad if we change
-	// to a non-monospace font.
-	//writer.Src = &image.Uniform{TextColour}
-	im := make(ImageMap, 0)
+	im := make(renderer.ImageMap, 0)
 
 	var inLineComment, inMultilineComment, inString, inCharString bool
 
-	_, MglyphWidth, _ := MonoFontFace.GlyphBounds('M')
+	// Used for calculating the size of a tab.
+	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
+
+	// Some characters (like a terminating quote) only change the active colour
+	//after being rendered.
 	var nextColor image.Image
 	for i, r := range runes {
-		_, glyphWidth, _ := MonoFontFace.GlyphBounds(r)
+		// Do this inside the loop anyways, in case someone changes it to a
+		// variable width font..
+		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
 		switch r {
 		case '\n':
 			if inLineComment && !inMultilineComment && !inString {
 				inLineComment = false
-				writer.Src = &image.Uniform{TextColour}
+				writer.Src = &image.Uniform{renderer.TextColour}
 			}
 		case '\'':
 			if !IsEscaped(i, runes) {
 				if inCharString {
 					// end of a string, colourize the quote too.
-					nextColor = &image.Uniform{TextColour}
+					nextColor = &image.Uniform{renderer.TextColour}
 					inCharString = false
 				} else if !inLineComment && !inMultilineComment && !inString {
 					inCharString = true
-					writer.Src = &image.Uniform{StringColour}
+					writer.Src = &image.Uniform{renderer.StringColour}
 				}
 			}
 		case '"':
 			if !IsEscaped(i, runes) {
 				if inString {
 					inString = false
-					nextColor = &image.Uniform{TextColour}
+					nextColor = &image.Uniform{renderer.TextColour}
 				} else if !inLineComment && !inMultilineComment && !inCharString {
 					inString = true
-					writer.Src = &image.Uniform{StringColour}
+					writer.Src = &image.Uniform{renderer.StringColour}
 				}
 			}
 		case '/':
 			if string(runes[i:i+2]) == "//" {
 				if !inCharString && !inMultilineComment && !inString {
 					inLineComment = true
-					writer.Src = &image.Uniform{CommentColour}
+					writer.Src = &image.Uniform{renderer.CommentColour}
 				}
 			}
 		case ' ', '\t':
 			if !inCharString && !inMultilineComment && !inString && !inLineComment {
-				writer.Src = &image.Uniform{TextColour}
+				writer.Src = &image.Uniform{renderer.TextColour}
 			}
 		default:
 			if !inCharString && !inMultilineComment && !inString && !inLineComment {
 				if IsLanguageKeyword(i, runes) {
-					writer.Src = &image.Uniform{KeywordColour}
+					writer.Src = &image.Uniform{renderer.KeywordColour}
 				} else if IsLanguageType(i, runes) {
-					writer.Src = &image.Uniform{BuiltinTypeColour}
+					writer.Src = &image.Uniform{renderer.BuiltinTypeColour}
 				} else if StartsLanguageDeliminator(r) {
-					writer.Src = &image.Uniform{TextColour}
+					writer.Src = &image.Uniform{renderer.TextColour}
 				}
 			}
 		}
@@ -126,13 +133,13 @@ func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, ImageMap, error
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im = append(im, ImageLoc{runeRectangle, uint(i)})
+		im = append(im, renderer.ImageLoc{runeRectangle, uint(i)})
 		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 			// it's in dot, so highlight the background
 			draw.Draw(
 				dst,
 				runeRectangle,
-				&image.Uniform{TextHighlight},
+				&image.Uniform{renderer.TextHighlight},
 				image.ZP,
 				draw.Src,
 			)

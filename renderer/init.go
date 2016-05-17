@@ -2,12 +2,10 @@ package renderer
 
 import (
 	"fmt"
-	"github.com/driusan/de/demodel"
 	"github.com/driusan/fonts"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
 	//	"golang.org/x/image/font/basicfont"
-	"image"
 	"os"
 )
 
@@ -38,11 +36,4 @@ func init() {
 	// the character '2', so for now just use the built in basicfont, even though
 	// it's not as pretty and doesn't have as many runes.
 	//MonoFontFace = basicfont.Face7x13
-}
-
-// Renders the character buffer to an image which can
-// be displayed on a screen. For instance, to a shiny
-// window.
-type Renderer interface {
-	Render(demodel.CharBuffer) (image.Image, ImageMap, error)
 }

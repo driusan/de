@@ -18,7 +18,6 @@ import (
 	"image/draw"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 var viewport struct {
@@ -91,13 +90,9 @@ func main() {
 	var lastKeyboardMode kbmap.Map = kbmap.NormalMode
 	viewport.KeyboardMode = kbmap.NormalMode
 
-	var render renderer.Renderer
-	if strings.HasSuffix(filename, ".go") {
-		render = &renderer.GoSyntax{}
-	} else {
-		render = &renderer.NoSyntaxRenderer{}
-	}
+	render := renderer.GetRenderer(buff)
 	img, imap, err := render.Render(buff)
+
 	if err != nil {
 		panic(err)
 	}
