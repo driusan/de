@@ -16,7 +16,6 @@ import (
 	"golang.org/x/mobile/event/size"
 	"image"
 	"image/draw"
-	"io/ioutil"
 	"os"
 )
 
@@ -33,7 +32,7 @@ const (
 	MouseWheelDown
 )
 
-func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image) {
+func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image) {
 	b, err := s.NewBuffer(sz.Size())
 	defer b.Release()
 	if err != nil {
@@ -52,7 +51,12 @@ func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Imag
 		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.NormalBackground}, image.ZP, draw.Src)
 	}
 
-	draw.Draw(dst, dst.Bounds(), buf, viewport.Location, draw.Over)
+	tagBounds := tagimage.Bounds()
+	contentBounds := dst.Bounds()
+	contentBounds.Min.Y = tagBounds.Max.Y
+
+	draw.Draw(dst, contentBounds, buf, viewport.Location, draw.Over)
+	draw.Draw(dst, tagBounds, tagimage, image.ZP, draw.Over)
 
 	w.Upload(image.Point{0, 0}, b, dst.Bounds())
 	w.Publish()
@@ -65,10 +69,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Need filename to open.\n")
 		return
 	}
+
 	filename := os.Args[1]
-	b, err := ioutil.ReadFile(filename)
-	buff := demodel.CharBuffer{}
-	if err != nil {
+
+	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{}}
+	if err := actions.OpenFile(filename, &buff); err != nil {
+
 		// An unhandled error occured
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "%s\n", err)
@@ -77,11 +83,7 @@ func main() {
 		// the error was just that the file doesn't exist, it'll be created on
 		// save
 		buff.Buffer = make([]byte, 0)
-	} else {
-		buff.Buffer = b
 	}
-
-	buff.Filename = filename
 
 	var imap renderer.ImageMap
 	var MouseButtonMask [6]bool
@@ -96,6 +98,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	tagline := renderer.TaglineRenderer{}
+
+	tagimg, tagmap, _ := tagline.Render(*buff.Tagline)
+
 	driver.Main(func(s screen.Screen) {
 		w, err := s.NewWindow(nil)
 		if err != nil {
@@ -117,6 +123,7 @@ func main() {
 					continue
 				}
 
+				oldFilename := buff.Filename
 				newKbmap, err := viewport.KeyboardMode.HandleKey(e, &buff)
 
 				wSize := sz.Size()
@@ -171,13 +178,45 @@ func main() {
 				lastKeyboardMode = viewport.KeyboardMode
 				viewport.KeyboardMode = newKbmap
 
+				if oldFilename != buff.Filename {
+					render = renderer.GetRenderer(buff)
+				}
 				img, imap, _ = render.Render(buff)
-				paintWindow(s, w, sz, img)
+				if buff.Tagline != nil {
+					tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+				}
+				paintWindow(s, w, sz, img, tagimg)
 			case mouse.Event:
-				charIdx, err := imap.At(int(e.X)+viewport.Location.X, int(e.Y)+viewport.Location.Y)
+				tagEnd := tagimg.Bounds().Max.Y
+
+				// the buffer that the mouse is over. Generally either the tagline,
+				// or the standard buffer
+				var evtBuff *demodel.CharBuffer = &buff
+				// the index into that buffer that's being pointed at
+				var charIdx uint
+				var err error
+				if int(e.Y) < tagEnd {
+					if viewport.KeyboardMode != kbmap.TagMode {
+						lastKeyboardMode = viewport.KeyboardMode
+						viewport.KeyboardMode = kbmap.TagMode
+					}
+					evtBuff = evtBuff.Tagline
+					charIdx, err = tagmap.At(int(e.X), int(e.Y))
+				} else {
+					// focus follows pointer
+					if viewport.KeyboardMode == kbmap.TagMode {
+						viewport.KeyboardMode = kbmap.NormalMode
+					}
+					// translate the mouse event by an appropriate amount, taking
+					// the size of the tagline, and scrolling of the viewport into
+					// consideration
+					charIdx, err = imap.At(int(e.X)+viewport.Location.X, int(e.Y)+viewport.Location.Y-tagEnd)
+				}
+
 				if err != nil {
 					continue
 				}
+
 				var pressed bool
 
 				switch e.Direction {
@@ -193,20 +232,20 @@ func main() {
 						// this is the start of a mouse click. Reset Dot
 						// to whatever was clicked on.
 						if pressed && MouseButtonMask[ButtonLeft] == false {
-							buff.Dot.Start = charIdx
-							buff.Dot.End = charIdx
+							evtBuff.Dot.Start = charIdx
+							evtBuff.Dot.End = charIdx
 						}
 						MouseButtonMask[ButtonLeft] = pressed
 					case mouse.ButtonMiddle:
 						if pressed && MouseButtonMask[ButtonMiddle] == false {
-							buff.Dot.Start = charIdx
-							buff.Dot.End = charIdx
+							evtBuff.Dot.Start = charIdx
+							evtBuff.Dot.End = charIdx
 						}
 						MouseButtonMask[ButtonMiddle] = pressed
 					case mouse.ButtonRight:
 						if pressed && MouseButtonMask[ButtonRight] == false {
-							buff.Dot.Start = charIdx
-							buff.Dot.End = charIdx
+							evtBuff.Dot.Start = charIdx
+							evtBuff.Dot.End = charIdx
 						}
 						MouseButtonMask[ButtonRight] = pressed
 					case mouse.ButtonWheelUp:
@@ -214,8 +253,10 @@ func main() {
 						if viewport.Location.Y < 0 {
 							viewport.Location.Y = 0
 						}
-						img, imap, _ = render.Render(buff)
-						paintWindow(s, w, sz, img)
+						//img, imap, _ = render.Render(buff)
+						// scrolling can't affect the content, so just rerender the window.
+						paintWindow(s, w, sz, img, tagimg)
+
 					case mouse.ButtonWheelDown:
 						viewport.Location.Y += 50
 						wSize := sz.Size()
@@ -225,56 +266,104 @@ func main() {
 							// the last
 							viewport.Location.Y = imgSize.Y - wSize.Y + 50
 						}
-						img, imap, _ = render.Render(buff)
-						paintWindow(s, w, sz, img)
+						/*
+							img, imap, _ = render.Render(buff)
+							if buff.Tagline != nil {
+								tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+							}
+						*/
+						paintWindow(s, w, sz, img, tagimg)
 					}
 				}
 
 				if MouseButtonMask[ButtonLeft] == true || MouseButtonMask[ButtonRight] == true || MouseButtonMask[ButtonMiddle] == true {
 					// if it's outside the current selection, expand the selection.
-					if charIdx < buff.Dot.Start {
-						buff.Dot.Start = charIdx
+					if charIdx < evtBuff.Dot.Start {
+						evtBuff.Dot.Start = charIdx
 					}
-					if charIdx > buff.Dot.End {
-						buff.Dot.End = charIdx
+					if charIdx > evtBuff.Dot.End {
+						evtBuff.Dot.End = charIdx
 					}
 
 					// if it's inside the current selection, shrink the selection.
-					if charIdx < buff.Dot.End && charIdx > buff.Dot.Start {
-						if buff.Dot.End-charIdx < buff.Dot.Start-charIdx {
+					if charIdx < evtBuff.Dot.End && charIdx > evtBuff.Dot.Start {
+						if evtBuff.Dot.End-charIdx < evtBuff.Dot.Start-charIdx {
 							// it's slower to the end
-							buff.Dot.End = charIdx
+							evtBuff.Dot.End = charIdx
 						} else {
 							// it's slower to the start
-							buff.Dot.Start = charIdx
+							evtBuff.Dot.Start = charIdx
+						}
+					}
+
+					// the highlighted portion of the image may have changed, so
+					// rerender everything.
+					img, imap, _ = render.Render(buff)
+					if buff.Tagline != nil {
+						tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+					}
+					paintWindow(s, w, sz, img, tagimg)
+				}
+				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
+					oldFilename := buff.Filename
+					if evtBuff == buff.Tagline {
+						if evtBuff.Dot.Start == evtBuff.Dot.End {
+							actions.FindNextOrOpenTag(position.CurTagWordStart, position.CurTagWordEnd, &buff)
+						} else {
+							actions.FindNextOrOpenTag(position.TagDotStart, position.TagDotEnd, &buff)
+						}
+					} else {
+
+						if evtBuff.Dot.Start == evtBuff.Dot.End {
+							actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, evtBuff)
+
+						} else {
+							actions.FindNextOrOpen(position.DotStart, position.DotEnd, evtBuff)
+						}
+					}
+					if oldFilename != buff.Filename {
+						// make sure the syntax highlighting gets updated if it needs to be.
+						render = renderer.GetRenderer(buff)
+					}
+
+					img, imap, _ = render.Render(buff)
+					if buff.Tagline != nil {
+						tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+					}
+					paintWindow(s, w, sz, img, tagimg)
+				}
+				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
+					if evtBuff == buff.Tagline {
+						// executing from the tagline is a little special, because it uses the word
+						// from a tagline buffer to perform an action in a non-tagline buffer.
+						if evtBuff.Dot.Start == evtBuff.Dot.End {
+							actions.PerformTagAction(position.CurTagWordStart, position.CurTagWordEnd, &buff)
+						} else {
+							actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, &buff)
+						}
+					} else {
+						if evtBuff.Dot.Start == evtBuff.Dot.End {
+
+							// otherwise, just perform the action normally.
+							actions.PerformAction(position.CurWordStart, position.CurWordEnd, evtBuff)
+
+						} else {
+							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff)
 						}
 					}
 					img, imap, _ = render.Render(buff)
-					paintWindow(s, w, sz, img)
-				}
-				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
-					if buff.Dot.Start == buff.Dot.End {
-						actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, &buff)
-
-					} else {
-						actions.FindNextOrOpen(position.DotStart, position.DotEnd, &buff)
+					if buff.Tagline != nil {
+						tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
 					}
-					img, imap, _ = render.Render(buff)
-					paintWindow(s, w, sz, img)
-				}
-				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
-					if buff.Dot.Start == buff.Dot.End {
-						actions.PerformAction(position.CurWordStart, position.CurWordEnd, &buff)
-					} else {
-						actions.PerformAction(position.DotStart, position.DotEnd, &buff)
-					}
+					paintWindow(s, w, sz, img, tagimg)
 				}
 				//paintWindow(s, w, sz, buff)
 			case paint.Event:
-				paintWindow(s, w, sz, img)
+				paintWindow(s, w, sz, img, tagimg)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
+				tagline.Width = wSize.X
 				img, imap, _ = render.Render(buff)
 				imgSize := img.Bounds().Size()
 				if wSize.X >= imgSize.X {
@@ -283,7 +372,10 @@ func main() {
 				if wSize.Y >= imgSize.Y {
 					viewport.Location.Y = 0
 				}
-				paintWindow(s, w, sz, img)
+				if buff.Tagline != nil {
+					tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+				}
+				paintWindow(s, w, sz, img, tagimg)
 			}
 		}
 	})

@@ -27,6 +27,10 @@ type CharBuffer struct {
 	// Each CharBuffer only has one SnarfBuffer associated with it, and it's not
 	// a tree.
 	SnarfBuffer []byte
+
+	// The tagline to display with this buffer. May be nil (for instance, taglines
+	// are CharBuffers, but taglines don't have their own tagline..)
+	Tagline *CharBuffer
 }
 
 // An action performs some sort of action to a character buffer,

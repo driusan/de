@@ -75,6 +75,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			actions.MoveCursor(position.DotStart, position.NextWordStart, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		return NormalMode, nil
 	case key.CodeB:
 		if Repeat == 0 {
 			Repeat = 1
@@ -83,6 +84,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			actions.MoveCursor(position.PrevWordStart, position.DotEnd, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		return NormalMode, nil
 	case key.CodeRightArrow:
 		return DeleteMode, ScrollRight
 	case key.CodeLeftArrow:

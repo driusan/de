@@ -245,6 +245,16 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			actions.OpenOrPerformAction(position.DotStart, position.DotEnd, buff)
 		}
 		return NormalMode, nil
+	case key.CodeSemicolon:
+		if e.Modifiers&key.ModShift != 0 {
+			if buff.Tagline != nil {
+				buff.Tagline.Buffer = append(buff.Tagline.Buffer, ' ')
+
+				buff.Tagline.Dot.Start = uint(len(buff.Tagline.Buffer))
+				buff.Tagline.Dot.End = buff.Tagline.Dot.Start
+			}
+		}
+		return TagMode, nil
 	}
 	return NormalMode, Invalid
 }

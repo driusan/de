@@ -25,7 +25,6 @@ See [USAGE.md](USAGE.md) for usage instructions.
 * Can not open multiple files/windows at a time. (if your workflow is like mine, it means you often
   save and quit, do something in the shell, and then relaunch your editor. The startup time should
   be fast enough to support this style of workflow.)
-* Missing acme style window tag to use as a scratch space.
 
 # Installation
 
@@ -34,4 +33,6 @@ It should be installable with the standard go tools:
 ```
 go get github.com/driusan/de
 ```
+
+Then as long as $GOPATH/bin is in your path, you can launch with `de [filename]`
 

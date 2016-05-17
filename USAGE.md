@@ -65,6 +65,19 @@ If the word is an internal editor command, it will perform that command. Otherwi
 executed as a shell command and the output to stdout from that command will replace the currently
 selected text.
 
+The top of the window has a tag line that you can use as a scratch space for writing commands
+without affecting the content of the current file. Typing in the tag line always acts like it's
+in Insert mode, with the exception that the return key works as if it were in Normal mode and
+either opens or executes the current word or selected text. You can access the tagline either by pointing
+to it (focus follows pointer, you don't need to click) or typing the ; key. ; will just give focus
+to the tag line, and : will give it focus as well as moving the cursor to the end and appending a
+space. This means that you can type, for instance, :Save<Enter> to save the current file.
+
+Note to Plan 9 users: you can *not* change the filename by editing it in the tagline and putting. The
+filename there is only for reference, and updated when a new file is opened if the current filename
+happens to be a prefix. There is currently no way to change the filename and save the file to another
+name.
+
 Currently understood commands:
 Get (or Discard): Reload the current file from disk and discard changes
 Put (or Save): Save the current character buffer to disk, overwriting the existing file.

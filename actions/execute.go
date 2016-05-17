@@ -30,6 +30,36 @@ func PerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 	runOrExec(cmd, buff)
 }
 
+func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer) {
+	if buff == nil || buff.Tagline == nil {
+		return
+	}
+	dot := demodel.Dot{}
+	// From and To should be the tag variant of Position functions, so run
+	// it directly on buff.
+	i, err := From(*buff)
+	if err != nil {
+		return
+	}
+
+	dot.Start = i
+	i, err = To(*buff)
+	if err != nil {
+		return
+	}
+	dot.End = i
+
+	if l := uint(len(buff.Tagline.Buffer)); dot.Start >= l || dot.End+1 >= l {
+		// one last check for safety
+		return
+	}
+	cmd := string(buff.Tagline.Buffer[dot.Start : dot.End+1])
+
+	// now that the command has been extracted from the tagline, perform the command
+	// on the real buffer.
+	runOrExec(cmd, buff)
+}
+
 func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 	if buff == nil {
 		return
@@ -55,19 +85,10 @@ func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 		cmd = string(buff.Buffer[dot.Start : dot.End+1])
 	}
 
-	if _, err := os.Stat(cmd); err == nil {
-		// the file exists, so open it
-		b, ferr := ioutil.ReadFile(cmd)
-		if ferr != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			return
-		}
-		buff.Buffer = b
-		buff.Filename = cmd
-		buff.Dot.Start = 0
-		buff.Dot.End = 0
+	if err := OpenFile(cmd, buff); err == nil {
 		return
 	}
+
 	runOrExec(cmd, buff)
 }
 
@@ -80,7 +101,7 @@ func runOrExec(cmd string, buff *demodel.CharBuffer) {
 	}
 
 	// it wasn't an internal command, so run the shell command
-	gocmd := exec.Command(cmd)
+	gocmd := exec.Command("sh", "-c", cmd)
 	stdout, err := gocmd.StdoutPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
