@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/position"
 	"io/ioutil"
 	"os"
 )
@@ -17,6 +18,8 @@ func init() {
 
 	actions.RegisterAction("Exit", Quit)
 	actions.RegisterAction("Quit", Quit)
+
+	actions.RegisterAction("Paste", Paste)
 }
 
 func Put(args string, buff *demodel.CharBuffer) {
@@ -39,4 +42,7 @@ func Get(args string, buff *demodel.CharBuffer) {
 
 func Quit(args string, buff *demodel.CharBuffer) {
 	os.Exit(0)
+}
+func Paste(args string, buff *demodel.CharBuffer) {
+	actions.InsertSnarfBuffer(position.DotStart, position.DotEnd, buff)
 }

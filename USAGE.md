@@ -68,8 +68,9 @@ selected text.
 Currently understood commands:
 Get (or Discard): Reload the current file from disk and discard changes
 Put (or Save): Save the current character buffer to disk, overwriting the existing file.
+Paste: Paste the Snarf buffer into the current location of the character buffer.
 Exit (or Quit): Quit de, discarding any changes.
 
 To be implemented:
-Copy (or Snarf), Cut, Paste,
+Copy (or Snarf), Cut
 ACME style tag/Scratch line
