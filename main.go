@@ -65,13 +65,14 @@ func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Imag
 
 func main() {
 	var sz size.Event
+	var filename string
 	if len(os.Args) <= 1 {
-		fmt.Fprintf(os.Stderr, "Need filename to open.\n")
-		return
+		// no file given on the command line, so open the curent directory and give a
+		// file listing that can be clicked on.
+		filename = "."
+	} else {
+		filename = os.Args[1]
 	}
-
-	filename := os.Args[1]
-
 	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{}}
 	if err := actions.OpenFile(filename, &buff); err != nil {
 
