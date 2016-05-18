@@ -110,7 +110,7 @@ func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, renderer.ImageM
 				}
 			}
 			if i > 1 && inMultilineComment && string(runes[i-1:i+1]) == "*/" {
-				nextColor= &image.Uniform{renderer.TextColour}
+				nextColor = &image.Uniform{renderer.TextColour}
 				inMultilineComment = false
 			}
 		case ' ', '\t':
