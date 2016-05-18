@@ -178,7 +178,7 @@ func main() {
 							viewport.Location.Y = newViewport.Min.Y - 50
 						}
 						//fmt.Printf("Should be scrolling up (Char at viewport: %d, buff start: %d!\n", idx, buff.Dot.Start)
-					} else if idx, err := imap.At(viewport.Location.X+wSize.X, viewport.Location.Y+wSize.Y); err == nil && buff.Dot.Start > idx {
+					} else if idx, err := imap.At(0, viewport.Location.Y+wSize.Y-tagEnd); err == nil && buff.Dot.Start > idx {
 						// if't not before the top-left, so check if it's after the bottom-right
 						// this might have happened if we manually scrolled the window, or used a command like <lineno>G
 						if newViewport, gerr := imap.Get(buff.Dot.Start); gerr == nil {
@@ -189,12 +189,12 @@ func main() {
 					// check if dot moved so that it's end is end is after the bottom right corner.
 					wSize := sz.Size()
 					//imgbounds := img.Bounds()
-					if idx, err := imap.At(viewport.Location.X+wSize.X, viewport.Location.Y+wSize.Y-tagEnd); err == nil && buff.Dot.End > idx {
+					if idx, err := imap.At(0, viewport.Location.Y+wSize.Y-tagEnd); err == nil && buff.Dot.End > idx {
 						if newViewport, gerr := imap.Get(buff.Dot.End); gerr == nil {
 							// scroll to about the middle of the screen
 							viewport.Location.Y = newViewport.Min.Y - (wSize.Y / 2)
 						}
-					} else if idx, err := imap.At(viewport.Location.X, viewport.Location.Y-tagEnd); err == nil && buff.Dot.End < idx {
+					} else if idx, err := imap.At(0, viewport.Location.Y-tagEnd); err == nil && buff.Dot.End < idx {
 						if newViewport, gerr := imap.Get(buff.Dot.End); gerr == nil {
 							viewport.Location.Y = newViewport.Min.Y - (wSize.Y / 2)
 						}

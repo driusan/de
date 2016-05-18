@@ -6,5 +6,5 @@ import (
 
 	// Go syntax highlighting plugin
 	_ "github.com/driusan/de/renderer/gorenderer"
-	//_ "github.com/driusan/de/renderer/markdown"
+	_ "github.com/driusan/de/renderer/markdown"
 )
