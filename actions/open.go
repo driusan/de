@@ -51,11 +51,11 @@ func OpenFile(filename string, buff *demodel.CharBuffer) error {
 		fmt.Fprintf(&bBuff, "./\n../\n")
 
 		for _, f := range files {
-			
+
 			if f.IsDir() {
-			fmt.Fprintf(&bBuff, "%s/\n", f.Name())
+				fmt.Fprintf(&bBuff, "%s/\n", f.Name())
 			} else {
-			fmt.Fprintf(&bBuff, "%s\n", f.Name())
+				fmt.Fprintf(&bBuff, "%s\n", f.Name())
 			}
 		}
 

@@ -103,6 +103,15 @@ func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, renderer.ImageM
 					inLineComment = true
 					writer.Src = &image.Uniform{renderer.CommentColour}
 				}
+			} else if string(runes[i:i+2]) == "/*" {
+				if !inCharString && !inString {
+					inMultilineComment = true
+					writer.Src = &image.Uniform{renderer.CommentColour}
+				}
+			}
+			if i > 1 && inMultilineComment && string(runes[i-1:i+1]) == "*/" {
+				nextColor= &image.Uniform{renderer.TextColour}
+				inMultilineComment = false
 			}
 		case ' ', '\t':
 			if !inCharString && !inMultilineComment && !inString && !inLineComment {
