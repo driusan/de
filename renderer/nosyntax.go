@@ -2,7 +2,6 @@ package renderer
 
 import (
 	"bytes"
-	"errors"
 	"github.com/driusan/de/demodel"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
@@ -14,7 +13,7 @@ import (
 // The default renderer. Performs no syntax highlighting.
 type NoSyntaxRenderer struct{}
 
-func (r NoSyntaxRenderer) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
+func (r NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 	metrics := MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, glyphWidth, _ := MonoFontFace.GlyphBounds('a')
@@ -42,24 +41,7 @@ func (r NoSyntaxRenderer) CanRender(demodel.CharBuffer) bool {
 	return true
 }
 
-var NoCharacter error = errors.New("No character under the mouse cursor.")
-
-type ImageLoc struct {
-	Loc image.Rectangle
-	Idx uint
-}
-type ImageMap []ImageLoc
-
-func (im ImageMap) At(x, y int) (uint, error) {
-	for _, m := range im {
-		if m.Loc.At(x, y) == color.Opaque {
-			return m.Idx, nil
-		}
-	}
-	return 0, NoCharacter
-}
-
-func (r NoSyntaxRenderer) Render(buf demodel.CharBuffer) (image.Image, ImageMap, error) {
+func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap, error) {
 	dstSize := r.calcImageSize(buf)
 	dst := image.NewRGBA(dstSize)
 	metrics := MonoFontFace.Metrics()
@@ -75,7 +57,7 @@ func (r NoSyntaxRenderer) Render(buf demodel.CharBuffer) (image.Image, ImageMap,
 	// use an M so that space characters are based on an em-quad if we change
 	// to a non-monospace font.
 	_, glyphWidth, _ := MonoFontFace.GlyphBounds('M')
-	im := make(ImageMap, 0)
+	im := ImageMap{make([]ImageLoc, 0), buf}
 	for i, r := range runes {
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
@@ -90,7 +72,7 @@ func (r NoSyntaxRenderer) Render(buf demodel.CharBuffer) (image.Image, ImageMap,
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im = append(im, ImageLoc{runeRectangle, uint(i)})
+		im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
 		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 			writer.Src = &image.Uniform{color.Black}
 			draw.Draw(

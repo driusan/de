@@ -18,7 +18,7 @@ type TaglineRenderer struct {
 	Width int
 }
 
-func (r TaglineRenderer) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
+func (r TaglineRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 	metrics := MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, glyphWidth, _ := MonoFontFace.GlyphBounds('a')
@@ -49,7 +49,7 @@ func (r TaglineRenderer) CanRender(demodel.CharBuffer) bool {
 	return true
 }
 
-func (r TaglineRenderer) Render(buf demodel.CharBuffer) (image.Image, ImageMap, error) {
+func (r TaglineRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap, error) {
 	dstSize := r.calcImageSize(buf)
 	dst := image.NewRGBA(dstSize)
 	draw.Draw(dst, dst.Bounds(), &image.Uniform{TaglineBackground}, image.ZP, draw.Src)
@@ -76,7 +76,7 @@ func (r TaglineRenderer) Render(buf demodel.CharBuffer) (image.Image, ImageMap, 
 	// use an M so that space characters are based on an em-quad if we change
 	// to a non-monospace font.
 	_, glyphWidth, _ := MonoFontFace.GlyphBounds('M')
-	im := make(ImageMap, 0)
+	im := ImageMap{make([]ImageLoc, 0), buf}
 	for i, r := range runes {
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
@@ -91,7 +91,7 @@ func (r TaglineRenderer) Render(buf demodel.CharBuffer) (image.Image, ImageMap, 
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im = append(im, ImageLoc{runeRectangle, uint(i)})
+		im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
 		if buf.Dot.Start != buf.Dot.End && uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 			writer.Src = &image.Uniform{color.Black}
 			draw.Draw(

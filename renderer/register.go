@@ -7,7 +7,7 @@ import (
 
 type Renderer interface {
 	CanRender(demodel.CharBuffer) bool
-	Render(demodel.CharBuffer) (image.Image, ImageMap, error)
+	Render(*demodel.CharBuffer) (image.Image, ImageMap, error)
 }
 
 var renderers []Renderer

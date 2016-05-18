@@ -10,29 +10,33 @@ import (
 
 var Repeat uint
 
-func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
+func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, error) {
 	// things only happen on key press in normal mode, if it's a release
 	// or a repeat, ignore it. It's not an error
 	if e.Direction != key.DirPress {
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	}
 	if buff == nil {
-		return NormalMode, Invalid
+		return NormalMode, DirectionNone, Invalid
 	}
 	switch e.Code {
 	case key.CodeEscape:
 		actions.SaveFile(position.BuffStart, position.BuffEnd, buff)
-		return NormalMode, ExitProgram
+		return NormalMode, DirectionNone, ExitProgram
 	case key.CodeDeleteBackspace:
 		if e.Direction == key.DirPress {
 			actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
 		}
-		return NormalMode, nil
+		// There's a potential that we're pressing backspace at the start of the
+		// screen and may need to scroll up
+		return NormalMode, DirectionUp, nil
 	case key.CodeI:
-		return InsertMode, nil
+		return InsertMode, DirectionNone, nil
 	case key.CodeA:
+		// There's a potentially we pressed 'a' at the very end of the screen and
+		// need to scroll down
 		actions.MoveCursor(position.NextChar, position.NextChar, buff)
-		return InsertMode, nil
+		return InsertMode, DirectionDown, nil
 	case key.CodeK:
 		if Repeat == 0 {
 			Repeat = 1
@@ -48,7 +52,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			}
 		}
 
-		return NormalMode, nil
+		return NormalMode, DirectionUp, nil
 	case key.CodeH:
 		if Repeat == 0 {
 			Repeat = 1
@@ -64,7 +68,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			}
 		}
 
-		return NormalMode, nil
+		return NormalMode, DirectionUp, nil
 
 	case key.CodeL:
 		if Repeat == 0 {
@@ -80,7 +84,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			}
 		}
 
-		return NormalMode, nil
+		return NormalMode, DirectionDown, nil
 	case key.CodeJ:
 		if Repeat == 0 {
 			Repeat = 1
@@ -94,7 +98,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			}
 		}
 
-		return NormalMode, nil
+		return NormalMode, DirectionDown, nil
 	case key.CodeX:
 		if Repeat == 0 {
 			Repeat = 1
@@ -103,7 +107,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			actions.MoveCursor(position.DotStart, position.NextChar, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.CodeW:
 		if Repeat == 0 {
 			Repeat = 1
@@ -115,6 +119,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.MoveCursor(position.NextWordStart, position.NextWordStart, buff)
 			}
 		}
+		return NormalMode, DirectionDown, nil
 	case key.CodeB:
 		if Repeat == 0 {
 			Repeat = 1
@@ -126,38 +131,43 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.MoveCursor(position.PrevWordStart, position.PrevWordStart, buff)
 			}
 		}
+		return NormalMode, DirectionUp, nil
 	case key.CodeP:
 		actions.InsertSnarfBuffer(position.DotStart, position.DotEnd, buff)
+		return NormalMode, DirectionDown, nil
 	case key.CodeRightArrow:
-		return NormalMode, ScrollRight
+		// Arrow keys indicate their scroll direction via the error return value,
+		// they return DirectionNone to make sure both code paths don't accidentally
+		// get triggered
+		return NormalMode, DirectionNone, ScrollRight
 	case key.CodeLeftArrow:
-		return NormalMode, ScrollLeft
+		return NormalMode, DirectionNone, ScrollLeft
 	case key.CodeDownArrow:
-		return NormalMode, ScrollDown
+		return NormalMode, DirectionNone, ScrollDown
 	case key.CodeUpArrow:
-		return NormalMode, ScrollUp
+		return NormalMode, DirectionNone, ScrollUp
 	case key.Code0:
 		if e.Modifiers == 0 {
 			Repeat *= 10
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code1:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 1
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code2:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 2
 
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code3:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 3
 
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code4:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 4
@@ -177,12 +187,12 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			}
 
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code5:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 5
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code6:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 6
@@ -199,22 +209,22 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 			}
 
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code7:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 7
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code8:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 8
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.Code9:
 		if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 9
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionNone, nil
 	case key.CodeG:
 		if e.Modifiers&key.ModShift != 0 {
 			// G treats the repeat counter differently. If it's set, it means "Go to
@@ -224,12 +234,18 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				for ; Repeat > 0; Repeat-- {
 					actions.MoveCursor(position.NextLine, position.NextLine, buff)
 				}
-			} else {
-				actions.MoveCursor(position.BuffEnd, position.BuffEnd, buff)
+				// We don't know if the line being moved to is above or below, but send an "up"
+				// hint so that it centers it at the top of the screen based on dot.
+				return NormalMode, DirectionUp, nil
 			}
+			// moving to the end of the file because Repeat isn't set.
+			actions.MoveCursor(position.BuffEnd, position.BuffEnd, buff)
+			// send a down hint so it centers it at the bottom.
+			return NormalMode, DirectionDown, nil
 		}
+
 	case key.CodeD:
-		return DeleteMode, nil
+		return DeleteMode, DirectionNone, nil
 	case key.CodeSlash:
 		if buff.Dot.Start == buff.Dot.End {
 			actions.FindNext(position.CurWordStart, position.CurWordEnd, buff)
@@ -237,14 +253,18 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 		} else {
 			actions.FindNext(position.DotStart, position.DotEnd, buff)
 		}
-		return NormalMode, nil
+		return NormalMode, DirectionDown, nil
 	case key.CodeReturnEnter:
 		if buff.Dot.Start == buff.Dot.End {
 			actions.OpenOrPerformAction(position.CurWordStart, position.CurWordEnd, buff)
 		} else {
 			actions.OpenOrPerformAction(position.DotStart, position.DotEnd, buff)
 		}
-		return NormalMode, nil
+		// There's a possibility OpenOrPerformAction opened a new file, in which case
+		// we should scroll to the top, or inserted text, in which case we should scroll
+		// to the top of the inserted text. Either way, it's an "Up" hint so that the
+		// scrolling is based on Dot.Start
+		return NormalMode, DirectionUp, nil
 	case key.CodeSemicolon:
 		if e.Modifiers&key.ModShift != 0 {
 			if buff.Tagline != nil {
@@ -254,7 +274,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				buff.Tagline.Dot.End = buff.Tagline.Dot.Start
 			}
 		}
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 	}
-	return NormalMode, Invalid
+	return NormalMode, DirectionNone, Invalid
 }

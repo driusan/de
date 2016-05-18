@@ -1,7 +1,7 @@
 package kbmap
 
 import (
-	"fmt"
+	//"fmt"
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
@@ -10,12 +10,12 @@ import (
 	"unicode/utf8"
 )
 
-func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
+func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, error) {
 	// special cases for Insert Mode
 	switch e.Code {
 	case key.CodeEscape:
 		if e.Direction == key.DirPress {
-			return NormalMode, nil
+			return NormalMode, DirectionNone, nil
 		}
 	case key.CodeDeleteBackspace:
 		if e.Direction == key.DirPress {
@@ -23,7 +23,7 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.DeleteCursor(position.DotStart, position.DotEnd, buff.Tagline)
 			}
 		}
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 	case key.CodeLeftArrow:
 		if e.Direction == key.DirPress {
 			if e.Modifiers&key.ModControl != 0 {
@@ -34,7 +34,7 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.MoveCursor(position.PrevChar, position.PrevChar, buff.Tagline)
 			}
 		}
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 	case key.CodeRightArrow:
 		if e.Direction == key.DirPress {
 			if e.Modifiers&key.ModControl != 0 {
@@ -45,7 +45,7 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.MoveCursor(position.NextChar, position.NextChar, buff.Tagline)
 			}
 		}
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 
 	case key.CodeDownArrow:
 		if e.Direction == key.DirPress {
@@ -57,7 +57,7 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.MoveCursor(position.NextLine, position.NextLine, buff.Tagline)
 			}
 		}
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 
 	case key.CodeUpArrow:
 		if e.Direction == key.DirPress {
@@ -69,15 +69,17 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 				actions.MoveCursor(position.PrevLine, position.PrevLine, buff.Tagline)
 			}
 		}
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 	case key.CodeReturnEnter:
 		if buff.Tagline.Dot.Start == buff.Tagline.Dot.End {
-			fmt.Printf("Executing tag from %s\n", *buff.Tagline)
+			//fmt.Printf("Executing tag from %s\n", *buff.Tagline)
 			actions.PerformTagAction(position.CurTagWordStart, position.CurTagWordEnd, buff)
 		} else {
 			actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, buff)
 		}
-		return NormalMode, nil
+		// if an action was performed, potentially scroll to the start of dot if it's off
+		// the screen.
+		return NormalMode, DirectionUp, nil
 
 	}
 
@@ -90,14 +92,14 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 		// add the character if it's a key release or a repeat, but not
 		// if it's being released. For some reason, release seems more reliable
 		// than press when typing fast.
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 	}
 
 	// unicode.IsPrint is selective about what whitespace it considers printable.
 	if !unicode.IsPrint(e.Rune) && e.Rune != '\n' && e.Rune != '\t' {
 		// if it's not a printable character, don't insert it. We also
 		// receive key events on things like shift being pressed..
-		return TagMode, nil
+		return TagMode, DirectionNone, nil
 	}
 	// in insert the rune at the current position, overwriting Dot if applicable
 
@@ -120,5 +122,5 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, error) {
 		buff.Tagline.Dot.Start += uint(i)
 		buff.Tagline.Dot.End = buff.Tagline.Dot.Start
 	}
-	return TagMode, nil
+	return TagMode, DirectionNone, nil
 }

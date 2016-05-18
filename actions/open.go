@@ -59,6 +59,7 @@ func OpenFile(filename string, buff *demodel.CharBuffer) error {
 			}
 		}
 
+		// save a reference to the old filename so we can strip the prefix.
 		oldFilename := buff.Filename
 
 		buff.Buffer = bBuff.Bytes()

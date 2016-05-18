@@ -94,14 +94,14 @@ func main() {
 	viewport.KeyboardMode = kbmap.NormalMode
 
 	render := renderer.GetRenderer(buff)
-	img, imap, err := render.Render(buff)
+	img, imap, err := render.Render(&buff)
 
 	if err != nil {
 		panic(err)
 	}
 	tagline := renderer.TaglineRenderer{}
 
-	tagimg, tagmap, _ := tagline.Render(*buff.Tagline)
+	tagimg, tagmap, _ := tagline.Render(buff.Tagline)
 
 	driver.Main(func(s screen.Screen) {
 		w, err := s.NewWindow(nil)
@@ -125,7 +125,7 @@ func main() {
 				}
 
 				oldFilename := buff.Filename
-				newKbmap, err := viewport.KeyboardMode.HandleKey(e, &buff)
+				newKbmap, scrolldir, err := viewport.KeyboardMode.HandleKey(e, &buff)
 
 				wSize := sz.Size()
 				imgSize := img.Bounds().Size()
@@ -165,14 +165,50 @@ func main() {
 					}
 				}
 
+				// There's nothing special about the tagline size since the viewport location already
+				// takes it into account, it just happens to be a good size (slightly more than 1 line)
+				// to use as a buffer at the top and bottom so that we don't trigger the scroll at the
+				// very last pixel
+				tagEnd := tagimg.Bounds().Max.Y
+				switch scrolldir {
+				case kbmap.DirectionUp:
+					// check if has moved so that it's before the top left corner.
+					if idx, err := imap.At(viewport.Location.X, viewport.Location.Y+tagEnd); err == nil && buff.Dot.Start < idx {
+						if newViewport, gerr := imap.Get(buff.Dot.Start); gerr == nil {
+							viewport.Location.Y = newViewport.Min.Y - 50
+						}
+						//fmt.Printf("Should be scrolling up (Char at viewport: %d, buff start: %d!\n", idx, buff.Dot.Start)
+					} else if idx, err := imap.At(viewport.Location.X+wSize.X, viewport.Location.Y+wSize.Y); err == nil && buff.Dot.Start > idx {
+						// if't not before the top-left, so check if it's after the bottom-right
+						// this might have happened if we manually scrolled the window, or used a command like <lineno>G
+						if newViewport, gerr := imap.Get(buff.Dot.Start); gerr == nil {
+							viewport.Location.Y = newViewport.Min.Y - 50
+						}
+					}
+				case kbmap.DirectionDown:
+					// check if dot moved so that it's end is end is after the bottom right corner.
+					wSize := sz.Size()
+					//imgbounds := img.Bounds()
+					if idx, err := imap.At(viewport.Location.X+wSize.X, viewport.Location.Y+wSize.Y-tagEnd); err == nil && buff.Dot.End > idx {
+						if newViewport, gerr := imap.Get(buff.Dot.End); gerr == nil {
+							// scroll to about the middle of the screen
+							viewport.Location.Y = newViewport.Min.Y - (wSize.Y / 2)
+						}
+					} else if idx, err := imap.At(viewport.Location.X, viewport.Location.Y-tagEnd); err == nil && buff.Dot.End < idx {
+						if newViewport, gerr := imap.Get(buff.Dot.End); gerr == nil {
+							viewport.Location.Y = newViewport.Min.Y - (wSize.Y / 2)
+						}
+					}
+
+				case kbmap.DirectionNone:
+				}
+
 				if wSize.X >= imgSize.X {
 					viewport.Location.X = 0
 				}
-				if wSize.Y >= imgSize.Y {
+				if wSize.Y >= imgSize.Y || viewport.Location.Y < 0 {
 					viewport.Location.Y = 0
 				}
-
-				// TODO: Autoscroll if the cursor has moved past the end of the window.
 
 				// now apply the new map and repaint the window to incorporate
 				// whatever changes the keystroke may have changed.
@@ -182,9 +218,9 @@ func main() {
 				if oldFilename != buff.Filename {
 					render = renderer.GetRenderer(buff)
 				}
-				img, imap, _ = render.Render(buff)
+				img, imap, _ = render.Render(&buff)
 				if buff.Tagline != nil {
-					tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
 				paintWindow(s, w, sz, img, tagimg)
 			case mouse.Event:
@@ -299,9 +335,9 @@ func main() {
 
 					// the highlighted portion of the image may have changed, so
 					// rerender everything.
-					img, imap, _ = render.Render(buff)
+					img, imap, _ = render.Render(&buff)
 					if buff.Tagline != nil {
-						tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
 					paintWindow(s, w, sz, img, tagimg)
 				}
@@ -327,9 +363,9 @@ func main() {
 						render = renderer.GetRenderer(buff)
 					}
 
-					img, imap, _ = render.Render(buff)
+					img, imap, _ = render.Render(&buff)
 					if buff.Tagline != nil {
-						tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
 					paintWindow(s, w, sz, img, tagimg)
 				}
@@ -352,9 +388,9 @@ func main() {
 							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff)
 						}
 					}
-					img, imap, _ = render.Render(buff)
+					img, imap, _ = render.Render(&buff)
 					if buff.Tagline != nil {
-						tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
 					paintWindow(s, w, sz, img, tagimg)
 				}
@@ -365,7 +401,7 @@ func main() {
 				sz = e
 				wSize := e.Size()
 				tagline.Width = wSize.X
-				img, imap, _ = render.Render(buff)
+				img, imap, _ = render.Render(&buff)
 				imgSize := img.Bounds().Size()
 				if wSize.X >= imgSize.X {
 					viewport.Location.X = 0
@@ -374,7 +410,7 @@ func main() {
 					viewport.Location.Y = 0
 				}
 				if buff.Tagline != nil {
-					tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
+					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
 				paintWindow(s, w, sz, img, tagimg)
 			}

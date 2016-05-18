@@ -19,7 +19,7 @@ type GoSyntax struct{}
 func (rd *GoSyntax) CanRender(buf demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".go")
 }
-func (rd *GoSyntax) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
+func (rd *GoSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 	metrics := renderer.MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
@@ -44,7 +44,7 @@ func (rd *GoSyntax) calcImageSize(buf demodel.CharBuffer) image.Rectangle {
 	return rt
 }
 
-func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, renderer.ImageMap, error) {
+func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.ImageMap, error) {
 	dstSize := rd.calcImageSize(buf)
 	dst := image.NewRGBA(dstSize)
 	metrics := renderer.MonoFontFace.Metrics()
@@ -56,7 +56,7 @@ func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, renderer.ImageM
 	}
 	runes := bytes.Runes(buf.Buffer)
 
-	im := make(renderer.ImageMap, 0)
+	im := renderer.ImageMap{make([]renderer.ImageLoc, 0), buf}
 
 	var inLineComment, inMultilineComment, inString, inCharString bool
 
@@ -142,7 +142,7 @@ func (rd *GoSyntax) Render(buf demodel.CharBuffer) (image.Image, renderer.ImageM
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im = append(im, renderer.ImageLoc{runeRectangle, uint(i)})
+		im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
 		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 			// it's in dot, so highlight the background
 			draw.Draw(
