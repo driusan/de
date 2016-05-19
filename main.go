@@ -103,6 +103,7 @@ func main() {
 
 	tagimg, tagmap, _ := tagline.Render(buff.Tagline)
 
+	var lastCharIdx uint
 	driver.Main(func(s screen.Screen) {
 		w, err := s.NewWindow(nil)
 		if err != nil {
@@ -248,6 +249,12 @@ func main() {
 					// the size of the tagline, and scrolling of the viewport into
 					// consideration
 					charIdx, err = imap.At(int(e.X)+viewport.Location.X, int(e.Y)+viewport.Location.Y-tagEnd)
+				}
+
+				if charIdx == lastCharIdx && e.Direction == mouse.DirNone {
+					continue
+				} else {
+					lastCharIdx = charIdx
 				}
 
 				if err != nil {
