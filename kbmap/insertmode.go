@@ -9,19 +9,19 @@ import (
 	"unicode/utf8"
 )
 
-func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, error) {
+func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {
 	// special cases for Insert Mode
 	switch e.Code {
 	case key.CodeEscape:
 		if e.Direction == key.DirPress {
-			return NormalMode, DirectionNone, nil
+			return NormalMode, demodel.DirectionNone, nil
 		}
 	case key.CodeDeleteBackspace:
 		if e.Direction == key.DirPress {
 			if e.Direction == key.DirPress {
 				actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
 			}
-			return InsertMode, DirectionUp, nil
+			return InsertMode, demodel.DirectionUp, nil
 		}
 	case key.CodeLeftArrow:
 		if e.Direction == key.DirPress {
@@ -33,7 +33,7 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 				actions.MoveCursor(position.PrevChar, position.PrevChar, buff)
 			}
 		}
-		return InsertMode, DirectionUp, nil
+		return InsertMode, demodel.DirectionUp, nil
 	case key.CodeRightArrow:
 		if e.Direction == key.DirPress {
 			if e.Modifiers&key.ModControl != 0 {
@@ -43,7 +43,7 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 				// ctrl is not pressed, so move the cursor without selecting
 				actions.MoveCursor(position.NextChar, position.NextChar, buff)
 			}
-			return InsertMode, DirectionDown, nil
+			return InsertMode, demodel.DirectionDown, nil
 		}
 	case key.CodeDownArrow:
 		if e.Direction == key.DirPress {
@@ -55,7 +55,7 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 				actions.MoveCursor(position.NextLine, position.NextLine, buff)
 			}
 		}
-		return InsertMode, DirectionDown, nil
+		return InsertMode, demodel.DirectionDown, nil
 
 	case key.CodeUpArrow:
 		if e.Direction == key.DirPress {
@@ -67,7 +67,7 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 				actions.MoveCursor(position.PrevLine, position.PrevLine, buff)
 			}
 		}
-		return InsertMode, DirectionUp, nil
+		return InsertMode, demodel.DirectionUp, nil
 	}
 
 	// These events don't seem to have the rune set properly, so add it as a hack.
@@ -82,14 +82,14 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 		// add the character if it's a key release or a repeat, but not
 		// if it's being released. For some reason, release seems more reliable
 		// than press when typing fast.
-		return InsertMode, DirectionNone, nil
+		return InsertMode, demodel.DirectionNone, nil
 	}
 
 	// unicode.IsPrint is selective about what whitespace it considers printable.
 	if !unicode.IsPrint(e.Rune) && e.Rune != '\n' && e.Rune != '\t' {
 		// if it's not a printable character, don't insert it. We also
 		// receive key events on things like shift being pressed..
-		return InsertMode, DirectionNone, nil
+		return InsertMode, demodel.DirectionNone, nil
 	}
 	// in insert the rune at the current position, overwriting Dot if applicable
 
@@ -113,5 +113,5 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 		buff.Dot.End = buff.Dot.Start
 	}
 	buff.Dirty = true
-	return InsertMode, DirectionDown, nil
+	return InsertMode, demodel.DirectionDown, nil
 }

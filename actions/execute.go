@@ -10,7 +10,7 @@ import (
 	"os/exec"
 )
 
-func PerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
+func PerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil {
 		return
 	}
@@ -29,10 +29,10 @@ func PerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 	dot.End = i
 
 	cmd := string(buff.Buffer[dot.Start : dot.End+1])
-	runOrExec(cmd, buff)
+	runOrExec(cmd, buff, v)
 }
 
-func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer) {
+func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil || buff.Tagline == nil {
 		return
 	}
@@ -65,10 +65,10 @@ func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 
 	// now that the command has been extracted from the tagline, perform the command
 	// on the real buffer.
-	runOrExec(cmd, buff)
+	runOrExec(cmd, buff, v)
 }
 
-func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
+func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil {
 		return
 	}
@@ -97,7 +97,7 @@ func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 		return
 	}
 
-	runOrExec(cmd, buff)
+	runOrExec(cmd, buff, v)
 }
 
 type replaceMode uint8
@@ -108,11 +108,10 @@ const (
 	replaceDot
 )
 
-func runOrExec(cmd string, buff *demodel.CharBuffer) {
-
+func runOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if f, ok := actions[cmd]; ok {
 		// it was an internal command, so run it.
-		f("", buff)
+		f("", buff, v)
 		return
 	}
 	if len(cmd) <= 0 || buff == nil {

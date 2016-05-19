@@ -48,7 +48,7 @@ func OpenFile(filename string, buff *demodel.CharBuffer) error {
 		os.Chdir(filename)
 
 		var bBuff bytes.Buffer
-		fmt.Fprintf(&bBuff, "./\n../\n")
+		fmt.Fprintf(&bBuff, "Shell\n\n./\n../\n")
 
 		for _, f := range files {
 

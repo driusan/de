@@ -39,6 +39,7 @@ func TagDotStart(buff demodel.CharBuffer) (uint, error) {
 	}
 	return buff.Tagline.Dot.Start, nil
 }
+
 func TagDotEnd(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
 		return 0, Invalid
@@ -123,6 +124,10 @@ func PrevLine(buff demodel.CharBuffer) (uint, error) {
 }
 
 func NextLine(buff demodel.CharBuffer) (uint, error) {
+	// special case. We're at a newline, so the next line is just the next character..
+	if buff.Buffer[buff.Dot.End] == '\n' {
+		return buff.Dot.End + 1, nil
+	}
 	// how far into the current line is the current character?
 	var lineIdx int = -1
 
@@ -141,15 +146,16 @@ func NextLine(buff demodel.CharBuffer) (uint, error) {
 	}
 	if lineIdx < 0 {
 		// must be the on the first line, which means Dot
-		// is actually the index.
+		// is actually the index into the line.
 		lineIdx = int(buff.Dot.End)
 	}
-
+	//fmt.Printf("Line Index: %d\n", lineIdx)
 	// now find the next line start, so we can add to it, and the line
 	// after that, so we can check if nextLine+idx goes too far.
-	for i := buff.Dot.End + 1; int(i) < len(buff.Buffer); i++ {
+	for i := buff.Dot.End; i < uint(len(buff.Buffer)); i++ {
 		if buff.Buffer[i] == '\n' {
 			if nextLineStart == -1 {
+				// the line starts after the newline character, not on it.
 				nextLineStart = int(i)
 			} else {
 				subsequentLine = int(i)
@@ -165,7 +171,7 @@ func NextLine(buff demodel.CharBuffer) (uint, error) {
 
 	// calculate the position
 	pos := uint(nextLineStart + lineIdx)
-	if subsequentLine >= 0 && pos > uint(subsequentLine) {
+	if subsequentLine > 0 && pos >= uint(subsequentLine) {
 		// went too far, so return the end of the line
 		return uint(subsequentLine) - 1, nil
 	}
@@ -175,6 +181,7 @@ func NextLine(buff demodel.CharBuffer) (uint, error) {
 		return uint(len(buff.Buffer)) - 1, Invalid
 	}
 
+	// the line starts at the character after the \n, not on the \n itself.
 	return pos, nil
 }
 

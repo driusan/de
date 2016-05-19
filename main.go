@@ -7,6 +7,7 @@ import (
 	"github.com/driusan/de/kbmap"
 	"github.com/driusan/de/position"
 	"github.com/driusan/de/renderer"
+	"github.com/driusan/de/viewer"
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
 	"golang.org/x/mobile/event/key"
@@ -17,12 +18,8 @@ import (
 	"image"
 	"image/draw"
 	"os"
+	"runtime/pprof"
 )
-
-var viewport struct {
-	Location     image.Point
-	KeyboardMode kbmap.Map
-}
 
 const (
 	ButtonLeft = iota
@@ -32,14 +29,14 @@ const (
 	MouseWheelDown
 )
 
-func clipRectangle(sz size.Event) image.Rectangle {
+func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
 	wSize := sz.Size()
 	return image.Rectangle{
 		Min: viewport.Location,
 		Max: image.Point{viewport.Location.X + wSize.X, viewport.Location.Y + wSize.Y},
 	}
 }
-func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image) {
+func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image, viewport *viewer.Viewport) {
 	b, err := s.NewBuffer(sz.Size())
 	defer b.Release()
 	if err != nil {
@@ -49,7 +46,7 @@ func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Imag
 
 	// Fill the buffer with the window background colour before
 	// drawing the web page on top of it.
-	switch viewport.KeyboardMode {
+	switch viewport.GetKeyboardMode() {
 	case kbmap.InsertMode:
 		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.InsertBackground}, image.ZP, draw.Src)
 	case kbmap.DeleteMode:
@@ -71,6 +68,9 @@ func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Imag
 }
 
 func main() {
+	f, _ := os.Create("test.profile")
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 	var sz size.Event
 	var filename string
 	if len(os.Args) <= 1 {
@@ -91,19 +91,21 @@ func main() {
 		// the error was just that the file doesn't exist, it'll be created on
 		// save
 		buff.Buffer = make([]byte, 0)
-		//	(&buff).ResetTagline()
 	}
 	buff.ResetTagline()
 	var imap renderer.ImageMap
 	var MouseButtonMask [6]bool
 
 	// hack so that things don't get confused on DirRelease when a button transitions keyboard modes
-	var lastKeyboardMode kbmap.Map = kbmap.NormalMode
-	viewport.KeyboardMode = kbmap.NormalMode
+	//var lastKeyboardMode demodel.Map = kbmap.NormalMode
+
+	viewport := &viewer.Viewport{Map: kbmap.NormalMode}
+
+	lastKeyboardMode := viewport.GetKeyboardMode()
 
 	render := renderer.GetRenderer(&buff)
 
-	img, imgSize, imap, err := render.Render(&buff, clipRectangle(sz))
+	img, imgSize, imap, err := render.Render(&buff, clipRectangle(sz, viewport))
 
 	if err != nil {
 		panic(err)
@@ -118,28 +120,37 @@ func main() {
 	// when hitting enter from the tagline. If the mouse is still over
 	// the tagline, we should stay in tagmode.
 	driver.Main(func(s screen.Screen) {
+
 		w, err := s.NewWindow(nil)
 		if err != nil {
 			return
 		}
 		defer w.Release()
+		viewport.Window = w
 
 		for {
+
+			img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+			if buff.Tagline != nil {
+				tagimg, tagmap, _ = tagline.Render(buff.Tagline)
+			}
+			paintWindow(s, w, sz, img, tagimg, viewport)
+
 			switch e := w.NextEvent().(type) {
 			case lifecycle.Event:
 				if e.To == lifecycle.StageDead {
 					return
 				}
 			case key.Event:
-				if lastKeyboardMode != viewport.KeyboardMode && e.Direction == key.DirRelease {
-					lastKeyboardMode = viewport.KeyboardMode
+				if lastKeyboardMode != viewport.GetKeyboardMode() && e.Direction == key.DirRelease {
+					lastKeyboardMode = viewport.GetKeyboardMode()
 					// don't repeat the same key in a different direction if a keystroke changed
 					// modes.
 					continue
 				}
 
 				oldFilename := buff.Filename
-				newKbmap, scrolldir, err := viewport.KeyboardMode.HandleKey(e, &buff)
+				newKbmap, scrolldir, err := viewport.HandleKey(e, &buff, viewport)
 
 				wSize := sz.Size()
 				//	imgSize := img.Bounds().Size()
@@ -189,7 +200,7 @@ func main() {
 				// very last pixel
 				tagEnd := tagimg.Bounds().Max.Y
 				switch scrolldir {
-				case kbmap.DirectionUp:
+				case demodel.DirectionUp:
 					// check if has moved so that it's before the top left corner.
 					if idx, err := imap.At(viewport.Location.X, viewport.Location.Y+tagEnd); err == nil && buff.Dot.Start < idx {
 						if newViewport, gerr := imap.Get(buff.Dot.Start); gerr == nil {
@@ -203,7 +214,7 @@ func main() {
 							viewport.Location.Y = newViewport.Min.Y - 50
 						}
 					}
-				case kbmap.DirectionDown:
+				case demodel.DirectionDown:
 					// check if dot moved so that it's end is end is after the bottom right corner.
 					wSize := sz.Size()
 					//imgbounds := img.Bounds()
@@ -217,8 +228,6 @@ func main() {
 							viewport.Location.Y = newViewport.Min.Y - (wSize.Y / 2)
 						}
 					}
-
-				case kbmap.DirectionNone:
 				}
 
 				if wSize.X >= imgSize.Max.X {
@@ -232,18 +241,19 @@ func main() {
 					// now apply the new map and repaint the window to incorporate
 					// whatever changes the keystroke may have changed.
 					// but if the mouse is over the tagline, stay in tagline mode.
-					lastKeyboardMode = viewport.KeyboardMode
-					viewport.KeyboardMode = newKbmap
+
+					lastKeyboardMode = viewport.GetKeyboardMode()
+					viewport.SetKeyboardMode(newKbmap)
 				}
 
 				if oldFilename != buff.Filename {
 					render = renderer.GetRenderer(&buff)
 				}
-				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 				if buff.Tagline != nil {
 					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
-				paintWindow(s, w, sz, img, tagimg)
+				paintWindow(s, w, sz, img, tagimg, viewport)
 			case mouse.Event:
 				mLoc = image.Point{int(e.X), int(e.Y)}
 				tagEnd := tagimg.Bounds().Max.Y
@@ -255,16 +265,16 @@ func main() {
 				var charIdx uint
 				var err error
 				if int(e.Y) < tagEnd {
-					if viewport.KeyboardMode != kbmap.TagMode {
-						lastKeyboardMode = viewport.KeyboardMode
-						viewport.KeyboardMode = kbmap.TagMode
+					if viewport.GetKeyboardMode() != kbmap.TagMode {
+						lastKeyboardMode = viewport.GetKeyboardMode()
+						viewport.SetKeyboardMode(kbmap.TagMode)
 					}
 					evtBuff = evtBuff.Tagline
 					charIdx, err = tagmap.At(int(e.X), int(e.Y))
 				} else {
 					// focus follows pointer
-					if viewport.KeyboardMode == kbmap.TagMode {
-						viewport.KeyboardMode = kbmap.NormalMode
+					if viewport.GetKeyboardMode() == kbmap.TagMode {
+						viewport.SetKeyboardMode(kbmap.NormalMode)
 					}
 					// translate the mouse event by an appropriate amount, taking
 					// the size of the tagline, and scrolling of the viewport into
@@ -328,9 +338,12 @@ func main() {
 						if viewport.Location.Y < 0 {
 							viewport.Location.Y = 0
 						}
-						//img, imap, _ = render.Render(buff)
 						// scrolling can't affect the content, so just rerender the window.
-						paintWindow(s, w, sz, img, tagimg)
+						img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+						if buff.Tagline != nil {
+							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
+						}
+						paintWindow(s, w, sz, img, tagimg, viewport)
 
 					case mouse.ButtonWheelDown:
 						viewport.Location.Y += 50
@@ -341,16 +354,22 @@ func main() {
 							// the last
 							viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 						}
-
-						img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+						img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 						if buff.Tagline != nil {
 							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 						}
 
-						paintWindow(s, w, sz, img, tagimg)
+						paintWindow(s, w, sz, img, tagimg, viewport)
 					}
 				}
 
+				// nothing is pressed, so don't rerender. There's no possibility of something having changed in the view.
+				if e.Direction == mouse.DirNone &&
+					MouseButtonMask[ButtonLeft] == false &&
+					MouseButtonMask[ButtonRight] == false &&
+					MouseButtonMask[ButtonMiddle] == false {
+					continue
+				}
 				if MouseButtonMask[ButtonLeft] == true || MouseButtonMask[ButtonRight] == true || MouseButtonMask[ButtonMiddle] == true {
 					// if it's outside the current selection, expand the selection.
 					if charIdx < eDot.Start {
@@ -373,11 +392,11 @@ func main() {
 
 					// the highlighted portion of the image may have changed, so
 					// rerender everything.
-					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
-					paintWindow(s, w, sz, img, tagimg)
+					paintWindow(s, w, sz, img, tagimg, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
@@ -400,40 +419,39 @@ func main() {
 						render = renderer.GetRenderer(&buff)
 					}
 
-					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
-					paintWindow(s, w, sz, img, tagimg)
+					paintWindow(s, w, sz, img, tagimg, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
 					if evtBuff == buff.Tagline {
 						// executing from the tagline is a little special, because it uses the word
 						// from a tagline buffer to perform an action in a non-tagline buffer.
 						if eDot.Start == eDot.End {
-							actions.PerformTagAction(position.CurTagExecutionWordStart, position.CurTagExecutionWordEnd, &buff)
+							actions.PerformTagAction(position.CurTagExecutionWordStart, position.CurTagExecutionWordEnd, &buff, viewport)
 						} else {
-							actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, &buff)
+							actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, &buff, viewport)
 						}
 					} else {
 						if eDot.Start == eDot.End {
-
 							// otherwise, just perform the action normally.
-							actions.PerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, evtBuff)
+							actions.PerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, evtBuff, viewport)
 
 						} else {
-							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff)
+							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff, viewport)
 						}
 					}
-					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
-					paintWindow(s, w, sz, img, tagimg)
+					paintWindow(s, w, sz, img, tagimg, viewport)
 				}
 				//paintWindow(s, w, sz, buff)
 			case paint.Event:
-				paintWindow(s, w, sz, img, tagimg)
+				paintWindow(s, w, sz, img, tagimg, viewport)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
@@ -443,7 +461,7 @@ func main() {
 					renderer.RecalculateFontFace(dpi)
 					render.InvalidateCache()
 				}
-				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 				imgSize := img.Bounds().Size()
 				if wSize.X >= imgSize.X {
 					viewport.Location.X = 0
@@ -454,8 +472,10 @@ func main() {
 				if buff.Tagline != nil {
 					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
-				paintWindow(s, w, sz, img, tagimg)
+				paintWindow(s, w, sz, img, tagimg, viewport)
+
 			}
 		}
 	})
+
 }

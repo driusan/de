@@ -5,6 +5,7 @@ import (
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
+	//"github.com/driusan/de/viewer"
 	"io/ioutil"
 	"os"
 )
@@ -23,13 +24,13 @@ func init() {
 	actions.RegisterAction("ResetTagline", ResetTagline)
 }
 
-func Put(args string, buff *demodel.CharBuffer) {
+func Put(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	// Just use the savefile movement command that's used saving with
 	// escape.
 	actions.SaveFile(nil, nil, buff)
 }
 
-func Get(args string, buff *demodel.CharBuffer) {
+func Get(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil {
 		return
 	}
@@ -42,13 +43,13 @@ func Get(args string, buff *demodel.CharBuffer) {
 	buff.Dirty = false
 }
 
-func Quit(args string, buff *demodel.CharBuffer) {
+func Quit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	os.Exit(0)
 }
-func Paste(args string, buff *demodel.CharBuffer) {
+func Paste(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	actions.InsertSnarfBuffer(position.DotStart, position.DotEnd, buff)
 }
 
-func ResetTagline(args string, buff *demodel.CharBuffer) {
+func ResetTagline(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	buff.ResetTagline()
 }

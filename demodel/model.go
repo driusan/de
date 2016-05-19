@@ -1,5 +1,10 @@
 package demodel
 
+import (
+	"golang.org/x/mobile/event/key"
+	//"image"
+)
+
 // Dot generally represents a selection or position in a buffer.
 // It holds the start and the end of the selection.
 // If Start==End, it's a position.
@@ -61,4 +66,34 @@ type Position func(buf CharBuffer) (uint, error)
 // yet implemented.
 type TermRender interface {
 	Render(CharBuffer) (string, error)
+}
+
+// A Map maps a keystroke to a command. It performs a command, and then
+// returns a new map which represents the keyboard mapping to be used
+// for the next keystroke.
+type Map interface {
+	HandleKey(key.Event, *CharBuffer, Viewport) (Map, ScrollDirection, error)
+}
+
+type ScrollDirection uint8
+
+const (
+	DirectionNone = ScrollDirection(iota)
+	DirectionUp
+	DirectionDown
+)
+
+// A Viewport represents the state of the window being rendered.
+type Viewport interface {
+	// Returns the current KBMap mode that the viewport is in.
+	GetKeyboardMode() Map
+	// Requests that the KBMap be changed to a new mode for this viewport.
+	SetKeyboardMode(Map) error
+	// Requests that the KBMap be changed to a new mode, and further changes
+	// be disallowed until it's explicitly unlocked. This is mostly for plugins
+	// such as Shell
+	LockKeyboardMode(Map) error
+
+	// Request that the viewport be rerendered.
+	Rerender()
 }
