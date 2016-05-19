@@ -14,7 +14,7 @@ See [USAGE.md](USAGE.md) for usage instructions.
 
 ## Features
 
-* Syntax highlighting (currently only Go and some basic markdown.)
+* Syntax highlighting (currently only Go and PHP with some basic markdown.)
 * vi-like keybindings and philosophy.
 * acme-like mouse bindings and philosophy.
 * Ability to write plugins in Go. See [PLUGINS.md](PLUGINS.md).
