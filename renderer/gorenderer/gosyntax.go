@@ -58,7 +58,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Image
 
 	im := renderer.ImageMap{make([]renderer.ImageLoc, 0), buf}
 
-	var inLineComment, inMultilineComment, inString, inCharString bool
+	var inLineComment, inMultilineComment, inString, inCharString, inStringLiteral bool
 
 	// Used for calculating the size of a tab.
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
@@ -82,7 +82,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Image
 					// end of a string, colourize the quote too.
 					nextColor = &image.Uniform{renderer.TextColour}
 					inCharString = false
-				} else if !inLineComment && !inMultilineComment && !inString {
+				} else if !inLineComment && !inMultilineComment && !inString && !inStringLiteral {
 					inCharString = true
 					writer.Src = &image.Uniform{renderer.StringColour}
 				}
@@ -92,11 +92,23 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Image
 				if inString {
 					inString = false
 					nextColor = &image.Uniform{renderer.TextColour}
-				} else if !inLineComment && !inMultilineComment && !inCharString {
+				} else if !inLineComment && !inMultilineComment && !inCharString && !inStringLiteral {
 					inString = true
 					writer.Src = &image.Uniform{renderer.StringColour}
 				}
 			}
+		case '`':
+			// \ doesn't mean anything special inside of a string literal in Go. Don't check if it's
+			// escaped.
+			//if !IsEscaped(i, runes) {
+			if inStringLiteral {
+				inStringLiteral = false
+				nextColor = &image.Uniform{renderer.TextColour}
+			} else if !inLineComment && !inMultilineComment && !inCharString && !inString {
+				inStringLiteral = true
+				writer.Src = &image.Uniform{renderer.StringColour}
+			}
+			//}
 		case '/':
 			if string(runes[i:i+2]) == "//" {
 				if !inCharString && !inMultilineComment && !inString {
@@ -118,7 +130,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Image
 				writer.Src = &image.Uniform{renderer.TextColour}
 			}
 		default:
-			if !inCharString && !inMultilineComment && !inString && !inLineComment {
+			if !inCharString && !inMultilineComment && !inString && !inLineComment && !inStringLiteral {
 				if IsLanguageKeyword(i, runes) {
 					writer.Src = &image.Uniform{renderer.KeywordColour}
 				} else if IsLanguageType(i, runes) {
