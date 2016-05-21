@@ -263,7 +263,9 @@ func PrevWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, Invalid
 	}
-
+	if buff.Dot.Start == 0 {
+		return 0, nil
+	}
 	foundSpace := false
 	foundNonSpaceBeforeSpace := false
 	for i := buff.Dot.Start; i >= 0; i-- {
