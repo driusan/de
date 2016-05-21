@@ -14,12 +14,22 @@ import (
 	"strings"
 )
 
-type GoSyntax struct{}
+type GoSyntax struct {
+	lastBuf     *demodel.CharBuffer
+	lastBufSize int
+	rSizeCache  image.Rectangle
+}
 
 func (rd *GoSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".go")
 }
 func (rd *GoSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
+	if rd.rSizeCache != image.ZR && buf == rd.lastBuf && rd.lastBufSize == len(buf.Buffer) {
+		return rd.rSizeCache
+	}
+	rd.lastBuf = buf
+	rd.lastBufSize = len(buf.Buffer)
+
 	metrics := renderer.MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
@@ -41,6 +51,7 @@ func (rd *GoSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 		}
 	}
 	rt.Max.Y += metrics.Height.Ceil() + 1
+	rd.rSizeCache = rt
 	return rt
 }
 

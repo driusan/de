@@ -14,12 +14,27 @@ import (
 	"strings"
 )
 
-type MarkdownSyntax struct{}
+type MarkdownSyntax struct {
+	// cache a copy of what the last buffer size was, so that it can be compared
+	// for the calculation in calcImageSize. If the buffer hasn't changed, and
+	// the buffer size hasn't changed, we can just return the last rectangle.
+	lastBuf     *demodel.CharBuffer
+	lastBufSize int
+	rSizeCache  image.Rectangle
+}
 
 func (rd *MarkdownSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".md") || strings.HasSuffix(buf.Filename, "COMMIT_EDITMSG")
 }
 func (rd *MarkdownSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
+	if rd.rSizeCache != image.ZR && rd.lastBuf == buf && rd.lastBufSize == len(buf.Buffer) {
+		// the file isn't being manipulated, just viewed, so it shouldn't
+		// have changed size. Just use the cache.
+		return rd.rSizeCache
+	} else {
+		rd.lastBuf = buf
+		rd.lastBufSize = len(buf.Buffer)
+	}
 	metrics := renderer.MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
@@ -41,6 +56,7 @@ func (rd *MarkdownSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle
 		}
 	}
 	rt.Max.Y += metrics.Height.Ceil() + 1
+	rd.rSizeCache = rt
 	return rt
 }
 

@@ -11,9 +11,19 @@ import (
 )
 
 // The default renderer. Performs no syntax highlighting.
-type NoSyntaxRenderer struct{}
+type NoSyntaxRenderer struct {
+	lastBuf     *demodel.CharBuffer
+	lastBufSize int
+	rSizeCache  image.Rectangle
+}
 
-func (r NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
+func (r *NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
+	if r.rSizeCache != image.ZR && r.lastBuf == buf && r.lastBufSize == len(buf.Buffer) {
+		return r.rSizeCache
+	}
+	r.lastBufSize = len(buf.Buffer)
+	r.lastBuf = buf
+
 	metrics := MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, glyphWidth, _ := MonoFontFace.GlyphBounds('a')
@@ -34,6 +44,7 @@ func (r NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle
 		}
 	}
 	rt.Max.Y += metrics.Height.Ceil() + 1
+	r.rSizeCache = rt
 	return rt
 }
 

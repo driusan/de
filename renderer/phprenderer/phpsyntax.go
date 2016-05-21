@@ -14,12 +14,21 @@ import (
 	"strings"
 )
 
-type PHPSyntax struct{}
+type PHPSyntax struct {
+	lastBuf     *demodel.CharBuffer
+	lastBufSize int
+	rSizeCache  image.Rectangle
+}
 
 func (rd *PHPSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".php") || strings.HasSuffix(buf.Filename, ".inc")
 }
 func (rd *PHPSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
+	if rd.rSizeCache != image.ZR && rd.lastBuf == buf && rd.lastBufSize == len(buf.Buffer) {
+		return rd.rSizeCache
+	}
+	rd.lastBuf = buf
+	rd.lastBufSize = len(buf.Buffer)
 	metrics := renderer.MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
@@ -41,6 +50,7 @@ func (rd *PHPSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 		}
 	}
 	rt.Max.Y += metrics.Height.Ceil() + 1
+	rd.rSizeCache = rt
 	return rt
 }
 
