@@ -78,12 +78,25 @@ filename there is only for reference, and updated when a new file is opened if t
 happens to be a prefix. There is currently no way to change the filename and save the file to another
 name.
 
-Currently understood commands:
+Currently understood internal commands:
 Get (or Discard): Reload the current file from disk and discard changes
 Put (or Save): Save the current character buffer to disk, overwriting the existing file.
 Paste: Paste the Snarf buffer into the current location of the character buffer.
 Exit (or Quit): Quit de, discarding any changes.
 
 To be implemented:
-Copy (or Snarf), Cut
-ACME style tag/Scratch line
+Copy (or Snarf), Cut, File:newfilename, Load:somefile, New:filename, etc.
+
+When the word (or selection) isn't an internal plugin command (generally commands with a capital first
+letter by convention, although that's not enforced), de will try to execute the shell command selected
+and pass the selected text (or the whole file if nothing is selected) to the processes's STDIN.
+
+In the general case, if the command executes successfully, de will take the stdout of the command,
+insert it *after* the currently selected text, and then select the newly inserted text. This is generally
+safe, because if something went wrong you can just hit backspace or x to delete it.
+
+The behaviour of what to do with the output can be modified by prefixing the command with either < or |.
+< generally means "Replace the whole buffer with this command's output" and "|" means "Replace the
+selected text with the output of filtering it through the command." Either one is most useful in the
+tagline, where you can put arbitrary sed commands, or gofmt, or any arbitrary script that you wrote
+which reads from stdin and outputs to stdout.

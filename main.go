@@ -271,6 +271,14 @@ func main() {
 					continue
 				}
 
+				// eDot determines which dot is being used for this event, based on the
+				// mouse button. Left or right clicking uses the normal dot, middle uses
+				// the alternate so that things can be executed with parameters other than
+				// themselves.
+				var eDot *demodel.Dot = &evtBuff.Dot
+				if e.Button == mouse.ButtonMiddle {
+					eDot = &evtBuff.AltDot
+				}
 				var pressed bool
 
 				switch e.Direction {
@@ -286,20 +294,20 @@ func main() {
 						// this is the start of a mouse click. Reset Dot
 						// to whatever was clicked on.
 						if pressed && MouseButtonMask[ButtonLeft] == false {
-							evtBuff.Dot.Start = charIdx
-							evtBuff.Dot.End = charIdx
+							eDot.Start = charIdx
+							eDot.End = charIdx
 						}
 						MouseButtonMask[ButtonLeft] = pressed
 					case mouse.ButtonMiddle:
 						if pressed && MouseButtonMask[ButtonMiddle] == false {
-							evtBuff.Dot.Start = charIdx
-							evtBuff.Dot.End = charIdx
+							eDot.Start = charIdx
+							eDot.End = charIdx
 						}
 						MouseButtonMask[ButtonMiddle] = pressed
 					case mouse.ButtonRight:
 						if pressed && MouseButtonMask[ButtonRight] == false {
-							evtBuff.Dot.Start = charIdx
-							evtBuff.Dot.End = charIdx
+							eDot.Start = charIdx
+							eDot.End = charIdx
 						}
 						MouseButtonMask[ButtonRight] = pressed
 					case mouse.ButtonWheelUp:
@@ -332,21 +340,21 @@ func main() {
 
 				if MouseButtonMask[ButtonLeft] == true || MouseButtonMask[ButtonRight] == true || MouseButtonMask[ButtonMiddle] == true {
 					// if it's outside the current selection, expand the selection.
-					if charIdx < evtBuff.Dot.Start {
-						evtBuff.Dot.Start = charIdx
+					if charIdx < eDot.Start {
+						eDot.Start = charIdx
 					}
-					if charIdx > evtBuff.Dot.End {
-						evtBuff.Dot.End = charIdx
+					if charIdx > eDot.End {
+						eDot.End = charIdx
 					}
 
 					// if it's inside the current selection, shrink the selection.
-					if charIdx < evtBuff.Dot.End && charIdx > evtBuff.Dot.Start {
-						if evtBuff.Dot.End-charIdx < evtBuff.Dot.Start-charIdx {
+					if charIdx < eDot.End && charIdx > eDot.Start {
+						if eDot.End-charIdx < eDot.Start-charIdx {
 							// it's slower to the end
-							evtBuff.Dot.End = charIdx
+							eDot.End = charIdx
 						} else {
 							// it's slower to the start
-							evtBuff.Dot.Start = charIdx
+							eDot.Start = charIdx
 						}
 					}
 
@@ -361,14 +369,13 @@ func main() {
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
 					if evtBuff == buff.Tagline {
-						if evtBuff.Dot.Start == evtBuff.Dot.End {
+						if eDot.Start == eDot.End {
 							actions.FindNextOrOpenTag(position.CurTagWordStart, position.CurTagWordEnd, &buff)
 						} else {
 							actions.FindNextOrOpenTag(position.TagDotStart, position.TagDotEnd, &buff)
 						}
 					} else {
-
-						if evtBuff.Dot.Start == evtBuff.Dot.End {
+						if eDot.Start == eDot.End {
 							actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, evtBuff)
 
 						} else {
@@ -390,19 +397,19 @@ func main() {
 					if evtBuff == buff.Tagline {
 						// executing from the tagline is a little special, because it uses the word
 						// from a tagline buffer to perform an action in a non-tagline buffer.
-						if evtBuff.Dot.Start == evtBuff.Dot.End {
+						if eDot.Start == eDot.End {
 							actions.PerformTagAction(position.CurTagWordStart, position.CurTagWordEnd, &buff)
 						} else {
-							actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, &buff)
+							actions.PerformTagAction(position.TagAltDotStart, position.TagAltDotEnd, &buff)
 						}
 					} else {
-						if evtBuff.Dot.Start == evtBuff.Dot.End {
+						if eDot.Start == eDot.End {
 
 							// otherwise, just perform the action normally.
-							actions.PerformAction(position.CurWordStart, position.CurWordEnd, evtBuff)
+							actions.PerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, evtBuff)
 
 						} else {
-							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff)
+							actions.PerformAction(position.AltDotStart, position.AltDotEnd, evtBuff)
 						}
 					}
 					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))

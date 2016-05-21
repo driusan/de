@@ -19,6 +19,13 @@ type CharBuffer struct {
 	// the character buffer.
 	Dot Dot
 
+	// AltDot represents the selection used for middle clicking or pressing "Enter"
+	// to execute a word. Since the execution might need Dot as a parameter, we
+	// need a second selection to determine what we're executing, otherwise commands
+	// like "Cut" would always cut the word "Cut", since it had to be selected
+	// to be executed.
+	AltDot Dot
+
 	// Filename represents the name that the CharBuffer.Buffer will be written
 	// to on save.
 	Filename string

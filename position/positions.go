@@ -20,6 +20,18 @@ func DotEnd(buff demodel.CharBuffer) (uint, error) {
 	return buff.Dot.End, nil
 }
 
+// DotStart can be used as a demodel.Position argument
+// to actions
+func AltDotStart(buff demodel.CharBuffer) (uint, error) {
+	return buff.AltDot.Start, nil
+}
+
+// DotEnd can be used as a demodel.Position argument
+// to actions
+func AltDotEnd(buff demodel.CharBuffer) (uint, error) {
+	return buff.AltDot.End, nil
+}
+
 func TagDotStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
 		return 0, Invalid
@@ -31,6 +43,19 @@ func TagDotEnd(buff demodel.CharBuffer) (uint, error) {
 		return 0, Invalid
 	}
 	return buff.Tagline.Dot.End, nil
+}
+
+func TagAltDotStart(buff demodel.CharBuffer) (uint, error) {
+	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
+		return 0, Invalid
+	}
+	return buff.Tagline.AltDot.Start, nil
+}
+func TagAltDotEnd(buff demodel.CharBuffer) (uint, error) {
+	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
+		return 0, Invalid
+	}
+	return buff.Tagline.AltDot.End, nil
 }
 
 func BuffStart(buff demodel.CharBuffer) (uint, error) {
@@ -229,7 +254,52 @@ func CurWordEnd(buff demodel.CharBuffer) (uint, error) {
 	return uint(len(buff.Buffer)) - 1, nil
 
 }
+func CurExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
+	if len(buff.Buffer) == 0 {
+		return 0, Invalid
+	}
+	if buff.AltDot.Start == 0 {
+		return 0, nil
+	}
+	for i := buff.AltDot.Start - 1; i > 0; i-- {
+		if unicode.IsSpace(rune(buff.Buffer[i])) {
+			return i + 1, nil
+		}
+		// some non-space word borders. Note that '.'
+		// isn't considered a word border so that opening
+		// files by right clicking or hitting enter works.
+		switch buff.Buffer[i] {
+		case '(', ')', '"', '\'', ',', '/', '[', ']', ';':
+			return i + 1, nil
+		}
 
+	}
+	// no word boundaries found, so the first word is the start..
+	return 0, nil
+}
+
+func CurExecutionWordEnd(buff demodel.CharBuffer) (uint, error) {
+	switch len(buff.Buffer) {
+	case 0:
+		return 0, Invalid
+	case 1:
+		return 0, nil
+	}
+
+	for i := buff.AltDot.End; i < uint(len(buff.Buffer)); i++ {
+		if unicode.IsSpace(rune(buff.Buffer[i])) {
+			return i - 1, nil
+		}
+		switch buff.Buffer[i] {
+		case '(', ')', '"', '\'', ',', '/', '[', ']', ';':
+			return i - 1, nil
+		}
+	}
+
+	// no words found, so the end of the buffer is the end of the word.
+	return uint(len(buff.Buffer)) - 1, nil
+
+}
 func CurTagWordStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
 		return 0, Invalid
@@ -260,7 +330,7 @@ func NextWordStart(buff demodel.CharBuffer) (uint, error) {
 }
 
 func PrevWordStart(buff demodel.CharBuffer) (uint, error) {
-	if len(buff.Buffer) == 0 {
+	if len(buff.Buffer) == 0 || buff.Dot.Start >= uint(len(buff.Buffer)) {
 		return 0, Invalid
 	}
 	if buff.Dot.Start == 0 {
@@ -268,7 +338,7 @@ func PrevWordStart(buff demodel.CharBuffer) (uint, error) {
 	}
 	foundSpace := false
 	foundNonSpaceBeforeSpace := false
-	for i := buff.Dot.Start; i >= 0; i-- {
+	for i := buff.Dot.Start; i > 0; i-- {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
 			if foundNonSpaceBeforeSpace == true {
 				return i + 1, nil
