@@ -142,7 +142,9 @@ func main() {
 				// program
 				switch err {
 				case kbmap.ExitProgram:
-					return
+					if buff.Dirty == false {
+						return
+					}
 				case kbmap.ScrollUp:
 					scrollSize := sz.Size().Y / 2
 					viewport.Location.Y -= scrollSize

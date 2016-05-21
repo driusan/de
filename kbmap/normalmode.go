@@ -1,7 +1,7 @@
 package kbmap
 
 import (
-	//	"fmt"
+	"fmt"
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
@@ -21,7 +21,13 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 	}
 	switch e.Code {
 	case key.CodeEscape:
-		actions.SaveFile(position.BuffStart, position.BuffEnd, buff)
+		/*if buff.Dirty == true {
+			actions.SaveFile(position.BuffStart, position.BuffEnd, buff)
+		}*/
+		if buff.Dirty == true {
+			buff.AppendTag(fmt.Sprintf("\nFile %s modified. Save or Discard changes before quitting.", buff.Filename))
+			return NormalMode, DirectionNone, Invalid
+		}
 		return NormalMode, DirectionNone, ExitProgram
 	case key.CodeDeleteBackspace:
 		if e.Direction == key.DirPress {

@@ -52,4 +52,5 @@ func DeleteCursor(From, To demodel.Position, buff *demodel.CharBuffer) {
 			buff.Dot.End = buff.Dot.Start
 		}
 	}
+	buff.Dirty = true
 }

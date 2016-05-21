@@ -112,5 +112,6 @@ func insertMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 		buff.Dot.Start += uint(i)
 		buff.Dot.End = buff.Dot.Start
 	}
+	buff.Dirty = true
 	return InsertMode, DirectionDown, nil
 }

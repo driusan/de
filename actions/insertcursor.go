@@ -40,4 +40,5 @@ func InsertSnarfBuffer(From, To demodel.Position, buff *demodel.CharBuffer) {
 		buff.Dot.End = buff.Dot.Start + uint(len(buff.SnarfBuffer))
 		buff.Dot.Start = buff.Dot.End
 	}
+	buff.Dirty = true
 }

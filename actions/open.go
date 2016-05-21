@@ -29,7 +29,7 @@ func OpenFile(filename string, buff *demodel.CharBuffer) error {
 		buff.Filename = filename
 		buff.Dot.Start = 0
 		buff.Dot.End = 0
-
+		buff.Dirty = false
 		if buff.Tagline.Buffer == nil {
 			buff.Tagline.Buffer = make([]byte, 0)
 		}
@@ -73,5 +73,6 @@ func OpenFile(filename string, buff *demodel.CharBuffer) error {
 		)
 
 	}
+
 	return nil
 }

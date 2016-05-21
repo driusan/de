@@ -38,6 +38,7 @@ func Get(args string, buff *demodel.CharBuffer) {
 		return
 	}
 	buff.Buffer = b
+	buff.Dirty = false
 }
 
 func Quit(args string, buff *demodel.CharBuffer) {

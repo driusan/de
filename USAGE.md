@@ -32,8 +32,8 @@ file. In all other modes, the arrow keys scroll the viewport without adjusting t
 In all modes, backspace will delete the currently selected text (or previous character if nothing
 is selected) without changing the mode.
 
-Pressing the Escape key will save the current file and exit. *NOTE TO VI USERS: RE-READ THE LAST
-SENTENCE*
+Pressing the Escape key will exit if the buffer hasn't been modified since the last save (or open),
+or print a message to the tag line asking you to Save or Discard if it's been modified.
 
 ## Mouse Usage
 

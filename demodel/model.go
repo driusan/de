@@ -38,6 +38,10 @@ type CharBuffer struct {
 	// The tagline to display with this buffer. May be nil (for instance, taglines
 	// are CharBuffers, but taglines don't have their own tagline..)
 	Tagline *CharBuffer
+
+	// Dirty represents if the file has been modified since being open, or since the last
+	// save.
+	Dirty bool
 }
 
 // An action performs some sort of action to a character buffer,

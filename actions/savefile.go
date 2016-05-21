@@ -19,7 +19,9 @@ func SaveFile(From, To demodel.Position, buff *demodel.CharBuffer) error {
 	err := ioutil.WriteFile(buff.Filename, buff.Buffer, 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return nil
 	}
-	return err
+	buff.Dirty = false
+	return nil
 
 }
