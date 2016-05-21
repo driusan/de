@@ -12,6 +12,7 @@ make the mouse useful.
 
 See [USAGE.md](USAGE.md) for usage instructions.
 
+![de screenshot](https://driusan.github.io/de/descreenshot_readme.png)
 ## Features
 
 * Syntax highlighting (currently only Go and PHP with some basic markdown.)
@@ -19,6 +20,7 @@ See [USAGE.md](USAGE.md) for usage instructions.
 * acme-like mouse bindings and philosophy.
 * Ability to write plugins in Go. See [PLUGINS.md](PLUGINS.md).
 
+![de screenshot](https://driusan.github.io/de/descreenshot_code.png)
 ## Limitations and Bugs
 
 * vi-like functionality not fully implemented (most notably some movement verbs like '%' are missing,
