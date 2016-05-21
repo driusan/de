@@ -16,7 +16,7 @@ import (
 
 type PHPSyntax struct{}
 
-func (rd *PHPSyntax) CanRender(buf demodel.CharBuffer) bool {
+func (rd *PHPSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".php") || strings.HasSuffix(buf.Filename, ".inc")
 }
 func (rd *PHPSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
@@ -44,9 +44,9 @@ func (rd *PHPSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 	return rt
 }
 
-func (rd *PHPSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.ImageMap, error) {
+func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, renderer.ImageMap, error) {
 	dstSize := rd.calcImageSize(buf)
-	dst := image.NewRGBA(dstSize)
+	dst := image.NewRGBA(viewport)
 	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
 		Dst:  dst,
@@ -136,22 +136,29 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Imag
 		case '\t':
 			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
 		case '\n':
-			runeRectangle.Max.X = dstSize.Max.X
+			runeRectangle.Max.X = viewport.Max.X
 		default:
 			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
-		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
-			// it's in dot, so highlight the background
-			draw.Draw(
-				dst,
-				runeRectangle,
-				&image.Uniform{renderer.TextHighlight},
-				image.ZP,
-				draw.Src,
-			)
+		if runeRectangle.Min.Y > viewport.Max.Y {
+			// exit the loop early since we're past the part that is being drawn.
+			return dst, dstSize.Bounds(), im, nil
+		}
+
+		if runeRectangle.Intersect(viewport) != image.ZR {
+			im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
+			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
+				// it's in dot, so highlight the background
+				draw.Draw(
+					dst,
+					runeRectangle,
+					&image.Uniform{renderer.TextHighlight},
+					image.ZP,
+					draw.Src,
+				)
+			}
 		}
 
 		switch r {
@@ -170,7 +177,7 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Imag
 		}
 	}
 
-	return dst, im, nil
+	return dst, dstSize.Bounds(), im, nil
 }
 
 func StartsLanguageDeliminator(r rune) bool {

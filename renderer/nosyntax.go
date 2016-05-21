@@ -37,13 +37,13 @@ func (r NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle
 	return rt
 }
 
-func (r NoSyntaxRenderer) CanRender(demodel.CharBuffer) bool {
+func (r NoSyntaxRenderer) CanRender(*demodel.CharBuffer) bool {
 	return true
 }
 
-func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap, error) {
-	dstSize := r.calcImageSize(buf)
-	dst := image.NewRGBA(dstSize)
+func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, ImageMap, error) {
+	dstsize := r.calcImageSize(buf)
+	dst := image.NewRGBA(viewport)
 	metrics := MonoFontFace.Metrics()
 	writer := font.Drawer{
 		Dst:  dst,
@@ -66,25 +66,26 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap
 		case '\t':
 			runeRectangle.Max.X = runeRectangle.Min.X + 8*glyphWidth.Ceil()
 		case '\n':
-			runeRectangle.Max.X = dstSize.Max.X
+			runeRectangle.Max.X = viewport.Max.X
 		default:
 			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
-		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
-			writer.Src = &image.Uniform{color.Black}
-			draw.Draw(
-				dst,
-				runeRectangle,
-				&image.Uniform{TextHighlight},
-				image.ZP,
-				draw.Src,
-			)
-		} else {
-			// it's not within dot, so use a black font on no background.
-			writer.Src = &image.Uniform{color.Black}
+		if runeRectangle.Min.Y > viewport.Max.Y {
+			return dst, dstsize.Bounds(), im, nil
+		}
+		if runeRectangle.Intersect(viewport) != image.ZR {
+			im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
+			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
+				draw.Draw(
+					dst,
+					runeRectangle,
+					&image.Uniform{TextHighlight},
+					image.ZP,
+					draw.Src,
+				)
+			}
 		}
 		switch r {
 		case '\t':
@@ -98,5 +99,5 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap
 		writer.DrawString(string(r))
 	}
 
-	return dst, im, nil
+	return dst, dstsize.Bounds(), im, nil
 }

@@ -16,7 +16,7 @@ import (
 
 type GoSyntax struct{}
 
-func (rd *GoSyntax) CanRender(buf demodel.CharBuffer) bool {
+func (rd *GoSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".go")
 }
 func (rd *GoSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
@@ -44,9 +44,9 @@ func (rd *GoSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 	return rt
 }
 
-func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.ImageMap, error) {
+func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, renderer.ImageMap, error) {
 	dstSize := rd.calcImageSize(buf)
-	dst := image.NewRGBA(dstSize)
+	dst := image.NewRGBA(viewport)
 	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
 		Dst:  dst,
@@ -148,22 +148,34 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Image
 		case '\t':
 			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
 		case '\n':
-			runeRectangle.Max.X = dstSize.Max.X
+			runeRectangle.Max.X = viewport.Max.X
 		default:
 			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
-		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
-			// it's in dot, so highlight the background
-			draw.Draw(
-				dst,
-				runeRectangle,
-				&image.Uniform{renderer.TextHighlight},
-				image.ZP,
-				draw.Src,
-			)
+		if runeRectangle.Min.Y > viewport.Max.Y {
+			// exit the loop early, we've already gotten past the part that we care about.
+			return dst, dstSize.Bounds(), im, nil
+		}
+
+		// Don't draw or calculate the image map if we're outside of the viewport. We can't
+		// break out, because things not being drawn might still affect the rendering (ie.
+		// the start of the screen might be in the middle of a comment that needs to be syntax
+		// highlighted)
+		if runeRectangle.Intersect(viewport) != image.ZR {
+			im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
+			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
+				// it's in dot, so highlight the background (unless it's outside of the viewport
+				// clipping rectangle)
+				draw.Draw(
+					dst,
+					runeRectangle,
+					&image.Uniform{renderer.TextHighlight},
+					image.ZP,
+					draw.Src,
+				)
+			}
 		}
 
 		switch r {
@@ -175,14 +187,16 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.Image
 			writer.Dot.X = 0
 			continue
 		}
+
 		writer.DrawString(string(r))
+
 		if nextColor != nil {
 			writer.Src = nextColor
 			nextColor = nil
 		}
 	}
 
-	return dst, im, nil
+	return dst, dstSize.Bounds(), im, nil
 }
 
 func StartsLanguageDeliminator(r rune) bool {

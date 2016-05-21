@@ -32,6 +32,13 @@ const (
 	MouseWheelDown
 )
 
+func clipRectangle(sz size.Event) image.Rectangle {
+	wSize := sz.Size()
+	return image.Rectangle{
+		Min: viewport.Location,
+		Max: image.Point{viewport.Location.X + wSize.X, viewport.Location.Y + wSize.Y},
+	}
+}
 func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image) {
 	b, err := s.NewBuffer(sz.Size())
 	defer b.Release()
@@ -93,8 +100,9 @@ func main() {
 	var lastKeyboardMode kbmap.Map = kbmap.NormalMode
 	viewport.KeyboardMode = kbmap.NormalMode
 
-	render := renderer.GetRenderer(buff)
-	img, imap, err := render.Render(&buff)
+	render := renderer.GetRenderer(&buff)
+
+	img, imgSize, imap, err := render.Render(&buff, clipRectangle(sz))
 
 	if err != nil {
 		panic(err)
@@ -129,7 +137,7 @@ func main() {
 				newKbmap, scrolldir, err := viewport.KeyboardMode.HandleKey(e, &buff)
 
 				wSize := sz.Size()
-				imgSize := img.Bounds().Size()
+				//	imgSize := img.Bounds().Size()
 				// special error codes that a keystroke can send to control the
 				// program
 				switch err {
@@ -144,10 +152,11 @@ func main() {
 				case kbmap.ScrollDown:
 					scrollSize := sz.Size().Y / 2
 					viewport.Location.Y += scrollSize
-					if viewport.Location.Y+wSize.Y > imgSize.Y+50 {
+
+					if viewport.Location.Y+wSize.Y > imgSize.Max.Y+50 {
 						// we can scroll a *little* past the end, so that it's easier to read
 						// the last
-						viewport.Location.Y = imgSize.Y - wSize.Y + 50
+						viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 					}
 				case kbmap.ScrollLeft:
 					scrollSize := sz.Size().X / 2
@@ -159,10 +168,11 @@ func main() {
 					scrollSize := sz.Size().X / 2
 					viewport.Location.X += scrollSize
 					// we've scrolled too far down
-					if viewport.Location.X+wSize.X > imgSize.X+50 {
+
+					if viewport.Location.X+wSize.X > imgSize.Max.X+50 {
 						// we can scroll a *little* past the end, so that it's easier to read
 						// the longest line
-						viewport.Location.X = imgSize.X - wSize.X + 50
+						viewport.Location.X = imgSize.Max.X - wSize.X + 50
 					}
 				}
 
@@ -204,10 +214,10 @@ func main() {
 				case kbmap.DirectionNone:
 				}
 
-				if wSize.X >= imgSize.X {
+				if wSize.X >= imgSize.Max.X {
 					viewport.Location.X = 0
 				}
-				if wSize.Y >= imgSize.Y || viewport.Location.Y < 0 {
+				if wSize.Y >= imgSize.Max.Y || viewport.Location.Y < 0 {
 					viewport.Location.Y = 0
 				}
 
@@ -217,9 +227,9 @@ func main() {
 				viewport.KeyboardMode = newKbmap
 
 				if oldFilename != buff.Filename {
-					render = renderer.GetRenderer(buff)
+					render = renderer.GetRenderer(&buff)
 				}
-				img, imap, _ = render.Render(&buff)
+				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 				if buff.Tagline != nil {
 					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
@@ -304,18 +314,18 @@ func main() {
 					case mouse.ButtonWheelDown:
 						viewport.Location.Y += 50
 						wSize := sz.Size()
-						imgSize := img.Bounds().Size()
-						if viewport.Location.Y+wSize.Y > imgSize.Y+50 {
+						//imgSize := img.Bounds().Size()
+						if viewport.Location.Y+wSize.Y > imgSize.Max.Y+50 {
 							// we can scroll a *little* past the end, so that it's easier to read
 							// the last
-							viewport.Location.Y = imgSize.Y - wSize.Y + 50
+							viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 						}
-						/*
-							img, imap, _ = render.Render(buff)
-							if buff.Tagline != nil {
-								tagimg, tagmap, _ = tagline.Render(*buff.Tagline)
-							}
-						*/
+
+						img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
+						if buff.Tagline != nil {
+							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
+						}
+
 						paintWindow(s, w, sz, img, tagimg)
 					}
 				}
@@ -342,7 +352,7 @@ func main() {
 
 					// the highlighted portion of the image may have changed, so
 					// rerender everything.
-					img, imap, _ = render.Render(&buff)
+					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
@@ -367,10 +377,10 @@ func main() {
 					}
 					if oldFilename != buff.Filename {
 						// make sure the syntax highlighting gets updated if it needs to be.
-						render = renderer.GetRenderer(buff)
+						render = renderer.GetRenderer(&buff)
 					}
 
-					img, imap, _ = render.Render(&buff)
+					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
@@ -395,7 +405,7 @@ func main() {
 							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff)
 						}
 					}
-					img, imap, _ = render.Render(&buff)
+					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
@@ -408,7 +418,7 @@ func main() {
 				sz = e
 				wSize := e.Size()
 				tagline.Width = wSize.X
-				img, imap, _ = render.Render(&buff)
+				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 				imgSize := img.Bounds().Size()
 				if wSize.X >= imgSize.X {
 					viewport.Location.X = 0

@@ -16,7 +16,7 @@ import (
 
 type MarkdownSyntax struct{}
 
-func (rd *MarkdownSyntax) CanRender(buf demodel.CharBuffer) bool {
+func (rd *MarkdownSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".md") || strings.HasSuffix(buf.Filename, "COMMIT_EDITMSG")
 }
 func (rd *MarkdownSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
@@ -44,9 +44,9 @@ func (rd *MarkdownSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle
 	return rt
 }
 
-func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer.ImageMap, error) {
+func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, renderer.ImageMap, error) {
 	dstSize := rd.calcImageSize(buf)
-	dst := image.NewRGBA(dstSize)
+	dst := image.NewRGBA(viewport)
 	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
 		Dst:  dst,
@@ -100,26 +100,33 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
 		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor()
+
+		if runeRectangle.Min.Y > viewport.Max.Y {
+			// no point in rendering past the end of the viewport
+			return dst, dstSize.Bounds(), im, nil
+		}
 		switch r {
 		case '\t':
 			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
 		case '\n':
-			runeRectangle.Max.X = dstSize.Max.X
+			runeRectangle.Max.X = viewport.Max.X
 		default:
 			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
 		}
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
-		im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
-		if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
-			// it's in dot, so highlight the background
-			draw.Draw(
-				dst,
-				runeRectangle,
-				&image.Uniform{renderer.TextHighlight},
-				image.ZP,
-				draw.Src,
-			)
+		if runeRectangle.Intersect(viewport) != image.ZR {
+			im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
+			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
+				// it's in dot, so highlight the background
+				draw.Draw(
+					dst,
+					runeRectangle,
+					&image.Uniform{renderer.TextHighlight},
+					image.ZP,
+					draw.Src,
+				)
+			}
 		}
 
 		switch r {
@@ -139,5 +146,5 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer) (image.Image, renderer
 		}
 	}
 
-	return dst, im, nil
+	return dst, dstSize.Bounds(), im, nil
 }
