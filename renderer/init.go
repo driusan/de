@@ -11,7 +11,8 @@ import (
 
 var MonoFontFace font.Face
 
-func RecalculateFontFace(dpi float32) {
+func RecalculateFontFace(dpi float64) {
+	//fmt.Printf("DPI: %f\n", dpi)
 	ff, err := fonts.Asset("DejaVuSansMono.ttf")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not retrieve font: %s\n", err)
@@ -26,8 +27,8 @@ func RecalculateFontFace(dpi float32) {
 
 	MonoFontFace = truetype.NewFace(ft,
 		&truetype.Options{
-			Size:    float64(16),
-			DPI:     72,
+			Size:    12,
+			DPI:     dpi,
 			Hinting: font.HintingNone})
 	if MonoFontFace == nil {
 		panic("Could not get font face.")
@@ -37,6 +38,6 @@ func init() {
 	// initialize the font face to 72 DPI as a default. RecalculateFontFace should be called
 	// once we know the real screen DPI, but that's not known until a size.Event comes in
 	// from shiny.
-	RecalculateFontFace(72.0)
+	RecalculateFontFace(72)
 
 }
