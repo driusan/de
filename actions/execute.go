@@ -37,24 +37,30 @@ func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer) {
 		return
 	}
 	dot := demodel.Dot{}
+	// using := doesn't seem to be working with delve, so use the manual
+	// initialization..
+	var i, j uint
+	var err error
 	// From and To should be the tag variant of Position functions, so run
 	// it directly on buff.
-	i, err := From(*buff)
+	i, err = From(*buff)
 	if err != nil {
 		return
 	}
-
 	dot.Start = i
-	i, err = To(*buff)
+
+	j, err = To(*buff)
 	if err != nil {
 		return
 	}
-	dot.End = i
+	dot.End = j
 
-	if l := uint(len(buff.Tagline.Buffer)); dot.Start >= l || dot.End+1 >= l {
-		// one last check for safety
-		return
-	}
+	/*
+		if l := uint(len(buff.Tagline.Buffer)); dot.Start >= l || dot.End+1 >= l {
+			// one last check for safety
+			return
+		}
+	*/
 	cmd := string(buff.Tagline.Buffer[dot.Start : dot.End+1])
 
 	// now that the command has been extracted from the tagline, perform the command

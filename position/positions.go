@@ -262,7 +262,7 @@ func CurExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Dot.Start == 0 {
 		return 0, nil
 	}
-	for i := buff.Dot.Start - 2; i > 0; i-- {
+	for i := buff.Dot.Start - 1; i > 0; i-- {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
 			return i + 1, nil
 		}
