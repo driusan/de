@@ -11,7 +11,7 @@ import (
 
 var MonoFontFace font.Face
 
-func init() {
+func RecalculateFontFace(dpi float32) {
 	ff, err := fonts.Asset("DejaVuSansMono.ttf")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not retrieve font: %s\n", err)
@@ -32,8 +32,11 @@ func init() {
 	if MonoFontFace == nil {
 		panic("Could not get font face.")
 	}
-	// There seems to be a bug where DejaVuSansMono with hinting won't render
-	// the character '2', so for now just use the built in basicfont, even though
-	// it's not as pretty and doesn't have as many runes.
-	//MonoFontFace = basicfont.Face7x13
+}
+func init() {
+	// initialize the font face to 72 DPI as a default. RecalculateFontFace should be called
+	// once we know the real screen DPI, but that's not known until a size.Event comes in
+	// from shiny.
+	RecalculateFontFace(72.0)
+
 }

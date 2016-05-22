@@ -113,6 +113,7 @@ func main() {
 	tagimg, tagmap, _ := tagline.Render(buff.Tagline)
 
 	var lastCharIdx uint
+	var dpi float32
 	var mLoc image.Point // used for determining if we should honour getting out of tag mode
 	// when hitting enter from the tagline. If the mouse is still over
 	// the tagline, we should stay in tagmode.
@@ -437,6 +438,10 @@ func main() {
 				sz = e
 				wSize := e.Size()
 				tagline.Width = wSize.X
+				if dpi == float32(0) {
+					dpi = sz.PixelsPerPt
+					renderer.RecalculateFontFace(dpi)
+				}
 				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 				imgSize := img.Bounds().Size()
 				if wSize.X >= imgSize.X {
