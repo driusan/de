@@ -20,6 +20,9 @@ type GoSyntax struct {
 	rSizeCache  image.Rectangle
 }
 
+func (rd *GoSyntax) InvalidateCache() {
+	rd.rSizeCache = image.ZR
+}
 func (rd *GoSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".go")
 }

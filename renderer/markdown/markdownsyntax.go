@@ -23,6 +23,9 @@ type MarkdownSyntax struct {
 	rSizeCache  image.Rectangle
 }
 
+func (rd *MarkdownSyntax) InvalidateCache() {
+	rd.rSizeCache = image.ZR
+}
 func (rd *MarkdownSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".md") || strings.HasSuffix(buf.Filename, "COMMIT_EDITMSG")
 }

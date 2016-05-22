@@ -20,6 +20,9 @@ type PHPSyntax struct {
 	rSizeCache  image.Rectangle
 }
 
+func (rd *PHPSyntax) InvalidateCache() {
+	rd.rSizeCache = image.ZR
+}
 func (rd *PHPSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".php") || strings.HasSuffix(buf.Filename, ".inc")
 }

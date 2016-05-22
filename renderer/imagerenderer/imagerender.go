@@ -13,6 +13,9 @@ import (
 
 type ImageRenderer struct{}
 
+func (r ImageRenderer) InvalidateCache() {
+	// there is no cache, this is just here to meet the interface requirements.
+}
 func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
 	// Check for a PNG signature
 	if len(buf.Buffer) > 8 && bytes.Compare(buf.Buffer[:8], []byte{

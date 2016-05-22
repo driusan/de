@@ -17,6 +17,9 @@ type NoSyntaxRenderer struct {
 	rSizeCache  image.Rectangle
 }
 
+func (r *NoSyntaxRenderer) InvalidateCache() {
+	r.rSizeCache = image.ZR
+}
 func (r *NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
 	if r.rSizeCache != image.ZR && r.lastBuf == buf && r.lastBufSize == len(buf.Buffer) {
 		return r.rSizeCache

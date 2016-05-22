@@ -441,6 +441,7 @@ func main() {
 				if dpi == 0 {
 					dpi = float64(sz.PixelsPerPt) * 72
 					renderer.RecalculateFontFace(dpi)
+					render.InvalidateCache()
 				}
 				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))
 				imgSize := img.Bounds().Size()
