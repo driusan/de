@@ -262,7 +262,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, err
 		return NormalMode, DirectionDown, nil
 	case key.CodeReturnEnter:
 		if buff.Dot.Start == buff.Dot.End {
-			actions.OpenOrPerformAction(position.CurWordStart, position.CurWordEnd, buff)
+			actions.OpenOrPerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, buff)
 		} else {
 			actions.OpenOrPerformAction(position.DotStart, position.DotEnd, buff)
 		}

@@ -80,7 +80,7 @@ func main() {
 	} else {
 		filename = os.Args[1]
 	}
-	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{}}
+	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{Buffer: make([]byte, 0)}}
 	if err := actions.OpenFile(filename, &buff); err != nil {
 
 		// An unhandled error occured
@@ -91,8 +91,9 @@ func main() {
 		// the error was just that the file doesn't exist, it'll be created on
 		// save
 		buff.Buffer = make([]byte, 0)
+		//	(&buff).ResetTagline()
 	}
-
+	buff.ResetTagline()
 	var imap renderer.ImageMap
 	var MouseButtonMask [6]bool
 
@@ -112,6 +113,9 @@ func main() {
 	tagimg, tagmap, _ := tagline.Render(buff.Tagline)
 
 	var lastCharIdx uint
+	var mLoc image.Point // used for determining if we should honour getting out of tag mode
+	// when hitting enter from the tagline. If the mouse is still over
+	// the tagline, we should stay in tagmode.
 	driver.Main(func(s screen.Screen) {
 		w, err := s.NewWindow(nil)
 		if err != nil {
@@ -223,10 +227,13 @@ func main() {
 					viewport.Location.Y = 0
 				}
 
-				// now apply the new map and repaint the window to incorporate
-				// whatever changes the keystroke may have changed.
-				lastKeyboardMode = viewport.KeyboardMode
-				viewport.KeyboardMode = newKbmap
+				if mLoc.Y > tagimg.Bounds().Max.Y {
+					// now apply the new map and repaint the window to incorporate
+					// whatever changes the keystroke may have changed.
+					// but if the mouse is over the tagline, stay in tagline mode.
+					lastKeyboardMode = viewport.KeyboardMode
+					viewport.KeyboardMode = newKbmap
+				}
 
 				if oldFilename != buff.Filename {
 					render = renderer.GetRenderer(&buff)
@@ -237,6 +244,7 @@ func main() {
 				}
 				paintWindow(s, w, sz, img, tagimg)
 			case mouse.Event:
+				mLoc = image.Point{int(e.X), int(e.Y)}
 				tagEnd := tagimg.Bounds().Max.Y
 
 				// the buffer that the mouse is over. Generally either the tagline,
@@ -278,9 +286,11 @@ func main() {
 				// the alternate so that things can be executed with parameters other than
 				// themselves.
 				var eDot *demodel.Dot = &evtBuff.Dot
-				if e.Button == mouse.ButtonMiddle {
-					eDot = &evtBuff.AltDot
-				}
+				/*
+						This doesn't seem to be working well enough to use yet.
+					if e.Button == mouse.ButtonMiddle {
+						eDot = &evtBuff.AltDot
+					}*/
 				var pressed bool
 
 				switch e.Direction {
@@ -400,9 +410,9 @@ func main() {
 						// executing from the tagline is a little special, because it uses the word
 						// from a tagline buffer to perform an action in a non-tagline buffer.
 						if eDot.Start == eDot.End {
-							actions.PerformTagAction(position.CurTagWordStart, position.CurTagWordEnd, &buff)
+							actions.PerformTagAction(position.CurTagExecutionWordStart, position.CurTagExecutionWordEnd, &buff)
 						} else {
-							actions.PerformTagAction(position.TagAltDotStart, position.TagAltDotEnd, &buff)
+							actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, &buff)
 						}
 					} else {
 						if eDot.Start == eDot.End {
@@ -411,7 +421,7 @@ func main() {
 							actions.PerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, evtBuff)
 
 						} else {
-							actions.PerformAction(position.AltDotStart, position.AltDotEnd, evtBuff)
+							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff)
 						}
 					}
 					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz))

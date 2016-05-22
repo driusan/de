@@ -2,6 +2,7 @@ package position
 
 import (
 	"errors"
+	//"fmt"
 	"github.com/driusan/de/demodel"
 	"unicode"
 )
@@ -258,20 +259,20 @@ func CurExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, Invalid
 	}
-	if buff.AltDot.Start == 0 {
+	if buff.Dot.Start == 0 {
 		return 0, nil
 	}
-	for i := buff.AltDot.Start - 1; i > 0; i-- {
+	for i := buff.Dot.Start - 2; i > 0; i-- {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
 			return i + 1, nil
 		}
 		// some non-space word borders. Note that '.'
 		// isn't considered a word border so that opening
 		// files by right clicking or hitting enter works.
-		switch buff.Buffer[i] {
+		/* switch buff.Buffer[i] {
 		case '(', ')', '"', '\'', ',', '/', '[', ']', ';':
 			return i + 1, nil
-		}
+		}*/
 
 	}
 	// no word boundaries found, so the first word is the start..
@@ -286,18 +287,32 @@ func CurExecutionWordEnd(buff demodel.CharBuffer) (uint, error) {
 		return 0, nil
 	}
 
-	for i := buff.AltDot.End; i < uint(len(buff.Buffer)); i++ {
+	for i := buff.Dot.End; i < uint(len(buff.Buffer)); i++ {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
 			return i - 1, nil
 		}
-		switch buff.Buffer[i] {
+		/* switch buff.Buffer[i] {
 		case '(', ')', '"', '\'', ',', '/', '[', ']', ';':
 			return i - 1, nil
-		}
+		} */
 	}
 
 	// no words found, so the end of the buffer is the end of the word.
 	return uint(len(buff.Buffer)) - 1, nil
+
+}
+func CurTagExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
+	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
+		return 0, Invalid
+	}
+	return CurExecutionWordStart(*buff.Tagline)
+}
+
+func CurTagExecutionWordEnd(buff demodel.CharBuffer) (uint, error) {
+	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
+		return 0, Invalid
+	}
+	return CurExecutionWordEnd(*buff.Tagline)
 
 }
 func CurTagWordStart(buff demodel.CharBuffer) (uint, error) {

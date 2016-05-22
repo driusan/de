@@ -112,6 +112,7 @@ func runOrExec(cmd string, buff *demodel.CharBuffer) {
 	if len(cmd) <= 0 || buff == nil {
 		return
 	}
+	//fmt.Printf("Wait to run %s\n", cmd)
 	var mode replaceMode
 	switch cmd[0] {
 	case '<':
@@ -123,8 +124,20 @@ func runOrExec(cmd string, buff *demodel.CharBuffer) {
 	default:
 		mode = appendDot
 	}
+	// replace : with spaces unless they're escaped, so that it's easier
+	// to click
+	newCmd := make([]byte, len(cmd))
+	for i, r := range []byte(cmd) {
+		if r == ':' && i > 0 && cmd[i-1] != '\\' {
+			newCmd[i] = ' '
+		} else {
+			newCmd[i] = r
+		}
+	}
+
+	//fmt.Printf("Running %s (%s)\n", cmd, newCmd)
 	// it wasn't an internal command, so run it through a shell.
-	gocmd := exec.Command("sh", "-c", cmd)
+	gocmd := exec.Command("sh", "-c", string(newCmd))
 	stdout, err := gocmd.StdoutPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
@@ -190,14 +203,20 @@ func runOrExec(cmd string, buff *demodel.CharBuffer) {
 		buff.Dot.End = 0
 		buff.Buffer = output
 	case replaceDot:
+		if buff.Dot.Start == buff.Dot.End {
+			// replacing dot means replacing the whole file, because nothing was selected
+			buff.Dot.Start = 0
+			buff.Dot.End = 0
+			buff.Buffer = output
+		} else {
+			newBuffer := make([]byte, len(buff.Buffer)-int(buff.Dot.End-buff.Dot.Start)+len(output))
+			copy(newBuffer, buff.Buffer)
+			copy(newBuffer[buff.Dot.Start:], output)
+			copy(newBuffer[buff.Dot.Start+uint(len(output)):], buff.Buffer[buff.Dot.End:])
+			buff.Dot.End = buff.Dot.Start + uint(len(output))
 
-		newBuffer := make([]byte, len(buff.Buffer)-int(buff.Dot.End-buff.Dot.Start)+len(output))
-		copy(newBuffer, buff.Buffer)
-		copy(newBuffer[buff.Dot.Start:], output)
-		copy(newBuffer[buff.Dot.Start+uint(len(output)):], buff.Buffer[buff.Dot.End:])
-		buff.Dot.End = buff.Dot.Start + uint(len(output))
-
-		buff.Buffer = newBuffer
+			buff.Buffer = newBuffer
+		}
 	default:
 		if buff.Dot.Start == buff.Dot.End {
 			// if it was executed by pressing enter, move dot.End to the end of the word, so that
@@ -220,4 +239,5 @@ func runOrExec(cmd string, buff *demodel.CharBuffer) {
 
 		buff.Buffer = newBuffer
 	}
+	buff.Dirty = true
 }

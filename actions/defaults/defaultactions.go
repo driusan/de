@@ -20,6 +20,7 @@ func init() {
 	actions.RegisterAction("Quit", Quit)
 
 	actions.RegisterAction("Paste", Paste)
+	actions.RegisterAction("ResetTagline", ResetTagline)
 }
 
 func Put(args string, buff *demodel.CharBuffer) {
@@ -46,4 +47,8 @@ func Quit(args string, buff *demodel.CharBuffer) {
 }
 func Paste(args string, buff *demodel.CharBuffer) {
 	actions.InsertSnarfBuffer(position.DotStart, position.DotEnd, buff)
+}
+
+func ResetTagline(args string, buff *demodel.CharBuffer) {
+	buff.ResetTagline()
 }

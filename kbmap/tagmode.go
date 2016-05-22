@@ -73,7 +73,7 @@ func tagMap(e key.Event, buff *demodel.CharBuffer) (Map, ScrollDirection, error)
 	case key.CodeReturnEnter:
 		if buff.Tagline.Dot.Start == buff.Tagline.Dot.End {
 			//fmt.Printf("Executing tag from %s\n", *buff.Tagline)
-			actions.PerformTagAction(position.CurTagWordStart, position.CurTagWordEnd, buff)
+			actions.PerformTagAction(position.CurTagExecutionWordStart, position.CurTagExecutionWordEnd, buff)
 		} else {
 			actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, buff)
 		}
