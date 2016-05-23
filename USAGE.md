@@ -15,7 +15,7 @@ similar to visual mode in vi.
 
 Delete mode is similar to normal mode, except the selected text plus the movement from the beginning
 or end will be deleted (depending on if it's a forward or backwards movement command.) You access delete
-mode by  typing 'd', just like in vi. (and dd will delete the current line.) You can exit Delete mode 
+mode by  typing 'd', just like in vi. (and dd will delete the current line.) You can exit Delete mode
 without deleting anything by hitting Escape.
 
 The most recently deleted text will be put in the snarf buffer (or "clipboard", if you prefer),
@@ -72,6 +72,10 @@ either opens or executes the current word or selected text. You can access the t
 to it (focus follows pointer, you don't need to click) or typing the ; key. ; will just give focus
 to the tag line, and : will give it focus as well as moving the cursor to the end and appending a
 space. This means that you can type, for instance, :Save<Enter> to save the current file.
+
+The tagline doubles as a Stderr channel for de, and some commands will use it as an area to provide
+status or error messages without affecting your editing buffer. (However the errors are still just
+regular text that can be executed, edited, or deleted when you're done with them.)
 
 Note to Plan 9 users: you can *not* change the filename by editing it in the tagline and putting. The
 filename there is only for reference, and updated when a new file is opened if the current filename
