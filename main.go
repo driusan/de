@@ -115,7 +115,8 @@ func main() {
 
 	render := renderer.GetRenderer(&buff)
 
-	img, imgSize, imap, err := render.Render(&buff, clipRectangle(sz, viewport))
+	img, imap, err := render.Render(&buff, clipRectangle(sz, viewport))
+	imgSize := render.Bounds(&buff)
 
 	if err != nil {
 		panic(err)
@@ -140,7 +141,8 @@ func main() {
 
 		for {
 
-			img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+			img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+			imgSize = render.Bounds(&buff)
 			if buff.Tagline != nil {
 				tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 			}
@@ -259,7 +261,8 @@ func main() {
 				if oldFilename != buff.Filename {
 					render = renderer.GetRenderer(&buff)
 				}
-				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+				img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+				imgSize = render.Bounds(&buff)
 				if buff.Tagline != nil {
 					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
@@ -349,7 +352,9 @@ func main() {
 							viewport.Location.Y = 0
 						}
 						// scrolling can't affect the content, so just rerender the window.
-						img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+						img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+
+						imgSize = render.Bounds(&buff)
 						if buff.Tagline != nil {
 							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 						}
@@ -364,7 +369,7 @@ func main() {
 							// the last
 							viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 						}
-						img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+						img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
 						if buff.Tagline != nil {
 							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 						}
@@ -402,7 +407,8 @@ func main() {
 
 					// the highlighted portion of the image may have changed, so
 					// rerender everything.
-					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+					img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+					imgSize = render.Bounds(&buff)
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
@@ -429,7 +435,8 @@ func main() {
 						render = renderer.GetRenderer(&buff)
 					}
 
-					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+					img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+					imgSize = render.Bounds(&buff)
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
@@ -453,7 +460,8 @@ func main() {
 							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff, viewport)
 						}
 					}
-					img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+					img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+					imgSize = render.Bounds(&buff)
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
@@ -471,12 +479,12 @@ func main() {
 					renderer.RecalculateFontFace(dpi)
 					render.InvalidateCache()
 				}
-				img, imgSize, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
-				imgSize := img.Bounds().Size()
-				if wSize.X >= imgSize.X {
+				img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
+				imgSize = render.Bounds(&buff)
+				if wSize.X >= imgSize.Max.X {
 					viewport.Location.X = 0
 				}
-				if wSize.Y >= imgSize.Y {
+				if wSize.Y >= imgSize.Max.Y {
 					viewport.Location.Y = 0
 				}
 				if buff.Tagline != nil {

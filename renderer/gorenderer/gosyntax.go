@@ -15,51 +15,14 @@ import (
 )
 
 type GoSyntax struct {
-	lastBuf     *demodel.CharBuffer
-	lastBufSize int
-	rSizeCache  image.Rectangle
+	renderer.DefaultSizeCalcer
 }
 
-func (rd *GoSyntax) InvalidateCache() {
-	rd.rSizeCache = image.ZR
-}
 func (rd *GoSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".go")
 }
-func (rd *GoSyntax) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
-	if rd.rSizeCache != image.ZR && buf == rd.lastBuf && rd.lastBufSize == len(buf.Buffer) {
-		return rd.rSizeCache
-	}
-	rd.lastBuf = buf
-	rd.lastBufSize = len(buf.Buffer)
 
-	metrics := renderer.MonoFontFace.Metrics()
-	runes := bytes.Runes(buf.Buffer)
-	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
-	rt := image.ZR
-	var lineSize fixed.Int26_6
-	for _, r := range runes {
-		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
-		switch r {
-		case '\t':
-			lineSize += MglyphWidth * 8
-		case '\n':
-			rt.Max.Y += metrics.Height.Ceil()
-			lineSize = 0
-		default:
-			lineSize += glyphWidth
-		}
-		if lineSize.Ceil() > rt.Max.X {
-			rt.Max.X = lineSize.Ceil()
-		}
-	}
-	rt.Max.Y += metrics.Height.Ceil() + 1
-	rd.rSizeCache = rt
-	return rt
-}
-
-func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, renderer.ImageMap, error) {
-	dstSize := rd.calcImageSize(buf)
+func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, renderer.ImageMap, error) {
 	dst := image.NewRGBA(viewport)
 	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
@@ -170,7 +133,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (i
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// exit the loop early, we've already gotten past the part that we care about.
-			return dst, dstSize.Bounds(), im, nil
+			return dst, im, nil
 		}
 
 		// Don't draw or calculate the image map if we're outside of the viewport. We can't
@@ -210,7 +173,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (i
 		}
 	}
 
-	return dst, dstSize.Bounds(), im, nil
+	return dst, im, nil
 }
 
 func StartsLanguageDeliminator(r rune) bool {

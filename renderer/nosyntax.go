@@ -12,51 +12,15 @@ import (
 
 // The default renderer. Performs no syntax highlighting.
 type NoSyntaxRenderer struct {
-	lastBuf     *demodel.CharBuffer
-	lastBufSize int
-	rSizeCache  image.Rectangle
-}
-
-func (r *NoSyntaxRenderer) InvalidateCache() {
-	r.rSizeCache = image.ZR
-}
-func (r *NoSyntaxRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
-	if r.rSizeCache != image.ZR && r.lastBuf == buf && r.lastBufSize == len(buf.Buffer) {
-		return r.rSizeCache
-	}
-	r.lastBufSize = len(buf.Buffer)
-	r.lastBuf = buf
-
-	metrics := MonoFontFace.Metrics()
-	runes := bytes.Runes(buf.Buffer)
-	_, glyphWidth, _ := MonoFontFace.GlyphBounds('a')
-	rt := image.ZR
-	var lineSize fixed.Int26_6
-	for _, r := range runes {
-		switch r {
-		case '\t':
-			lineSize += glyphWidth * 8
-		case '\n':
-			rt.Max.Y += metrics.Height.Ceil()
-			lineSize = 0
-		default:
-			lineSize += glyphWidth
-		}
-		if lineSize.Ceil() > rt.Max.X {
-			rt.Max.X = lineSize.Ceil()
-		}
-	}
-	rt.Max.Y += metrics.Height.Ceil() + 1
-	r.rSizeCache = rt
-	return rt
+	DefaultSizeCalcer
 }
 
 func (r NoSyntaxRenderer) CanRender(*demodel.CharBuffer) bool {
 	return true
 }
 
-func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, ImageMap, error) {
-	dstsize := r.calcImageSize(buf)
+func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, ImageMap, error) {
+	//dstsize := r.Bounds(buf)
 	dst := image.NewRGBA(viewport)
 	metrics := MonoFontFace.Metrics()
 	writer := font.Drawer{
@@ -87,7 +51,7 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
-			return dst, dstsize.Bounds(), im, nil
+			return dst, im, nil
 		}
 		if runeRectangle.Intersect(viewport) != image.ZR {
 			im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
@@ -113,5 +77,5 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		writer.DrawString(string(r))
 	}
 
-	return dst, dstsize.Bounds(), im, nil
+	return dst, im, nil
 }

@@ -15,8 +15,10 @@ type Renderer interface {
 	// should be shown on the screen, a rectangle determining what the size of the *entire* buffer rendered
 	// would be (even if it didn't render it), an ImageMap that, at least for the portion rendered, can
 	// be used to determine what any pixel represents, and an error (hopefully nil.)
-	Render(buffer *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, ImageMap, error)
+	Render(buffer *demodel.CharBuffer, viewport image.Rectangle) (image.Image, ImageMap, error)
 
+	// Returns the bounds that would render the entire buffer, if the viewport were big enough.
+	Bounds(buffer *demodel.CharBuffer) image.Rectangle
 	// This being in the interface is a temporary hack until the renderers are refactored to share
 	// more code. It requests that any cache of the image size be invalidated, because the DPI
 	// changed. It doesn't belong here, but it's got nowhere else to go right now.

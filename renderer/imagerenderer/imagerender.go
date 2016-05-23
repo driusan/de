@@ -11,10 +11,15 @@ import (
 	_ "image/png"
 )
 
-type ImageRenderer struct{}
+type ImageRenderer struct {
+	cache image.Image
+}
 
 func (r ImageRenderer) InvalidateCache() {
 	// there is no cache, this is just here to meet the interface requirements.
+}
+func (r ImageRenderer) Bounds(buf *demodel.CharBuffer) image.Rectangle {
+	return r.cache.Bounds()
 }
 func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
 	// Check for a PNG signature
@@ -42,12 +47,13 @@ func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
 	return false
 }
 
-func (r ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, image.Rectangle, renderer.ImageMap, error) {
+func (r *ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, renderer.ImageMap, error) {
 	bReader := bytes.NewReader(buf.Buffer)
 	img, _, err := image.Decode(bReader)
+	r.cache = img
 	// image.Image doesn't have SubImage(r). Most types do, but not jpeg/png.
 	// so we need to allocate a new image, draw to it, and return that.
 	dst := image.NewRGBA(viewport)
 	draw.Draw(dst, viewport, img, viewport.Min, draw.Src)
-	return dst, img.Bounds(), renderer.ImageMap{}, err
+	return dst, renderer.ImageMap{}, err
 }
