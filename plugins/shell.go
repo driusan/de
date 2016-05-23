@@ -153,6 +153,12 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 		c.Start()
 
 		for {
+			if buff.Filename != "" {
+				// The user must have clicked on a filename and opened it.
+				// Stop the Shell.
+				stdin.Close()
+				break
+			}
 			termline := make([]byte, 1024)
 
 			//fmt.Printf("reading from stdout\n")
@@ -162,7 +168,7 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 				buff.Buffer = append(buff.Buffer, termline[:n]...)
 				buff.Dot.End = uint(len(buff.Buffer)) - 1
 				buff.Dot.Start = buff.Dot.End
-				fmt.Printf("Requesting rerender\n")
+				//fmt.Printf("Requesting rerender\n")
 				viewport.Rerender()
 			} else {
 				time.Sleep(500)

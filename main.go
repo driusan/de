@@ -25,8 +25,6 @@ const (
 	ButtonLeft = iota
 	ButtonMiddle
 	ButtonRight
-	MouseWheelUp
-	MouseWheelDown
 )
 
 func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
@@ -170,7 +168,7 @@ func main() {
 				// program
 				switch err {
 				case kbmap.ExitProgram:
-					if buff.Dirty == false {
+					if !buff.Dirty {
 						return
 					}
 				case kbmap.ScrollUp:
@@ -273,7 +271,7 @@ func main() {
 
 				// the buffer that the mouse is over. Generally either the tagline,
 				// or the standard buffer
-				var evtBuff *demodel.CharBuffer = &buff
+				evtBuff := &buff
 				// the index into that buffer that's being pointed at
 				var charIdx uint
 				var err error
@@ -329,19 +327,19 @@ func main() {
 					case mouse.ButtonLeft:
 						// this is the start of a mouse click. Reset Dot
 						// to whatever was clicked on.
-						if pressed && MouseButtonMask[ButtonLeft] == false {
+						if pressed && !MouseButtonMask[ButtonLeft] {
 							eDot.Start = charIdx
 							eDot.End = charIdx
 						}
 						MouseButtonMask[ButtonLeft] = pressed
 					case mouse.ButtonMiddle:
-						if pressed && MouseButtonMask[ButtonMiddle] == false {
+						if pressed && !MouseButtonMask[ButtonMiddle] {
 							eDot.Start = charIdx
 							eDot.End = charIdx
 						}
 						MouseButtonMask[ButtonMiddle] = pressed
 					case mouse.ButtonRight:
-						if pressed && MouseButtonMask[ButtonRight] == false {
+						if pressed && !MouseButtonMask[ButtonRight] {
 							eDot.Start = charIdx
 							eDot.End = charIdx
 						}
@@ -380,12 +378,12 @@ func main() {
 
 				// nothing is pressed, so don't rerender. There's no possibility of something having changed in the view.
 				if e.Direction == mouse.DirNone &&
-					MouseButtonMask[ButtonLeft] == false &&
-					MouseButtonMask[ButtonRight] == false &&
-					MouseButtonMask[ButtonMiddle] == false {
+					!MouseButtonMask[ButtonLeft] &&
+					!MouseButtonMask[ButtonRight] &&
+					!MouseButtonMask[ButtonMiddle] {
 					continue
 				}
-				if MouseButtonMask[ButtonLeft] == true || MouseButtonMask[ButtonRight] == true || MouseButtonMask[ButtonMiddle] == true {
+				if MouseButtonMask[ButtonLeft] || MouseButtonMask[ButtonRight] || MouseButtonMask[ButtonMiddle] {
 					// if it's outside the current selection, expand the selection.
 					if charIdx < eDot.Start {
 						eDot.Start = charIdx
