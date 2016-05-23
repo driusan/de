@@ -125,6 +125,12 @@ func PrevLine(buff demodel.CharBuffer) (uint, error) {
 
 func NextLine(buff demodel.CharBuffer) (uint, error) {
 	// special case. We're at a newline, so the next line is just the next character..
+	if len(buff.Buffer) == 0 {
+		return 0, Invalid
+	}
+	if buff.Dot.End >= uint(len(buff.Buffer)) {
+		return uint(len(buff.Buffer) - 1), Invalid
+	}
 	if buff.Buffer[buff.Dot.End] == '\n' {
 		return buff.Dot.End + 1, nil
 	}
