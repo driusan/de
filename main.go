@@ -18,7 +18,7 @@ import (
 	"image"
 	"image/draw"
 	"os"
-	"runtime/pprof"
+	//"runtime/pprof"
 )
 
 const (
@@ -68,9 +68,11 @@ func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Imag
 }
 
 func main() {
-	f, _ := os.Create("test.profile")
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	/*
+		f, _ := os.Create("test.profile")
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	*/
 	var sz size.Event
 	var filename string
 	if len(os.Args) <= 1 {
