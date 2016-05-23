@@ -57,6 +57,11 @@ func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Imag
 
 	tagBounds := tagimage.Bounds()
 	contentBounds := dst.Bounds()
+	// ensure that the tag takes no more than half the window, so that the content doesn't get
+	// drowned out by commands that output more to stderr than they should.
+	if wHeight := sz.Size().Y; tagBounds.Max.Y > wHeight/2 {
+		tagBounds.Max.Y = wHeight / 2
+	}
 	contentBounds.Min.Y = tagBounds.Max.Y
 
 	draw.Draw(dst, contentBounds, buf, viewport.Location, draw.Over)
