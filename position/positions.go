@@ -206,6 +206,22 @@ func EndOfLine(buff demodel.CharBuffer) (uint, error) {
 	}
 	return uint(len(buff.Buffer) - 1), nil
 }
+
+func EndOfLineWithNewline(buff demodel.CharBuffer) (uint, error) {
+	if len(buff.Buffer) == 0 {
+		return 0, Invalid
+	}
+
+	if buff.Buffer[buff.Dot.End] == '\n' {
+		return buff.Dot.End, nil
+	}
+	for i := buff.Dot.End; i < uint(len(buff.Buffer)); i++ {
+		if buff.Buffer[i] == '\n' {
+			return i, nil
+		}
+	}
+	return uint(len(buff.Buffer) - 1), nil
+}
 func StartOfLine(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, Invalid

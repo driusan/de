@@ -233,9 +233,28 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			// G treats the repeat counter differently. If it's set, it means "Go to
 			// lineno", and if it's not it means "Go to end of buffer"
 			if Repeat > 0 {
+				/* This seems to be buggy, so do it manually, at least until there's better
+				   tests.
 				actions.MoveCursor(position.BuffStart, position.BuffStart, buff)
 				for ; Repeat > 0; Repeat-- {
 					actions.MoveCursor(position.NextLine, position.NextLine, buff)
+				}*/
+				lineNo := uint(1)
+				for i, c := range buff.Buffer {
+					if c == '\n' {
+						lineNo++
+					}
+					// should be equal, but if we've went too far at least it's
+					// better to stop now.
+					if lineNo >= Repeat {
+						// we're on the \n itself, so add 1 to get to the actual line.
+						buff.Dot.Start = uint(i + 1)
+						buff.Dot.End = buff.Dot.Start
+						Repeat = 0
+						// select the line.
+						actions.MoveCursor(position.DotStart, position.EndOfLineWithNewline, buff)
+						break
+					}
 				}
 				// We don't know if the line being moved to is above or below, but send an "up"
 				// hint so that it centers it at the top of the screen based on dot.
