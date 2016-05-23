@@ -103,4 +103,8 @@ The behaviour of what to do with the output can be modified by prefixing the com
 < generally means "Replace the whole buffer with this command's output" and "|" means "Replace the
 selected text with the output of filtering it through the command." Either one is most useful in the
 tagline, where you can put arbitrary sed commands, or gofmt, or any arbitrary script that you wrote
-which reads from stdin and outputs to stdout.
+which reads from stdin and outputs to stdout. Prefixing the whole thing with ! will tell de to ignore
+the return code, and insert the output even if the process reports an error.
+
+Finally, the scripts directory contains some wrapper scripts that may be useful to put in your path
+and execute from the tagline.

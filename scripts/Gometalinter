@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Run gometalinter, but redirect stdout to stderr, so that the
+# output goes to the tag line.
+gometalinter 1>&2
