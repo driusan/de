@@ -95,6 +95,9 @@ func main() {
 		buff.Buffer = make([]byte, 0)
 	}
 	buff.ResetTagline()
+
+	buff.LoadSnarfBuffer()
+	defer buff.SaveSnarfBuffer()
 	var imap renderer.ImageMap
 	var MouseButtonMask [6]bool
 

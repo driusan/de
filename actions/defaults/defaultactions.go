@@ -44,6 +44,10 @@ func Get(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 }
 
 func Quit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	buff.SaveSnarfBuffer()
+	if buff.Dirty {
+		os.Exit(1)
+	}
 	os.Exit(0)
 }
 func Paste(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
