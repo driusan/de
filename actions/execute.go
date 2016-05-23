@@ -118,6 +118,12 @@ func runOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		return
 	}
 	//fmt.Printf("Wait to run %s\n", cmd)
+	var ignoreReturnCode bool
+	if cmd[0] == '!' {
+		ignoreReturnCode = true
+		cmd = cmd[1:]
+	}
+
 	var mode replaceMode
 	switch cmd[0] {
 	case '<':
@@ -190,7 +196,7 @@ func runOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	fmt.Fprintf(os.Stderr, "Error: %s\n", erroutput)
 	exiterr := gocmd.Wait()
 
-	if exiterr != nil {
+	if exiterr != nil && ignoreReturnCode == false {
 		// Something went wrong, so log it and return without modifying the real
 		// buffer.
 		fmt.Fprintf(os.Stderr, "%s\n", exiterr)
