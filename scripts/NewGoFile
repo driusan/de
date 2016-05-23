@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Script to provide scaffolding for creating a new go file in the current
+# package.
+# Generally most useful to run <NewGoFile in an existing package.
+grep -h '^package ' *.go | head -1
+
+cat <<EOF
+
+import (
+	//"fmt"
+)
+
+EOF
