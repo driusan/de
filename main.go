@@ -34,11 +34,9 @@ func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
 		Max: image.Point{viewport.Location.X + wSize.X, viewport.Location.Y + wSize.Y},
 	}
 }
-func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image, viewport *viewer.Viewport) {
-	b, err := s.NewBuffer(sz.Size())
-	defer b.Release()
-	if err != nil {
-		panic(err)
+func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image, viewport *viewer.Viewport) {
+	if b == nil {
+		return
 	}
 	dst := b.RGBA()
 
@@ -128,6 +126,7 @@ func main() {
 	var mLoc image.Point // used for determining if we should honour getting out of tag mode
 	// when hitting enter from the tagline. If the mouse is still over
 	// the tagline, we should stay in tagmode.
+	var screenBuffer screen.Buffer
 	driver.Main(func(s screen.Screen) {
 
 		w, err := s.NewWindow(nil)
@@ -144,7 +143,7 @@ func main() {
 			if buff.Tagline != nil {
 				tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 			}
-			paintWindow(s, w, sz, img, tagimg, viewport)
+			paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 
 			switch e := w.NextEvent().(type) {
 			case lifecycle.Event:
@@ -264,7 +263,7 @@ func main() {
 				if buff.Tagline != nil {
 					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
-				paintWindow(s, w, sz, img, tagimg, viewport)
+				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 			case mouse.Event:
 				mLoc = image.Point{int(e.X), int(e.Y)}
 				tagEnd := tagimg.Bounds().Max.Y
@@ -356,7 +355,7 @@ func main() {
 						if buff.Tagline != nil {
 							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 						}
-						paintWindow(s, w, sz, img, tagimg, viewport)
+						paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 
 					case mouse.ButtonWheelDown:
 						viewport.Location.Y += 50
@@ -372,7 +371,7 @@ func main() {
 							tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 						}
 
-						paintWindow(s, w, sz, img, tagimg, viewport)
+						paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 					}
 				}
 
@@ -410,7 +409,7 @@ func main() {
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
-					paintWindow(s, w, sz, img, tagimg, viewport)
+					paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
@@ -438,7 +437,7 @@ func main() {
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
-					paintWindow(s, w, sz, img, tagimg, viewport)
+					paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
 					if evtBuff == buff.Tagline {
@@ -463,11 +462,11 @@ func main() {
 					if buff.Tagline != nil {
 						tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 					}
-					paintWindow(s, w, sz, img, tagimg, viewport)
+					paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 				}
 				//paintWindow(s, w, sz, buff)
 			case paint.Event:
-				paintWindow(s, w, sz, img, tagimg, viewport)
+				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
@@ -488,10 +487,18 @@ func main() {
 				if buff.Tagline != nil {
 					tagimg, tagmap, _ = tagline.Render(buff.Tagline)
 				}
-				paintWindow(s, w, sz, img, tagimg, viewport)
+				if screenBuffer != nil {
+					// Release the old buffer.
+					screenBuffer.Release()
+				}
+				screenBuffer, err = s.NewBuffer(wSize)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "%v\n", err)
+					continue
+				}
+				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 
 			}
 		}
 	})
-
 }
