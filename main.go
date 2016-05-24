@@ -38,10 +38,11 @@ func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
 }
 func paintWindow(s screen.Screen, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image, viewport *viewer.Viewport) {
 	b, err := s.NewBuffer(sz.Size())
-	defer b.Release()
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		return
 	}
+	defer b.Release()
 	dst := b.RGBA()
 
 	// Fill the buffer with the window background colour before
