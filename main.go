@@ -267,6 +267,16 @@ func main() {
 				}
 				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 			case mouse.Event:
+				// No button changed state, and nothing is pressed.
+				// Skip doing anything in this mouse event, because
+				// there's nothing that could have changed which needs
+				// a rerender.
+				if e.Direction == mouse.DirNone &&
+					!MouseButtonMask[ButtonLeft] &&
+					!MouseButtonMask[ButtonMiddle] &&
+					!MouseButtonMask[ButtonRight] {
+					continue
+				}
 				mLoc = image.Point{int(e.X), int(e.Y)}
 				tagEnd := tagimg.Bounds().Max.Y
 
