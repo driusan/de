@@ -137,14 +137,6 @@ func main() {
 		viewport.Window = w
 
 		for {
-
-			img, imap, _ = render.Render(&buff, clipRectangle(sz, viewport))
-			imgSize = render.Bounds(&buff)
-			if buff.Tagline != nil {
-				tagimg, tagmap, _ = tagline.Render(buff.Tagline)
-			}
-			paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
-
 			switch e := w.NextEvent().(type) {
 			case lifecycle.Event:
 				if e.To == lifecycle.StageDead {
