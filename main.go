@@ -128,7 +128,6 @@ func main() {
 
 	var lastCharIdx uint
 	var dpi float64
-	var mLoc image.Point // used for determining if we should honour getting out of tag mode
 	// when hitting enter from the tagline. If the mouse is still over
 	// the tagline, we should stay in tagmode.
 	var screenBuffer screen.Buffer
@@ -245,14 +244,8 @@ func main() {
 					viewport.Location.Y = 0
 				}
 
-				if mLoc.Y > tagimg.Bounds().Max.Y {
-					// now apply the new map and repaint the window to incorporate
-					// whatever changes the keystroke may have changed.
-					// but if the mouse is over the tagline, stay in tagline mode.
-
-					lastKeyboardMode = viewport.GetKeyboardMode()
-					viewport.SetKeyboardMode(newKbmap)
-				}
+				lastKeyboardMode = viewport.GetKeyboardMode()
+				viewport.SetKeyboardMode(newKbmap)
 
 				if oldFilename != buff.Filename {
 					render = renderer.GetRenderer(&buff)
@@ -276,7 +269,6 @@ func main() {
 					!MouseButtonMask[ButtonRight] {
 					continue
 				}
-				mLoc = image.Point{int(e.X), int(e.Y)}
 				tagEnd := tagimg.Bounds().Max.Y
 
 				// the buffer that the mouse is over. Generally either the tagline,
@@ -286,17 +278,9 @@ func main() {
 				var charIdx uint
 				var err error
 				if int(e.Y) < tagEnd {
-					if viewport.GetKeyboardMode() != kbmap.TagMode {
-						lastKeyboardMode = viewport.GetKeyboardMode()
-						viewport.SetKeyboardMode(kbmap.TagMode)
-					}
 					evtBuff = evtBuff.Tagline
 					charIdx, _ = tagmap.At(int(e.X), int(e.Y))
 				} else {
-					// focus follows pointer
-					if viewport.GetKeyboardMode() == kbmap.TagMode {
-						viewport.SetKeyboardMode(kbmap.NormalMode)
-					}
 					// translate the mouse event by an appropriate amount, taking
 					// the size of the tagline, and scrolling of the viewport into
 					// consideration
@@ -328,6 +312,19 @@ func main() {
 				switch e.Direction {
 				case mouse.DirPress:
 					pressed = true
+					if int(e.Y) < tagEnd {
+						if viewport.GetKeyboardMode() != kbmap.TagMode {
+							lastKeyboardMode = viewport.GetKeyboardMode()
+							viewport.SetKeyboardMode(kbmap.TagMode)
+						}
+					} else {
+						lastKeyboardMode = viewport.GetKeyboardMode()
+						if lastKeyboardMode == kbmap.TagMode {
+							viewport.SetKeyboardMode(kbmap.NormalMode)
+						} else {
+							viewport.SetKeyboardMode(lastKeyboardMode)
+						}
+					}
 				case mouse.DirRelease:
 					pressed = false
 				}
