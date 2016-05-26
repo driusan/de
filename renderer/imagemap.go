@@ -3,14 +3,15 @@ package renderer
 import (
 	"errors"
 	"github.com/driusan/de/demodel"
+	"golang.org/x/image/math/fixed"
 	"image"
-	"image/color"
 )
 
 var NoCharacter error = errors.New("No character under the mouse cursor.")
 
 type ImageLoc struct {
-	Loc image.Rectangle
+	Loc fixed.Rectangle26_6
+
 	Idx uint
 }
 type ImageMap struct {
@@ -18,9 +19,12 @@ type ImageMap struct {
 	Buf  *demodel.CharBuffer
 }
 
+func inRectangle(x, y int, r fixed.Rectangle26_6) bool {
+	return x >= r.Min.X.Ceil() && x <= r.Max.X.Floor() && y >= r.Min.Y.Ceil() && y <= r.Max.Y.Floor()
+}
 func (im ImageMap) At(x, y int) (uint, error) {
 	for _, m := range im.IMap {
-		if m.Loc.At(x, y) == color.Opaque {
+		if inRectangle(x, y, m.Loc) {
 			return m.Idx, nil
 		}
 	}
@@ -32,7 +36,10 @@ func (im ImageMap) At(x, y int) (uint, error) {
 func (im ImageMap) Get(idx uint) (image.Rectangle, error) {
 	for _, chr := range im.IMap {
 		if chr.Idx == idx {
-			return chr.Loc, nil
+			return image.Rectangle{
+				Min: image.Point{chr.Loc.Min.X.Ceil(), chr.Loc.Min.Y.Ceil()},
+				Max: image.Point{chr.Loc.Max.X.Ceil(), chr.Loc.Max.Y.Ceil()},
+			}, nil
 		}
 	}
 	return image.ZR, NoCharacter

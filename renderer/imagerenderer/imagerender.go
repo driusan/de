@@ -47,7 +47,7 @@ func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
 	return false
 }
 
-func (r *ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, renderer.ImageMap, error) {
+func (r *ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
 	bReader := bytes.NewReader(buf.Buffer)
 	img, _, err := image.Decode(bReader)
 	r.cache = img
@@ -55,5 +55,9 @@ func (r *ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle
 	// so we need to allocate a new image, draw to it, and return that.
 	dst := image.NewRGBA(viewport)
 	draw.Draw(dst, viewport, img, viewport.Min, draw.Src)
-	return dst, renderer.ImageMap{}, err
+	return dst, err
+}
+
+func (r *ImageRenderer) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) *renderer.ImageMap {
+	return &renderer.ImageMap{}
 }

@@ -16,13 +16,19 @@ import (
 
 type PHPSyntax struct {
 	renderer.DefaultSizeCalcer
+	renderer.DefaultImageMapper
+}
+
+func (rd *PHPSyntax) InvalidateCache() {
+	rd.DefaultSizeCalcer.InvalidateCache()
+	rd.DefaultImageMapper.InvalidateCache()
 }
 
 func (rd *PHPSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".php") || strings.HasSuffix(buf.Filename, ".inc")
 }
 
-func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, renderer.ImageMap, error) {
+func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
 	dst := image.NewRGBA(viewport)
 	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
@@ -32,8 +38,6 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
-
-	im := renderer.ImageMap{make([]renderer.ImageLoc, 0), buf}
 
 	var inLineComment, inMultilineComment, inString, inCharString bool
 
@@ -108,7 +112,7 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
-		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor()
+		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
 		switch r {
 		case '\t':
 			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
@@ -121,11 +125,10 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// exit the loop early since we're past the part that is being drawn.
-			return dst, im, nil
+			return dst, nil
 		}
 
 		if runeRectangle.Intersect(viewport) != image.ZR {
-			im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
 			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 				// it's in dot, so highlight the background
 				draw.Draw(
@@ -154,7 +157,7 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 		}
 	}
 
-	return dst, im, nil
+	return dst, nil
 }
 
 func StartsLanguageDeliminator(r rune) bool {

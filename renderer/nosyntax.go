@@ -13,13 +13,18 @@ import (
 // The default renderer. Performs no syntax highlighting.
 type NoSyntaxRenderer struct {
 	DefaultSizeCalcer
+	DefaultImageMapper
 }
 
+func (r *NoSyntaxRenderer) InvalidateCache() {
+	r.DefaultSizeCalcer.InvalidateCache()
+	r.DefaultImageMapper.InvalidateCache()
+}
 func (r NoSyntaxRenderer) CanRender(*demodel.CharBuffer) bool {
 	return true
 }
 
-func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, ImageMap, error) {
+func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
 	//dstsize := r.Bounds(buf)
 	dst := image.NewRGBA(viewport)
 	metrics := MonoFontFace.Metrics()
@@ -34,15 +39,16 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 	// it's a monospace font, so only do this once outside of the for loop..
 	// use an M so that space characters are based on an em-quad if we change
 	// to a non-monospace font.
-	_, glyphWidth, _ := MonoFontFace.GlyphBounds('M')
-	im := ImageMap{make([]ImageLoc, 0), buf}
+	_, MglyphWidth, _ := MonoFontFace.GlyphBounds('M')
+
 	for i, r := range runes {
+		_, glyphWidth, _ := MonoFontFace.GlyphBounds(r)
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
-		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor()
+		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
 		switch r {
 		case '\t':
-			runeRectangle.Max.X = runeRectangle.Min.X + 8*glyphWidth.Ceil()
+			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
 		case '\n':
 			runeRectangle.Max.X = viewport.Max.X
 		default:
@@ -51,17 +57,16 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
-			return dst, im, nil
+			return dst, nil
 		}
 		if runeRectangle.Intersect(viewport) != image.ZR {
-			im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
 			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 				draw.Draw(
 					dst,
 					runeRectangle,
 					&image.Uniform{TextHighlight},
 					image.ZP,
-					draw.Src,
+					draw.Over,
 				)
 			}
 		}
@@ -77,5 +82,5 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		writer.DrawString(string(r))
 	}
 
-	return dst, im, nil
+	return dst, nil
 }

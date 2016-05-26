@@ -14,43 +14,25 @@ import (
 // provide syntax highlighting, but uses a different background
 // colour which doesn't change regardless of mode.
 type TaglineRenderer struct {
-	// The width of the window. The tag will be rendered at least this wide.
-	Width int
+	DefaultSizeCalcer
+	DefaultImageMapper
 }
 
-func (r TaglineRenderer) calcImageSize(buf *demodel.CharBuffer) image.Rectangle {
-	metrics := MonoFontFace.Metrics()
-	runes := bytes.Runes(buf.Buffer)
-	_, glyphWidth, _ := MonoFontFace.GlyphBounds('a')
-	rt := image.ZR
-	var lineSize fixed.Int26_6
-	for _, r := range runes {
-		switch r {
-		case '\t':
-			lineSize += glyphWidth * 8
-		case '\n':
-			rt.Max.Y += metrics.Height.Ceil()
-			lineSize = 0
-		default:
-			lineSize += glyphWidth
-		}
-		if lineSize.Ceil() > rt.Max.X {
-			rt.Max.X = lineSize.Ceil()
-		}
+func (r *TaglineRenderer) InvalidateCache() {
+	r.DefaultSizeCalcer.InvalidateCache()
+	r.DefaultImageMapper.InvalidateCache()
+}
+
+func (r TaglineRenderer) CanRender(*demodel.CharBuffer) bool {
+	return false
+}
+
+func (r TaglineRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
+	dstSize := r.Bounds(buf)
+	if wSize := viewport.Size().X; dstSize.Max.X < wSize {
+		dstSize.Max.X = wSize
 	}
-	rt.Max.Y += metrics.Height.Ceil() + 5
-	if rt.Max.X < r.Width {
-		rt.Max.X = r.Width
-	}
-	return rt
-}
-
-func (r TaglineRenderer) CanRender(demodel.CharBuffer) bool {
-	return true
-}
-
-func (r TaglineRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap, error) {
-	dstSize := r.calcImageSize(buf)
+	dstSize.Max.Y += 1
 	dst := image.NewRGBA(dstSize)
 	draw.Draw(dst, dst.Bounds(), &image.Uniform{TaglineBackground}, image.ZP, draw.Src)
 	draw.Draw(dst,
@@ -75,23 +57,23 @@ func (r TaglineRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap,
 	// it's a monospace font, so only do this once outside of the for loop..
 	// use an M so that space characters are based on an em-quad if we change
 	// to a non-monospace font.
-	_, glyphWidth, _ := MonoFontFace.GlyphBounds('M')
-	im := ImageMap{make([]ImageLoc, 0), buf}
+	_, MglyphWidth, _ := MonoFontFace.GlyphBounds('M')
 	for i, r := range runes {
+		_, glyphWidth, _ := MonoFontFace.GlyphBounds(r)
+
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
 		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor()
 		switch r {
 		case '\t':
-			runeRectangle.Max.X = runeRectangle.Min.X + 8*glyphWidth.Ceil()
+			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
 		case '\n':
 			runeRectangle.Max.X = dstSize.Max.X
 		default:
 			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
 		}
-		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
+		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil()
 
-		im.IMap = append(im.IMap, ImageLoc{runeRectangle, uint(i)})
 		if buf.Dot.Start != buf.Dot.End && uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 			writer.Src = &image.Uniform{color.Black}
 			draw.Draw(
@@ -99,7 +81,7 @@ func (r TaglineRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap,
 				runeRectangle,
 				&image.Uniform{TextHighlight},
 				image.ZP,
-				draw.Src,
+				draw.Over,
 			)
 		} else {
 
@@ -131,5 +113,5 @@ func (r TaglineRenderer) Render(buf *demodel.CharBuffer) (image.Image, ImageMap,
 		writer.DrawString(string(r))
 	}
 
-	return dst, im, nil
+	return dst, nil
 }

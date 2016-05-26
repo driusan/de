@@ -16,13 +16,19 @@ import (
 
 type MarkdownSyntax struct {
 	renderer.DefaultSizeCalcer
+	renderer.DefaultImageMapper
+}
+
+func (rd *MarkdownSyntax) InvalidateCache() {
+	rd.DefaultImageMapper.InvalidateCache()
+	rd.DefaultSizeCalcer.InvalidateCache()
 }
 
 func (rd *MarkdownSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".md") || strings.HasSuffix(buf.Filename, "COMMIT_EDITMSG")
 }
 
-func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, renderer.ImageMap, error) {
+func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
 	dst := image.NewRGBA(viewport)
 	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
@@ -32,8 +38,6 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
-
-	im := renderer.ImageMap{make([]renderer.ImageLoc, 0), buf}
 
 	// Used for calculating the size of a tab.
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
@@ -76,11 +80,11 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
-		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor()
+		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// no point in rendering past the end of the viewport
-			return dst, im, nil
+			return dst, nil
 		}
 		switch r {
 		case '\t':
@@ -93,7 +97,6 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
 		if runeRectangle.Intersect(viewport) != image.ZR {
-			im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
 			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 				// it's in dot, so highlight the background
 				draw.Draw(
@@ -123,5 +126,5 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		}
 	}
 
-	return dst, im, nil
+	return dst, nil
 }
