@@ -10,6 +10,13 @@ import (
 	"os/exec"
 )
 
+// Do does a built in action that's been registered.
+func Do(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	if f, ok := actions[cmd]; ok {
+		// it was an internal command, so run it.
+		f("", buff, v)
+	}
+}
 func PerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil {
 		return

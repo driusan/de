@@ -32,8 +32,8 @@ file. In all other modes, the arrow keys scroll the viewport without adjusting t
 In all modes, backspace will delete the currently selected text (or previous character if nothing
 is selected) without changing the mode.
 
-Pressing the Escape key will exit if the buffer hasn't been modified since the last save (or open),
-or print a message to the tag line asking you to Save or Discard if it's been modified.
+Pressing the Escape key will Save if the buffer hasn't been modified, and Exit if it doesn't
+(so hitting Escape twice will Save and Exit.)
 
 ## Mouse Usage
 

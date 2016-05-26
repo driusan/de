@@ -11,15 +11,29 @@ import (
 )
 
 func init() {
+	// Basic Save and Discard
 	actions.RegisterAction("Put", Put)
 	actions.RegisterAction("Save", Put)
 
 	actions.RegisterAction("Get", Get)
 	actions.RegisterAction("Discard", Get)
 
-	actions.RegisterAction("Exit", Quit)
-	actions.RegisterAction("Quit", Quit)
+	// Quit if clean, provide a warning otherwise
+	actions.RegisterAction("Quit", Exit)
+	actions.RegisterAction("Exit", Exit)
 
+	// Quit regardless of cleanliness
+	actions.RegisterAction("ForceExit", ForceQuit)
+	actions.RegisterAction("ForceQuit", ForceQuit)
+
+	// Save AND Exit
+	actions.RegisterAction("SaveExit", SaveAndExit)
+	actions.RegisterAction("SaveQuit", SaveAndExit)
+
+	// Save OR Exit, depending on dirty buffer status,
+	// default for Escape key.
+	actions.RegisterAction("SaveOrExit", SaveOrExit)
+	actions.RegisterAction("SaveOrQuit", SaveOrExit)
 	actions.RegisterAction("Paste", Paste)
 	actions.RegisterAction("ResetTagline", ResetTagline)
 }
@@ -43,11 +57,34 @@ func Get(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	buff.Dirty = false
 }
 
-func Quit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+func Exit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	if buff.Dirty {
+		buff.AppendTag("\nFile has been modified. Save or Discard changes or ForceQuit")
+		return
+	}
+	buff.SaveSnarfBuffer()
+	os.Exit(0)
+}
+func ForceQuit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	buff.SaveSnarfBuffer()
 	if buff.Dirty {
 		os.Exit(1)
 	}
+	os.Exit(0)
+}
+
+func SaveAndExit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	buff.SaveSnarfBuffer()
+	actions.SaveFile(nil, nil, buff)
+	os.Exit(0)
+}
+
+func SaveOrExit(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	if buff.Dirty {
+		actions.SaveFile(nil, nil, buff)
+		return
+	}
+	buff.SaveSnarfBuffer()
 	os.Exit(0)
 }
 func Paste(args string, buff *demodel.CharBuffer, v demodel.Viewport) {

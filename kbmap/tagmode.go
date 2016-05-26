@@ -14,9 +14,8 @@ func tagMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.
 	// special cases for Insert Mode
 	switch e.Code {
 	case key.CodeEscape:
-		if e.Direction == key.DirPress {
-			return NormalMode, demodel.DirectionNone, nil
-		}
+		actions.Do("SaveOrExit", buff, v)
+		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeDeleteBackspace:
 		if e.Direction == key.DirPress {
 			if e.Direction == key.DirPress {
