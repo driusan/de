@@ -44,7 +44,7 @@ func (c *CharBuffer) LoadSnarfBuffer() {
 	if err != nil {
 		return
 	}
-	fmt.Printf("Loading %s into snarf\n", sbuf)
+	//fmt.Printf("Loading %s into snarf\n", sbuf)
 	c.SnarfBuffer = sbuf
 }
 
@@ -54,7 +54,7 @@ func (c *CharBuffer) SaveSnarfBuffer() {
 		fmt.Printf("No directory to save buffer?")
 		return
 	}
-	fmt.Printf("Saving %s\n", c.SnarfBuffer)
+	//fmt.Printf("Saving %s\n", c.SnarfBuffer)
 	os.MkdirAll(getSnarfSaveDir(), 0700)
 	ioutil.WriteFile(dir+"default", c.SnarfBuffer, 0600)
 }

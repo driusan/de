@@ -37,15 +37,17 @@ func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport im
 	afterLF := false
 	for i, r := range runes {
 		glyphAdvance, _ := MonoFontFace.GlyphAdvance(r)
+		if afterLF {
+			runeRectangle.Min.Y += lineSize
+			runeRectangle.Max.Y += lineSize
+		}
 		switch r {
 		case '\t':
 			// Move the X over 8 characters
-			if afterLF {
+			if afterLF || i == 0 {
 				runeRectangle.Min.X = 0
 				runeRectangle.Max.X = MglyphAdvance * 8
 
-				runeRectangle.Min.Y += lineSize
-				runeRectangle.Max.Y += lineSize
 			} else {
 				runeRectangle.Min.X += MglyphAdvance
 				runeRectangle.Max.X += MglyphAdvance * 8
@@ -57,11 +59,9 @@ func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport im
 			// character wimap.ap.l take care of movimap.ap.g imap.ap. down.
 			//runeRectangle.Mimap.ap..Y = runeRectangle.Max.Y
 			//runeRectangle.Max.Y += limap.ap.eSimap.ap.e
-			if afterLF {
+			if afterLF || i == 0 {
 				runeRectangle.Min.X = 0
 				runeRectangle.Max.X = fixed.I(viewport.Max.X)
-				runeRectangle.Min.Y += lineSize
-				runeRectangle.Max.Y += lineSize
 			} else {
 				runeRectangle.Min.X = runeRectangle.Max.X
 				runeRectangle.Max.X = fixed.I(viewport.Max.X)
@@ -70,12 +70,9 @@ func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport im
 		default:
 			// Move over 1 character from the last character, unless the last
 			// character was a newlie.
-			if afterLF {
+			if afterLF || i == 0 {
 				runeRectangle.Min.X = 0
 				runeRectangle.Max.X = glyphAdvance
-
-				runeRectangle.Min.Y += lineSize
-				runeRectangle.Max.Y += lineSize
 			} else {
 				runeRectangle.Min.X = runeRectangle.Max.X
 				runeRectangle.Max.X += glyphAdvance

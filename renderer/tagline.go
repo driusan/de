@@ -63,7 +63,7 @@ func (r TaglineRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangl
 
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
-		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() +1
+		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor()
 		switch r {
 		case '\t':
 			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
@@ -72,7 +72,7 @@ func (r TaglineRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangl
 		default:
 			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
 		}
-		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
+		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil()
 
 		if buf.Dot.Start != buf.Dot.End && uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 			writer.Src = &image.Uniform{color.Black}
