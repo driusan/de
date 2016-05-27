@@ -279,7 +279,7 @@ func main() {
 				var err error
 				if int(e.Y) < tagEnd {
 					evtBuff = evtBuff.Tagline
-					charIdx, _ = tagmap.At(int(e.X), int(e.Y))
+					charIdx, err = tagmap.At(int(e.X), int(e.Y))
 				} else {
 					// translate the mouse event by an appropriate amount, taking
 					// the size of the tagline, and scrolling of the viewport into
@@ -313,16 +313,16 @@ func main() {
 				case mouse.DirPress:
 					pressed = true
 					if int(e.Y) < tagEnd {
+						// clicked in the tag bar
 						if viewport.GetKeyboardMode() != kbmap.TagMode {
 							lastKeyboardMode = viewport.GetKeyboardMode()
 							viewport.SetKeyboardMode(kbmap.TagMode)
 						}
 					} else {
-						lastKeyboardMode = viewport.GetKeyboardMode()
-						if lastKeyboardMode == kbmap.TagMode {
+						// clicked outside of the tagbar
+						if viewport.GetKeyboardMode() == kbmap.TagMode {
+							lastKeyboardMode = kbmap.TagMode
 							viewport.SetKeyboardMode(kbmap.NormalMode)
-						} else {
-							viewport.SetKeyboardMode(lastKeyboardMode)
 						}
 					}
 				case mouse.DirRelease:
