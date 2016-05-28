@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	renderer.RegisterRenderer(&MarkdownSyntax{})
+	renderer.RegisterRenderer("markdown", &MarkdownSyntax{})
 }

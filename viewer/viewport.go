@@ -12,6 +12,7 @@ import (
 
 type Viewport struct {
 	demodel.Map
+	demodel.Renderer
 	Location image.Point
 
 	kbLocked bool
@@ -48,5 +49,14 @@ func (v *Viewport) SetKeyboardMode(m demodel.Map) error {
 	}
 	v.Map = m
 	//fmt.Print("Set keyboard mode!")
+	return nil
+}
+
+func (v *Viewport) GetRenderer() demodel.Renderer {
+	return v.Renderer
+}
+
+func (v *Viewport) SetRenderer(r demodel.Renderer) error {
+	v.Renderer = r
 	return nil
 }

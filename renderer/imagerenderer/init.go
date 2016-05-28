@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	renderer.RegisterRenderer(&ImageRenderer{})
+	renderer.RegisterRenderer("image", &ImageRenderer{})
 }

@@ -72,9 +72,9 @@ func tagMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.
 	case key.CodeReturnEnter:
 		if buff.Tagline.Dot.Start == buff.Tagline.Dot.End {
 			//fmt.Printf("Executing tag from %s\n", *buff.Tagline)
-			actions.PerformTagAction(position.CurTagExecutionWordStart, position.CurTagExecutionWordEnd, buff, nil)
+			actions.PerformTagAction(position.CurTagExecutionWordStart, position.CurTagExecutionWordEnd, buff, v)
 		} else {
-			actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, buff, nil)
+			actions.PerformTagAction(position.TagDotStart, position.TagDotEnd, buff, v)
 		}
 		// if an action was performed, potentially scroll to the start of dot if it's off
 		// the screen.

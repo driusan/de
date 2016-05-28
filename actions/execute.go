@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // Do does a built in action that's been registered.
@@ -116,9 +117,14 @@ const (
 )
 
 func runOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
-	if f, ok := actions[cmd]; ok {
+	var actionCmd, actionArgs string = cmd, ""
+	if i := strings.Index(cmd, ":"); i >= 0 {
+		actionCmd = cmd[:i]
+		actionArgs = cmd[i+1:]
+	}
+	if f, ok := actions[actionCmd]; ok {
 		// it was an internal command, so run it.
-		f("", buff, v)
+		f(actionArgs, buff, v)
 		return
 	}
 	if len(cmd) <= 0 || buff == nil {

@@ -305,7 +305,7 @@ func IsLanguageType(pos int, runes []rune) bool {
 	if len(runes) > pos+7 {
 		if unicode.IsSpace(runes[pos+6]) {
 			switch string(runes[pos : pos+6]) {
-			case "uint16", "uint32", "uint64":
+			case "uint16", "uint32", "uint64", "string":
 				return true
 			}
 		}

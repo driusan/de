@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	renderer.RegisterRenderer(&PHPSyntax{})
+	renderer.RegisterRenderer("php", &PHPSyntax{})
 }

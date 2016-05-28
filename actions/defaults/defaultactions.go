@@ -6,6 +6,7 @@ import (
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
 	//"github.com/driusan/de/viewer"
+	"github.com/driusan/de/renderer"
 	"io/ioutil"
 	"os"
 )
@@ -36,6 +37,9 @@ func init() {
 	actions.RegisterAction("SaveOrQuit", SaveOrExit)
 	actions.RegisterAction("Paste", Paste)
 	actions.RegisterAction("ResetTagline", ResetTagline)
+
+	// Change the renderer by name
+	actions.RegisterAction("Renderer", SwitchRenderer)
 }
 
 func Put(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
@@ -93,4 +97,14 @@ func Paste(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 
 func ResetTagline(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	buff.ResetTagline()
+}
+
+func SwitchRenderer(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	r := renderer.GetNamedRenderer(args)
+	if r == nil || v == nil {
+		fmt.Printf("R: %s V %s", r, v)
+		return
+	}
+	v.SetRenderer(r)
+	v.Rerender()
 }

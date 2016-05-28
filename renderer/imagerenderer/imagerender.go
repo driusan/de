@@ -58,6 +58,6 @@ func (r *ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle
 	return dst, err
 }
 
-func (r *ImageRenderer) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) *renderer.ImageMap {
+func (r *ImageRenderer) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) demodel.ImageMap {
 	return &renderer.ImageMap{}
 }

@@ -20,7 +20,7 @@ type DefaultImageMapper struct {
 func (i *DefaultImageMapper) InvalidateCache() {
 	i.IMap = nil
 }
-func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) *ImageMap {
+func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) demodel.ImageMap {
 	if imap.IMap != nil && imap.LastBuf == buf && imap.LastBufSize == len(buf.Buffer) {
 		return imap.IMap
 	}

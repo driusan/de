@@ -3,6 +3,7 @@ package renderer
 import (
 	"bytes"
 	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 	"image"
@@ -12,8 +13,8 @@ import (
 
 // The default renderer. Performs no syntax highlighting.
 type NoSyntaxRenderer struct {
-	DefaultSizeCalcer
-	DefaultImageMapper
+	renderer.DefaultSizeCalcer
+	renderer.DefaultImageMapper
 }
 
 func (r *NoSyntaxRenderer) InvalidateCache() {
@@ -27,11 +28,11 @@ func (r NoSyntaxRenderer) CanRender(*demodel.CharBuffer) bool {
 func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
 	//dstsize := r.Bounds(buf)
 	dst := image.NewRGBA(viewport)
-	metrics := MonoFontFace.Metrics()
+	metrics := renderer.MonoFontFace.Metrics()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
-		Face: MonoFontFace,
+		Face: renderer.MonoFontFace,
 		Dot:  fixed.P(0, metrics.Ascent.Floor()),
 	}
 	runes := bytes.Runes(buf.Buffer)
@@ -39,10 +40,10 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 	// it's a monospace font, so only do this once outside of the for loop..
 	// use an M so that space characters are based on an em-quad if we change
 	// to a non-monospace font.
-	_, MglyphWidth, _ := MonoFontFace.GlyphBounds('M')
+	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
 
 	for i, r := range runes {
-		_, glyphWidth, _ := MonoFontFace.GlyphBounds(r)
+		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
 		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
@@ -64,7 +65,7 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 				draw.Draw(
 					dst,
 					runeRectangle,
-					&image.Uniform{TextHighlight},
+					&image.Uniform{renderer.TextHighlight},
 					image.ZP,
 					draw.Over,
 				)
