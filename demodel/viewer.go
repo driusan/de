@@ -38,6 +38,10 @@ type Viewport interface {
 	// be disallowed until it's explicitly unlocked. This is mostly for plugins
 	// such as Shell
 	LockKeyboardMode(Map) error
+	// Informs the viewport that the keyboard map should be unlocked from Map.
+	// The current map must be passed as a parameter, mostly to prevent accidentally
+	//unlocking someone else's lock, not for security reasons.
+	UnlockKeyboardMode(Map) error
 
 	// Request that the viewport be rerendered.
 	GetRenderer() Renderer

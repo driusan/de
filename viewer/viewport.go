@@ -43,6 +43,19 @@ func (v *Viewport) LockKeyboardMode(m demodel.Map) error {
 	v.Map = m
 	return nil
 }
+
+// Unlocks a locked keyboard mode. The locked mode must be passed as a
+// parameter to ensure that it's the same caller that locked it.
+// It's not secure, but it prevents plugins from accidentally unlocking
+// someone else's locked keyboard.
+// Returns KBLockedError if d doesn't equal the mode that it's locked to.
+func (v *Viewport) UnlockKeyboardMode(d demodel.Map) error {
+	if v.Map == d {
+		v.kbLocked = false
+		return nil
+	}
+	return KBLockedError
+}
 func (v *Viewport) SetKeyboardMode(m demodel.Map) error {
 	if v.kbLocked {
 		return KBLockedError

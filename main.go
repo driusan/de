@@ -511,6 +511,15 @@ func main() {
 					continue
 				}
 				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+			case viewer.RequestRerender:
+				img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
+				imgSize = viewport.Bounds(&buff)
+				if buff.Tagline != nil {
+					tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
+				}
+				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 
 			}
 		}

@@ -52,7 +52,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 	switch e.Code {
 	case key.CodeEscape:
 		// TODO: Quit the shell as the documentation claims happens.
-		if e.Direction == key.DirPress {
+		if e.Direction != key.DirPress {
 			return kbmap.NormalMode, demodel.DirectionNone, nil
 		}
 		return s, demodel.DirectionDown, nil
@@ -99,19 +99,20 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		}
 		return s, demodel.DirectionDown, nil
 	case key.CodeReturnEnter:
-		if e.Direction == key.DirPress {
+		if e.Direction != key.DirPress {
 			buff.Buffer = append(buff.Buffer, '\n')
 			fmt.Fprintf(s.stdin, "%c", '\n')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
 			return s, demodel.DirectionDown, nil
 		}
+		return s, demodel.DirectionDown, nil
 	default:
 		if e.Direction != key.DirPress && e.Rune > 0 {
 			// send the rune to the buffer and to the shell
 			rbytes := make([]byte, 4)
 			n := utf8.EncodeRune(rbytes, e.Rune)
-			fmt.Printf("Sent to stdin: %c %d", e.Rune, e.Rune)
+			//	fmt.Printf("Sent to stdin: %c %d", e.Rune, e.Rune)
 			buff.Buffer = append(buff.Buffer, rbytes[:n]...)
 			fmt.Fprintf(s.stdin, "%c", e.Rune)
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
@@ -139,7 +140,6 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 	//c := exec.Command("sh")
 	stdin, _ := c.StdinPipe()
 	kbMap := &shellKbmap{stdin}
-	//fmt.Printf("Setting keyboard mode to shell mode\n")
 	viewport.LockKeyboardMode(kbMap)
 	buff.Filename = ""
 
@@ -171,10 +171,12 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 				//fmt.Printf("Requesting rerender\n")
 				viewport.Rerender()
 			} else {
-				time.Sleep(500)
+				time.Sleep(300 * time.Millisecond)
 			}
 		}
-		//c.Wait()
+		c.Wait()
 		fmt.Fprintf(os.Stderr, "Shell exited")
+		viewport.UnlockKeyboardMode(kbMap)
+		viewport.SetKeyboardMode(kbmap.NormalMode)
 	}()
 }
