@@ -53,7 +53,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 	case key.CodeEscape:
 		// TODO: Quit the shell as the documentation claims happens.
 		if e.Direction != key.DirPress {
-			return kbmap.NormalMode, demodel.DirectionNone, nil
+			//return kbmap.NormalMode, demodel.DirectionNone, nil
 		}
 		return s, demodel.DirectionDown, nil
 	// Still honour the viewport manipulation keys
@@ -166,6 +166,12 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 
 			if n > 0 {
 				buff.Buffer = append(buff.Buffer, termline[:n]...)
+				if l := len(buff.Buffer); l > 65536 {
+					// be relatively conservative in how large the buffer
+					// can get, so that the rendering doesn't slow everything
+					// down.
+					buff.Buffer = buff.Buffer[l-65536:]
+				}
 				buff.Dot.End = uint(len(buff.Buffer)) - 1
 				buff.Dot.Start = buff.Dot.End
 				//fmt.Printf("Requesting rerender\n")

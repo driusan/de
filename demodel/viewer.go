@@ -47,6 +47,8 @@ type Viewport interface {
 	GetRenderer() Renderer
 	SetRenderer(Renderer) error
 	Rerender()
+
+	ResetLocation() error
 }
 
 // An ImageMap represents a way to convert points in an image into indexes into a

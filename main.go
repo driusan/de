@@ -84,7 +84,7 @@ func main() {
 		filename = os.Args[1]
 	}
 	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{Buffer: make([]byte, 0)}}
-	if err := actions.OpenFile(filename, &buff); err != nil {
+	if err := actions.OpenFile(filename, &buff, nil); err != nil {
 
 		// An unhandled error occured
 		if !os.IsNotExist(err) {
@@ -418,16 +418,16 @@ func main() {
 					oldFilename := buff.Filename
 					if evtBuff == buff.Tagline {
 						if eDot.Start == eDot.End {
-							actions.FindNextOrOpenTag(position.CurTagWordStart, position.CurTagWordEnd, &buff)
+							actions.FindNextOrOpenTag(position.CurTagWordStart, position.CurTagWordEnd, &buff, viewport)
 						} else {
-							actions.FindNextOrOpenTag(position.TagDotStart, position.TagDotEnd, &buff)
+							actions.FindNextOrOpenTag(position.TagDotStart, position.TagDotEnd, &buff, viewport)
 						}
 					} else {
 						if eDot.Start == eDot.End {
-							actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, evtBuff)
+							actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, evtBuff, viewport)
 
 						} else {
-							actions.FindNextOrOpen(position.DotStart, position.DotEnd, evtBuff)
+							actions.FindNextOrOpen(position.DotStart, position.DotEnd, evtBuff, viewport)
 						}
 					}
 					if oldFilename != buff.Filename {
@@ -518,6 +518,13 @@ func main() {
 				if buff.Tagline != nil {
 					tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
 					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
+				}
+				wSize := sz.Size()
+
+				if viewport.Location.Y+wSize.Y > imgSize.Max.Y+50 {
+					// we can scroll a *little* past the end, so that it's easier to read
+					// the last
+					viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 				}
 				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 

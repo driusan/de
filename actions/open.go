@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func OpenFile(filename string, buff *demodel.CharBuffer) error {
+func OpenFile(filename string, buff *demodel.CharBuffer, v demodel.Viewport) error {
 	fstat, err := os.Stat(filename)
 	if err != nil {
 		return err
@@ -72,6 +72,9 @@ func OpenFile(filename string, buff *demodel.CharBuffer) error {
 			bytes.TrimPrefix(buff.Tagline.Buffer, []byte(oldFilename))...,
 		)
 
+	}
+	if v != nil {
+		v.ResetLocation()
 	}
 
 	return nil

@@ -32,6 +32,16 @@ func (v *Viewport) GetKeyboardMode() demodel.Map {
 }
 
 var KBLockedError error = errors.New("Keyboard mode is locked")
+var InvalidViewport error = errors.New("Invalid viewport")
+
+func (v *Viewport) ResetLocation() error {
+	if v == nil {
+		return InvalidViewport
+	}
+	v.Location.X = 0
+	v.Location.Y = 0
+	return nil
+}
 
 // Sets the keyboard mode in a way that future requests to SetKeyboardMode
 // will fail.

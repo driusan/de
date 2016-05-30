@@ -35,7 +35,7 @@ func FindNext(From, To demodel.Position, buff *demodel.CharBuffer) {
 
 }
 
-func FindNextOrOpen(From, To demodel.Position, buff *demodel.CharBuffer) {
+func FindNextOrOpen(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil {
 		return
 	}
@@ -54,7 +54,7 @@ func FindNextOrOpen(From, To demodel.Position, buff *demodel.CharBuffer) {
 
 	word := string(buff.Buffer[dot.Start:dot.End])
 
-	if err := OpenFile(word, buff); err == nil {
+	if err := OpenFile(word, buff, v); err == nil {
 		return
 	}
 
@@ -69,7 +69,7 @@ func FindNextOrOpen(From, To demodel.Position, buff *demodel.CharBuffer) {
 	}
 }
 
-func FindNextOrOpenTag(From, To demodel.Position, buff *demodel.CharBuffer) {
+func FindNextOrOpenTag(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
 	if buff == nil || buff.Tagline == nil {
 		return
 	}
@@ -89,7 +89,7 @@ func FindNextOrOpenTag(From, To demodel.Position, buff *demodel.CharBuffer) {
 	// find the word between From and To in the tagline
 	word := string(buff.Tagline.Buffer[dot.Start:dot.End])
 
-	if err := OpenFile(word, buff); err == nil {
+	if err := OpenFile(word, buff, v); err == nil {
 		return
 	}
 

@@ -101,7 +101,7 @@ func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v 
 		cmd = string(buff.Buffer[dot.Start : dot.End+1])
 	}
 
-	if err := OpenFile(cmd, buff); err == nil {
+	if err := OpenFile(cmd, buff, v); err == nil {
 		return
 	}
 
