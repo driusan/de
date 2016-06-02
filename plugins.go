@@ -5,7 +5,7 @@ import (
 	_ "github.com/driusan/de/actions/defaults"
 	// More exotic optional plugins.
 	_ "github.com/driusan/de/plugins"
-
+	//_ "github.com/driusan/de/plugins/redmine"
 	// RENDERERS:
 	// The order here matters. The most recently registered (lowest down the list)
 	// renderer will win.
