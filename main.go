@@ -260,10 +260,23 @@ func main() {
 				}
 				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
 			case mouse.Event:
+				// Some drivers (notable Mac and Windows)
+				// seem to only send scroll events as a DirNone event,
+				// which trips up by the code that tries to ensure we don't
+				// do anything if nothing changed. As a result, this hack
+				// fakes a DirPress event by just modifying the event struct
+				// before we do anything.
+				if e.Direction == mouse.DirNone &&
+					(e.Button == mouse.ButtonWheelUp ||
+						e.Button == mouse.ButtonWheelDown) {
+					e.Direction = mouse.DirPress
+				}
+
 				// No button changed state, and nothing is pressed.
 				// Skip doing anything in this mouse event, because
 				// there's nothing that could have changed which needs
 				// a rerender.
+
 				if e.Direction == mouse.DirNone &&
 					!MouseButtonMask[ButtonLeft] &&
 					!MouseButtonMask[ButtonMiddle] &&
