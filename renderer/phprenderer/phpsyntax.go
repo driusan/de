@@ -28,13 +28,13 @@ func (rd *PHPSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".php") || strings.HasSuffix(buf.Filename, ".inc")
 }
 
-func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
-	dst := image.NewRGBA(viewport)
+func (rd *PHPSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	metrics := renderer.MonoFontFace.Metrics()
+	bounds := dst.Bounds()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{renderer.TextColour},
-		Dot:  fixed.P(0, metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
 		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
@@ -125,7 +125,7 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// exit the loop early since we're past the part that is being drawn.
-			return dst, nil
+			return nil
 		}
 
 		if runeRectangle.Intersect(viewport) != image.ZR {
@@ -133,7 +133,11 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 				// it's in dot, so highlight the background
 				draw.Draw(
 					dst,
-					runeRectangle,
+					image.Rectangle{
+						runeRectangle.Min.Sub(viewport.Min),
+						runeRectangle.Max.Sub(viewport.Min),
+					},
+
 					&image.Uniform{renderer.TextHighlight},
 					image.ZP,
 					draw.Src,
@@ -150,14 +154,20 @@ func (rd *PHPSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 			writer.Dot.X = 0
 			continue
 		}
+
+		writer.Dot.X -= fixed.I(viewport.Min.X)
+		writer.Dot.Y -= fixed.I(viewport.Min.Y)
 		writer.DrawString(string(r))
+		writer.Dot.X += fixed.I(viewport.Min.X)
+		writer.Dot.Y += fixed.I(viewport.Min.Y)
+
 		if nextColor != nil {
 			writer.Src = nextColor
 			nextColor = nil
 		}
 	}
 
-	return dst, nil
+	return nil
 }
 
 func StartsLanguageDeliminator(r rune) bool {

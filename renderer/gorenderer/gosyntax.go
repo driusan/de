@@ -2,13 +2,13 @@ package renderer
 
 import (
 	"bytes"
-	"github.com/driusan/de/demodel"
-	"unicode"
 	//"fmt"
+	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 	"image"
+	"unicode"
 	//	"image/color"
 	"image/draw"
 	"strings"
@@ -27,13 +27,14 @@ func (rd *GoSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".go")
 }
 
-func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
-	dst := image.NewRGBA(viewport)
+func (rd *GoSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	metrics := renderer.MonoFontFace.Metrics()
+
+	bounds := dst.Bounds()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{renderer.TextColour},
-		Dot:  fixed.P(0, metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
 		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
@@ -136,7 +137,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (i
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// exit the loop early, we've already gotten past the part that we care about.
-			return dst, nil
+			return nil
 		}
 
 		// Don't draw or calculate the image map if we're outside of the viewport. We can't
@@ -151,7 +152,9 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (i
 				// clipping rectangle)
 				draw.Draw(
 					dst,
-					runeRectangle,
+					image.Rectangle{
+						runeRectangle.Min.Sub(viewport.Min),
+						runeRectangle.Max.Sub(viewport.Min)},
 					&image.Uniform{renderer.TextHighlight},
 					image.ZP,
 					draw.Src,
@@ -169,7 +172,15 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (i
 			continue
 		}
 
-		writer.DrawString(string(r))
+		if runeRectangle.Max.Y > viewport.Min.Y {
+			// as a hack to align viewport.Min with dst.Min, we subtract it from
+			// Dot before drawing, then add it back.
+			writer.Dot.X -= fixed.I(viewport.Min.X)
+			writer.Dot.Y -= fixed.I(viewport.Min.Y)
+			writer.DrawString(string(r))
+			writer.Dot.X += fixed.I(viewport.Min.X)
+			writer.Dot.Y += fixed.I(viewport.Min.Y)
+		}
 
 		if nextColor != nil {
 			writer.Src = nextColor
@@ -177,7 +188,7 @@ func (rd *GoSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (i
 		}
 	}
 
-	return dst, nil
+	return nil
 }
 
 func StartsLanguageDeliminator(r rune) bool {

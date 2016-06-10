@@ -8,6 +8,7 @@ import (
 	"golang.org/x/image/math/fixed"
 	"image"
 	"image/color"
+	"image/draw"
 )
 
 type HexRenderer struct{}
@@ -39,16 +40,14 @@ func (r HexRenderer) Bounds(buf *demodel.CharBuffer) image.Rectangle {
 func (r HexRenderer) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) demodel.ImageMap {
 	return nil
 }
-func (r HexRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
-
-	dst := image.NewRGBA(viewport)
+func (r HexRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	metrics := renderer.MonoFontFace.Metrics()
-
+	bounds := dst.Bounds()
 	hexwriter := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
 		Face: renderer.MonoFontFace,
-		Dot:  fixed.P(0, metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
 	}
 
 	charStart := 500
@@ -56,7 +55,7 @@ func (r HexRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
 		Face: renderer.MonoFontFace,
-		Dot:  fixed.P(charStart, metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X+charStart, bounds.Min.Y+metrics.Ascent.Floor()),
 	}
 
 	for i, b := range buf.Buffer {
@@ -69,13 +68,25 @@ func (r HexRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (
 				charwriter.Dot.Y += metrics.Height
 			}
 
-			hexwriter.DrawString(fmt.Sprintf("%0.8x ", i))
+			offsetDraw(&hexwriter, fmt.Sprintf("%0.8x ", i), viewport)
 		}
-		hexwriter.DrawString(fmt.Sprintf("%0.2x", b))
+		offsetDraw(&hexwriter, fmt.Sprintf("%0.2x", b), viewport)
 		if i%2 == 1 && i > 0 {
-			hexwriter.DrawString(" ")
+			offsetDraw(&hexwriter, " ", viewport)
 		}
-		charwriter.DrawString(string(b))
+		offsetDraw(&charwriter, string(b), viewport)
 	}
-	return dst, nil
+	return nil
+}
+
+// Offset draw is a hack to let the renderer treat Dot in the charbuffer's
+// space, while rendering the viewport into an image that doesn't share the
+// same coordinate system, since we have no control over what reference point
+// a screen buffer's RGBA uses for Bounds().Min and Bounds().Max.
+func offsetDraw(d *font.Drawer, s string, v image.Rectangle) {
+	d.Dot.X -= fixed.I(v.Min.X)
+	d.Dot.Y -= fixed.I(v.Min.Y)
+	d.DrawString(s)
+	d.Dot.X += fixed.I(v.Min.X)
+	d.Dot.Y += fixed.I(v.Min.Y)
 }

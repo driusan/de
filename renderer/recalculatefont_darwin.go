@@ -12,7 +12,7 @@ import (
 func RecalculateFontFace(dpi float64) {
 	// While shiny correctly reports the PixelsPerPt in Shiny, OS X clearly
 	// doesn't expect you to use it, because multiplying it through while
-	// parsing fonts results in a constant physical size font on the screen 
+	// parsing fonts results in a constant physical size font on the screen
 	// (as it should.) Meanwhile, OS X system preferences don't even refer
 	// to resolution, they refer to "more text" and "less text" on the screen.
 	//

@@ -2,6 +2,7 @@ package demodel
 
 import (
 	"image"
+	"image/draw"
 )
 
 // A Renderer takes a character buffer and renders it to an image to be displayed in a viewport.
@@ -15,7 +16,7 @@ type Renderer interface {
 	// should be shown on the screen, a rectangle determining what the size of the *entire* buffer rendered
 	// would be (even if it didn't render it), an ImageMap that, at least for the portion rendered, can
 	// be used to determine what any pixel represents, and an error (hopefully nil.)
-	Render(buffer *CharBuffer, viewport image.Rectangle) (image.Image, error)
+	RenderInto(dst draw.Image, buffer *CharBuffer, viewport image.Rectangle) error
 
 	// Returns the bounds that would render the entire buffer, if the viewport were big enough.
 	Bounds(buffer *CharBuffer) image.Rectangle

@@ -34,7 +34,11 @@ func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
 		Max: image.Point{viewport.Location.X + wSize.X, viewport.Location.Y + wSize.Y},
 	}
 }
-func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf image.Image, tagimage image.Image, viewport *viewer.Viewport) {
+
+var tagline demodel.Renderer
+var tagSize image.Rectangle
+
+func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf *demodel.CharBuffer, viewport *viewer.Viewport) {
 	if b == nil {
 		return
 	}
@@ -51,8 +55,10 @@ func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf image.Imag
 		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.NormalBackground}, image.ZP, draw.Src)
 	}
 
-	tagBounds := tagimage.Bounds()
+	s := sz.Size()
+
 	contentBounds := dst.Bounds()
+	tagBounds := tagSize
 	// ensure that the tag takes no more than half the window, so that the content doesn't get
 	// drowned out by commands that output more to stderr than they should.
 	if wHeight := sz.Size().Y; tagBounds.Max.Y > wHeight/2 {
@@ -60,8 +66,10 @@ func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf image.Imag
 	}
 	contentBounds.Min.Y = tagBounds.Max.Y
 
-	draw.Draw(dst, contentBounds, buf, viewport.Location, draw.Over)
-	draw.Draw(dst, tagBounds, tagimage, image.ZP, draw.Over)
+	//	draw.Draw(dst, contentBounds, buf, viewport.Location, draw.Over)
+	//	draw.Draw(dst, tagBounds, tagimage, image.ZP, draw.Over)
+	tagline.RenderInto(dst.SubImage(image.Rectangle{image.ZP, image.Point{s.X, tagBounds.Max.Y}}).(*image.RGBA), buf.Tagline, clipRectangle(sz, viewport))
+	viewport.Renderer.RenderInto(dst.SubImage(image.Rectangle{image.Point{0, tagBounds.Max.Y}, s}).(*image.RGBA), buf, clipRectangle(sz, viewport))
 
 	w.Upload(image.Point{0, 0}, b, dst.Bounds())
 	w.Publish()
@@ -111,20 +119,16 @@ func main() {
 
 	lastKeyboardMode := viewport.GetKeyboardMode()
 
-	img, err := viewport.Render(&buff, clipRectangle(sz, viewport))
 	imap := viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 	imgSize := viewport.Bounds(&buff)
-
-	if err != nil {
-		panic(err)
-	}
 
 	// Don't use type inference because we want to make sure that we keep implementing
 	// the renderer interface for taglines for consistency, but also don't want to register
 	// it so that no one accidentally uses it.
-	var tagline demodel.Renderer = &renderer.TaglineRenderer{}
+	tagline = &renderer.TaglineRenderer{}
+	tagSize = tagline.Bounds(buff.Tagline)
 
-	tagimg, _ := tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+	//tagimg, _ := tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
 	tagmap := tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 
 	var lastCharIdx uint
@@ -204,10 +208,13 @@ func main() {
 				// takes it into account, it just happens to be a good size (slightly more than 1 line)
 				// to use as a buffer at the top and bottom so that we don't trigger the scroll at the
 				// very last pixel
-				tagEnd := tagimg.Bounds().Max.Y
+				tagEnd := tagSize.Max.Y
 				switch scrolldir {
 				case demodel.DirectionUp:
 					// check if has moved so that it's before the top left corner.
+					if imap == nil {
+						continue
+					}
 					if idx, err := imap.At(viewport.Location.X, viewport.Location.Y+tagEnd); err == nil && buff.Dot.Start < idx {
 						if newViewport, gerr := imap.Get(buff.Dot.Start); gerr == nil {
 							viewport.Location.Y = newViewport.Min.Y - 50
@@ -220,10 +227,14 @@ func main() {
 							viewport.Location.Y = newViewport.Min.Y - 50
 						}
 					}
+
 				case demodel.DirectionDown:
 					// check if dot moved so that it's end is end is after the bottom right corner.
 					wSize := sz.Size()
 					//imgbounds := img.Bounds()
+					if imap == nil {
+						continue
+					}
 					if idx, err := imap.At(0, viewport.Location.Y+wSize.Y-tagEnd); err == nil && buff.Dot.End > idx {
 						if newViewport, gerr := imap.Get(buff.Dot.End); gerr == nil {
 							// scroll to about the middle of the screen
@@ -234,6 +245,7 @@ func main() {
 							viewport.Location.Y = newViewport.Min.Y - (wSize.Y / 2)
 						}
 					}
+
 				}
 
 				if wSize.X >= imgSize.Max.X {
@@ -251,14 +263,14 @@ func main() {
 						renderer.GetRenderer(&buff),
 					)
 				}
-				img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+				//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)
 				if buff.Tagline != nil {
-					tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
 					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
+					tagSize = tagline.Bounds(buff.Tagline)
 				}
-				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case mouse.Event:
 				// Some drivers (notable Mac and Windows)
 				// seem to only send scroll events as a DirNone event,
@@ -283,7 +295,7 @@ func main() {
 					!MouseButtonMask[ButtonRight] {
 					continue
 				}
-				tagEnd := tagimg.Bounds().Max.Y
+				tagEnd := tagSize.Max.Y
 
 				// the buffer that the mouse is over. Generally either the tagline,
 				// or the standard buffer
@@ -370,23 +382,20 @@ func main() {
 						if viewport.Location.Y < 0 {
 							viewport.Location.Y = 0
 						}
-						// scrolling can't affect the content or the tag, so just reviewport the window.
-						img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
-						imgSize = viewport.Bounds(&buff)
-						paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+						paintWindow(screenBuffer, w, sz, &buff, viewport)
 
 					case mouse.ButtonWheelDown:
 						viewport.Location.Y += 50
 						wSize := sz.Size()
-						//imgSize := img.Bounds().Size()
+
 						if viewport.Location.Y+wSize.Y > imgSize.Max.Y+50 {
 							// we can scroll a *little* past the end, so that it's easier to read
 							// the last
 							viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 						}
-						img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+						//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 						imgSize = viewport.Bounds(&buff)
-						paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+						paintWindow(screenBuffer, w, sz, &buff, viewport)
 					}
 				}
 
@@ -419,13 +428,9 @@ func main() {
 
 					// the highlighted portion of the image may have changed, so
 					// reviewport everything.
-					img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+					//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 					imgSize = viewport.Bounds(&buff)
-					if buff.Tagline != nil {
-						tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
-						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
-					}
-					paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+					paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
@@ -450,14 +455,14 @@ func main() {
 						)
 					}
 
-					img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+					//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 					imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 					imgSize = viewport.Bounds(&buff)
 					if buff.Tagline != nil {
-						tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+						tagSize = tagline.Bounds(buff.Tagline)
 						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					}
-					paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+					paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
 					if evtBuff == buff.Tagline {
@@ -477,18 +482,19 @@ func main() {
 							actions.PerformAction(position.DotStart, position.DotEnd, evtBuff, viewport)
 						}
 					}
-					img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+					//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 					imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 					imgSize = viewport.Bounds(&buff)
 					if buff.Tagline != nil {
-						tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+						//tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+						tagSize = tagline.Bounds(buff.Tagline)
 						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					}
-					paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+					paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
 				//paintWindow(s, w, sz, buff)
 			case paint.Event:
-				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
@@ -498,6 +504,7 @@ func main() {
 					renderer.RecalculateFontFace(dpi)
 					viewport.InvalidateCache()
 					tagline.InvalidateCache()
+
 				}
 
 				if wSize.X >= imgSize.Max.X {
@@ -506,14 +513,17 @@ func main() {
 				if wSize.Y >= imgSize.Max.Y {
 					viewport.Location.Y = 0
 				}
-				img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
-				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)
-				if buff.Tagline != nil {
-					tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
-					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
-				}
-
+				tagSize = tagline.Bounds(buff.Tagline)
+				/*
+					img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+					imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
+					imgSize = viewport.Bounds(&buff)
+					if buff.Tagline != nil {
+						tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
+					}
+				*/
 				if screenBuffer != nil {
 					// Release the old buffer.
 					screenBuffer.Release()
@@ -523,13 +533,15 @@ func main() {
 					fmt.Fprintf(os.Stderr, "%v\n", err)
 					continue
 				}
-				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case viewer.RequestRerender:
-				img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
+				fmt.Printf("Requesting rerender")
+				//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)
 				if buff.Tagline != nil {
-					tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
+					tagSize = tagline.Bounds(buff.Tagline)
+					//tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
 					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 				}
 				wSize := sz.Size()
@@ -539,7 +551,14 @@ func main() {
 					// the last
 					viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 				}
-				paintWindow(screenBuffer, w, sz, img, tagimg, viewport)
+				if wSize.X >= imgSize.Max.X {
+					viewport.Location.X = 0
+				}
+				if wSize.Y >= imgSize.Max.Y {
+					viewport.Location.Y = 0
+				}
+
+				paintWindow(screenBuffer, w, sz, &buff, viewport)
 
 			}
 		}

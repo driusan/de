@@ -19,6 +19,9 @@ func (r ImageRenderer) InvalidateCache() {
 	// there is no cache, this is just here to meet the interface requirements.
 }
 func (r ImageRenderer) Bounds(buf *demodel.CharBuffer) image.Rectangle {
+	if r.cache == nil {
+		return image.ZR
+	}
 	return r.cache.Bounds()
 }
 func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
@@ -47,15 +50,12 @@ func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
 	return false
 }
 
-func (r *ImageRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
+func (r *ImageRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	bReader := bytes.NewReader(buf.Buffer)
 	img, _, err := image.Decode(bReader)
 	r.cache = img
-	// image.Image doesn't have SubImage(r). Most types do, but not jpeg/png.
-	// so we need to allocate a new image, draw to it, and return that.
-	dst := image.NewRGBA(viewport)
-	draw.Draw(dst, viewport, img, viewport.Min, draw.Src)
-	return dst, err
+	draw.Draw(dst, dst.Bounds(), img, viewport.Min, draw.Src)
+	return err
 }
 
 func (r *ImageRenderer) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) demodel.ImageMap {

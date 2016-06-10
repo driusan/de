@@ -28,13 +28,13 @@ func (rd *MarkdownSyntax) CanRender(buf *demodel.CharBuffer) bool {
 	return strings.HasSuffix(buf.Filename, ".md") || strings.HasSuffix(buf.Filename, "COMMIT_EDITMSG")
 }
 
-func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
-	dst := image.NewRGBA(viewport)
+func (rd *MarkdownSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	metrics := renderer.MonoFontFace.Metrics()
+	bounds := dst.Bounds()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{renderer.TextColour},
-		Dot:  fixed.P(0, metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
 		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
@@ -84,7 +84,7 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// no point in rendering past the end of the viewport
-			return dst, nil
+			return nil
 		}
 		switch r {
 		case '\t':
@@ -101,7 +101,11 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 				// it's in dot, so highlight the background
 				draw.Draw(
 					dst,
-					runeRectangle,
+					image.Rectangle{
+						runeRectangle.Min.Sub(viewport.Min),
+						runeRectangle.Max.Sub(viewport.Min),
+					},
+
 					&image.Uniform{renderer.TextHighlight},
 					image.ZP,
 					draw.Src,
@@ -118,7 +122,13 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 			writer.Dot.X = 0
 			continue
 		}
+		// translate from viewport coordinate system to dst coordinate system
+		// for drawing.
+		writer.Dot.X -= fixed.I(viewport.Min.X)
+		writer.Dot.Y -= fixed.I(viewport.Min.Y)
 		writer.DrawString(string(r))
+		writer.Dot.X += fixed.I(viewport.Min.X)
+		writer.Dot.Y += fixed.I(viewport.Min.Y)
 
 		if nextColor != nil {
 			writer.Src = nextColor
@@ -126,5 +136,5 @@ func (rd *MarkdownSyntax) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		}
 	}
 
-	return dst, nil
+	return nil
 }

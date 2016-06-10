@@ -25,15 +25,14 @@ func (r NoSyntaxRenderer) CanRender(*demodel.CharBuffer) bool {
 	return true
 }
 
-func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
-	//dstsize := r.Bounds(buf)
-	dst := image.NewRGBA(viewport)
+func (r NoSyntaxRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	metrics := renderer.MonoFontFace.Metrics()
+	bounds := dst.Bounds()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
 		Face: renderer.MonoFontFace,
-		Dot:  fixed.P(0, metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
 	}
 	runes := bytes.Runes(buf.Buffer)
 
@@ -58,13 +57,16 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
-			return dst, nil
+			return nil
 		}
 		if runeRectangle.Intersect(viewport) != image.ZR {
 			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 				draw.Draw(
 					dst,
-					runeRectangle,
+					image.Rectangle{
+						runeRectangle.Min.Sub(viewport.Min),
+						runeRectangle.Max.Sub(viewport.Min),
+					},
 					&image.Uniform{renderer.TextHighlight},
 					image.ZP,
 					draw.Over,
@@ -80,8 +82,14 @@ func (r NoSyntaxRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectang
 			writer.Dot.X = 0
 			continue
 		}
+
+		// hack to draw into the dst using the viewport coordinate system
+		writer.Dot.X -= fixed.I(viewport.Min.X)
+		writer.Dot.Y -= fixed.I(viewport.Min.Y)
 		writer.DrawString(string(r))
+		writer.Dot.X += fixed.I(viewport.Min.X)
+		writer.Dot.Y += fixed.I(viewport.Min.Y)
 	}
 
-	return dst, nil
+	return nil
 }

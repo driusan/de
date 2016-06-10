@@ -27,13 +27,12 @@ func (r TaglineRenderer) CanRender(*demodel.CharBuffer) bool {
 	return false
 }
 
-func (r TaglineRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangle) (image.Image, error) {
+func (r TaglineRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
 	dstSize := r.Bounds(buf)
 	if wSize := viewport.Size().X; dstSize.Max.X < wSize {
 		dstSize.Max.X = wSize
 	}
-	dstSize.Max.Y += 1
-	dst := image.NewRGBA(dstSize)
+
 	draw.Draw(dst, dst.Bounds(), &image.Uniform{TaglineBackground}, image.ZP, draw.Src)
 	draw.Draw(dst,
 		image.Rectangle{
@@ -113,5 +112,5 @@ func (r TaglineRenderer) Render(buf *demodel.CharBuffer, viewport image.Rectangl
 		writer.DrawString(string(r))
 	}
 
-	return dst, nil
+	return nil
 }

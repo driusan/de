@@ -5,6 +5,6 @@ import (
 )
 
 func init() {
-	renderer.RegisterRenderer("html", &HtmlSyntax{})
-	renderer.RegisterRenderer("css", &HtmlSyntax{})
+	renderer.RegisterRenderer("html", &HTMLSyntax{})
+	renderer.RegisterRenderer("css", &HTMLSyntax{})
 }
