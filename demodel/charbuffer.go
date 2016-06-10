@@ -21,7 +21,7 @@ func (c *CharBuffer) AppendTag(val string) error {
 
 func (c *CharBuffer) ResetTagline() error {
 	c.Tagline = &CharBuffer{Buffer: []byte(c.Filename)}
-	c.AppendTag(" | Save Discard Cut Copy Paste Exit")
+	c.AppendTag(" | " + getDefaultTagline())
 	c.Tagline.Dot.Start = uint(len(c.Tagline.Buffer))
 	c.Tagline.Dot.End = c.Tagline.Dot.Start
 	return nil
@@ -35,6 +35,18 @@ func getSnarfSaveDir() string {
 	return u.HomeDir + "/.de/snarf/"
 }
 
+func getDefaultTagline() string {
+	u, err := user.Current()
+	if err != nil {
+		return ""
+	}
+	file := u.HomeDir + "/.de/tagline"
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "Save Discard Cut Copy Paste Exit"
+	}
+	return string(content)
+}
 func (c *CharBuffer) LoadSnarfBuffer() {
 	dir := getSnarfSaveDir()
 	if dir == "" {
