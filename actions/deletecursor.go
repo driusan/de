@@ -21,6 +21,14 @@ func DeleteCursor(From, To demodel.Position, buff *demodel.CharBuffer) {
 		return
 	}
 	dot.End = i
+
+	// Update the undo buffer before doing anything.
+	buff.Undo = &demodel.CharBuffer{
+		Dot:    buff.Dot,
+		Undo:   buff.Undo,
+		Buffer: make([]byte, len(buff.Buffer)),
+	}
+	copy(buff.Undo.Buffer, buff.Buffer)
 	if dot.Start == dot.End {
 		// nothing selected, so delete the previous character
 

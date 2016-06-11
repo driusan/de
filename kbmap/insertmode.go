@@ -9,11 +9,18 @@ import (
 	"unicode/utf8"
 )
 
+// Since we don't want to update the undo buffer for every single keystroke in
+// insert mode, we keep a pointer to the buffer when insert mode started, and
+// only update the Undo pointer upon leaving insert mode.
+var insertStartCharBuffer *demodel.CharBuffer
+
 func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {
 	// special cases for Insert Mode
 	switch e.Code {
 	case key.CodeEscape:
 		if e.Direction == key.DirPress {
+			buff.Undo = insertStartCharBuffer
+			insertStartCharBuffer = nil
 			return NormalMode, demodel.DirectionNone, nil
 		}
 	case key.CodeDeleteBackspace:
@@ -96,6 +103,16 @@ func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	runeBytes := make([]byte, 4)
 	i := utf8.EncodeRune(runeBytes, e.Rune)
 
+	// Before we do anything, cache the start of the insert if applicable so that
+	// we can set the appropriate *Undo pointer when leaving insert mode.
+	if insertStartCharBuffer == nil {
+		insertStartCharBuffer = &demodel.CharBuffer{
+			Buffer: buff.Buffer,
+			Dot:    buff.Dot,
+			Undo:   buff.Undo,
+		}
+
+	}
 	// inserting at the start of the file.
 	if buff.Dot.End == 0 {
 		buff.Buffer = append(runeBytes[:i], buff.Buffer...)

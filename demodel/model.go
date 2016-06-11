@@ -43,6 +43,9 @@ type CharBuffer struct {
 	// are CharBuffers, but taglines don't have their own tagline..)
 	Tagline *CharBuffer
 
+	// Undo represents the previous CharBuffer that got the buffer into this state.
+	// It's effectively a singly-linked list of Undos.
+	Undo *CharBuffer
 	// Dirty represents if the file has been modified since being open, or since the last
 	// save.
 	Dirty bool

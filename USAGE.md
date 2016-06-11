@@ -44,6 +44,9 @@ Delete existing text can either happen with shorthands like Backspace or
 Some other common commands:
 
 -   `p`: Paste
+-   `u`: Undo
+-   `;`: Give keyboard focus to tagline (see below for tagline usage)
+-   `:`: Give keyboard focus to end of tagline (see below)
 -   Up: scroll viewport up half a screen
 -   Down: scroll viewport down half a screen
 -   Esc: Save if buffer has been modified, Exit if buffer has not been

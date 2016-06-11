@@ -21,6 +21,14 @@ func InsertSnarfBuffer(From, To demodel.Position, buff *demodel.CharBuffer) {
 		return
 	}
 	dot.End = i
+
+	// Update the undo buffer before doing anything.
+	buff.Undo = &demodel.CharBuffer{
+		Buffer: buff.Buffer,
+		Dot:    buff.Dot,
+		Undo:   buff.Undo,
+	}
+
 	// inserting at the start of the file.
 	if dot.End == 0 {
 		newBuffer := make([]byte, len(buff.Buffer)+len(buff.SnarfBuffer))

@@ -43,7 +43,7 @@ func getDefaultTagline() string {
 	file := u.HomeDir + "/.de/tagline"
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
-		return "Save Discard Cut Copy Paste Exit"
+		return "Save Discard Cut Copy Paste Undo Exit"
 	}
 	return string(content)
 }

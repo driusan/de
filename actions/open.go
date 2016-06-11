@@ -73,6 +73,8 @@ func OpenFile(filename string, buff *demodel.CharBuffer, v demodel.Viewport) err
 		)
 
 	}
+	// new file, nothing to undo yet..
+	buff.Undo = nil
 	if v != nil {
 		v.ResetLocation()
 	}

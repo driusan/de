@@ -16,6 +16,12 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	if buff == nil {
 		return NormalMode, demodel.DirectionNone, Invalid
 	}
+
+	// since some keys we're modify dot before calling DeleteCursor, we need to back it up
+	// and set it properly for the undo buffer after deleting. We just back it up once here,
+	// for simplicity, even for the delete modes that don't need it.
+	undoDot := buff.Dot
+
 	switch e.Code {
 	case key.CodeEscape:
 		return NormalMode, demodel.DirectionNone, nil
@@ -28,11 +34,13 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		if Repeat == 0 {
 			Repeat = 1
 		}
+
 		for ; Repeat > 0; Repeat-- {
 			actions.MoveCursor(position.PrevLine, position.DotEnd, buff)
 		}
 
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeH:
 		if Repeat == 0 {
@@ -42,6 +50,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			actions.MoveCursor(position.PrevChar, position.DotEnd, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeL:
 		if Repeat == 0 {
@@ -51,6 +60,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			actions.MoveCursor(position.DotStart, position.NextChar, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeJ:
 		if Repeat == 0 {
@@ -60,6 +70,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			actions.MoveCursor(position.DotStart, position.NextLine, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeX:
 		// x just deletes the selected text, similar to vi. Repeat only does
@@ -71,10 +82,12 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		if Repeat == 0 {
 			Repeat = 1
 		}
+
 		for ; Repeat > 0; Repeat-- {
 			actions.MoveCursor(position.DotStart, position.NextWordStart, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeB:
 		if Repeat == 0 {
@@ -84,6 +97,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			actions.MoveCursor(position.PrevWordStart, position.DotEnd, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeRightArrow:
 		return DeleteMode, demodel.DirectionUp, ScrollRight
@@ -115,6 +129,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			actions.MoveCursor(position.DotStart, position.BuffEnd, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeD:
 		// don't need to handle Repeat = 0 case, because the first movement will
@@ -124,6 +139,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			actions.MoveCursor(position.DotStart, position.NextLine, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
+		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	}
 	return DeleteMode, demodel.DirectionNone, Invalid

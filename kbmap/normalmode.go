@@ -1,7 +1,7 @@
 package kbmap
 
 import (
-	//	"fmt"
+	//"fmt"
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
@@ -265,6 +265,14 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 
 	case key.CodeD:
 		return DeleteMode, demodel.DirectionNone, nil
+	case key.CodeU:
+		if buff.Undo != nil {
+			buff.Buffer = buff.Undo.Buffer
+			buff.Dot = buff.Undo.Dot
+			buff.Undo = buff.Undo.Undo
+			v.Rerender()
+		}
+		return NormalMode, demodel.DirectionNone, nil
 	case key.CodeSlash:
 		if buff.Dot.Start == buff.Dot.End {
 			actions.FindNext(position.CurWordStart, position.CurWordEnd, buff)
