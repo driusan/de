@@ -1,39 +1,77 @@
 # de Usage Instructions
 
 ## Basic Usage
-de is a modal editor that starts in normal mode. The three modes currently implemented are
-Normal (biege background), Insert (light green background), and Delete mode (light red/pink
-background). The keybindings are inspired by, but not identical to, vi.
 
-de supports the movement commands hjkl, w (next word), b (previous word start), $ (end of line),
-^ (start of line) and G (go to line, or end of file with no prefix.) Movements can be repeated 
-multiple times by prefixing the command with a number (ie 3w to go forwards 3 words.)
+de is a modal editor that starts in normal mode. The three modes
+currently implemented are Normal (biege background), Insert (light green
+background), and Delete mode (light red/pink background). The
+keybindings are inspired by, but not identical to, vi.
 
-In Normal mode, typing a movement command moves the cursor to that position, like vi. Unlike
-vi, holding CTRL and typing a movement command instead expands the selection by that much movement
-similar to visual mode in vi.
+### Normal Mode
 
-Delete mode is similar to normal mode, except the selected text plus the movement from the beginning
-or end will be deleted (depending on if it's a forward or backwards movement command.) You access delete
-mode by  typing 'd', just like in vi. (and dd will delete the current line.) You can exit Delete mode
-without deleting anything by hitting Escape.
+Movements can be repeated multiple times by prefixing the command with a
+number (ie `3w` to go forward 3 words)
 
-The most recently deleted text will be put in the snarf buffer (or "clipboard", if you prefer),
-overwriting what was there previously. It can be pasted by typing 'p' in Normal mode.
+In Normal mode, typing a movement command moves the cursor to that
+position, like vi. Unlike vi, holding CTRL and typing a movement command
+instead expands the selection by that much movement similar to visual
+mode in vi.
 
-You can enter Insert mode by typing either 'i' (insert before current selection) or 'a'
-(insert after current selection)
+-   `h`: move cursor left one char
+-   `j`: move cursor down one char
+-   `k`: move cursor up one char
+-   `l`: move cursor right one char
+-   `w`: move cursor to next word
+-   `b`: move cursor to previous word start
+-   `$`: move cursor to end of line
+-   `^`: move cursor to start of line
+-   `G`: go to line, or end of file with no prefix
 
-In Insert mode, the arrow keys take on the same meaning as hjkl in Normal mode, and Escape will
-return to normal mode. Any other key combination that results in a printable unicode character
-being sent to de will insert the utf8 encoding of that character at the current location of the
-file. In all other modes, the arrow keys scroll the viewport without adjusting the text cursor.
+Add new text by entering Insert mode with `i` or `a`.
 
-In all modes, backspace will delete the currently selected text (or previous character if nothing
-is selected) without changing the mode.
+-   `i`: insert before current selection
+-   `a`: insert after current selection
 
-Pressing the Escape key will Save if the buffer hasn't been modified, and Exit if it doesn't
-(so hitting Escape twice will Save and Exit.)
+Delete existing text can either happen with shorthands like Backspace or
+`x`, or with full Delete mode.
+
+-   `d`: enter Delete mode
+-   `dd`: delete current line
+-   `x`: delete current char
+-   Backspace: delete durrently selected text (or previous character if
+    nothing is selected)
+
+Some other common commands:
+
+-   `p`: Paste
+-   Up: scroll viewport up half a screen
+-   Down: scroll viewport down half a screen
+-   Esc: Save if buffer has been modified, Exit if buffer has not been
+    modified (so hitting Escape twice will Save and Exit)
+
+### Insert Mode
+
+In Insert mode, the arrow keys take on the same meaning as hjkl in
+Normal mode, and Escape will return to normal mode. Any other key
+combination that results in a printable unicode character being sent to
+de will insert the utf8 encoding of that character at the current
+location of the file.
+
+-   Left: move cursor left one char
+-   Up: move cursor up one line
+-   Down: move cursor down one line
+-   Right: move cursor right one char
+
+### Delete Mode
+
+Delete mode is similar to Normal mode, except the selected text plus the
+movement from the beginning or end will be deleted (depending on if it's
+a forward or backwards movement command.)
+
+The most recently deleted text will be put in the snarf buffer (or
+"clipboard", if you prefer), overwriting what was there previously.
+
+-   Escape: exit Delete mode (without deleting anything)
 
 ## Mouse Usage
 
