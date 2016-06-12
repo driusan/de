@@ -535,7 +535,7 @@ func main() {
 				}
 				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case viewer.RequestRerender:
-				fmt.Printf("Requesting rerender")
+				//fmt.Printf("Requesting rerender")
 				//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)

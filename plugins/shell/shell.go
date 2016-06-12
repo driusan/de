@@ -1,4 +1,4 @@
-package plugins
+package shell
 
 import (
 	//"bufio"
@@ -15,7 +15,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
-	"unicode/utf8"
+	//	"unicode/utf8"
+	"runtime"
 )
 
 // Create a thread safe wrapper around bytes.Buffer, so that our go routine can read
@@ -110,18 +111,28 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 	default:
 		if e.Direction != key.DirPress && e.Rune > 0 {
 			// send the rune to the buffer and to the shell
-			rbytes := make([]byte, 4)
-			n := utf8.EncodeRune(rbytes, e.Rune)
+			//rbytes := make([]byte, 4)
+			//n := utf8.EncodeRune(rbytes, e.Rune)
 			//	fmt.Printf("Sent to stdin: %c %d", e.Rune, e.Rune)
-			buff.Buffer = append(buff.Buffer, rbytes[:n]...)
+			// bash and zsh echo the character typed back when invoked with $SHELL -i
+			// and it's not a tty.
+			// dash doesn't.
+			// Don't append the rune to the buffer, because odds are high it'll
+			// get echoed back, though there's no way to know for sure.
+			//buff.Buffer = append(buff.Buffer, rbytes[:n]...)
+
 			fmt.Fprintf(s.stdin, "%c", e.Rune)
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
 
 		} else {
-			if e.Rune <= 0 {
-				fmt.Printf("Invalid rune %d from %s\n", e.Rune, e)
-			}
+			/*
+					for debugging only. This otherwise triggers errors on things like
+					the user pressing a control key.
+
+				if e.Rune <= 0 {
+					fmt.Printf("Invalid rune %d from %s\n", e.Rune, e)
+				}*/
 		}
 	}
 	return s, demodel.DirectionDown, nil
@@ -135,12 +146,22 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 	//cmd.Start()
 	//scanner := bufio.NewScanner(cmdReader)
 	//buff.KeyboardMode = &shellKbmap{}
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		switch runtime.GOOS {
+		case "plan9":
+			shell = "rc"
+		default:
+			shell = "sh"
+		}
+	}
 
-	c := exec.Command("sh", "-i")
+	c := exec.Command(shell, "-i")
 	//c := exec.Command("sh")
 	stdin, _ := c.StdinPipe()
 	kbMap := &shellKbmap{stdin}
 	viewport.LockKeyboardMode(kbMap)
+
 	buff.Filename = ""
 
 	go func() {
@@ -152,14 +173,17 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 		//stderr, _ := c.StderrPipe()
 		c.Start()
 
+		// buffer to read lines into. Allocate this out of the loop to go
+		// easier on the GC.
+		termline := make([]byte, 1024)
 		for {
+			viewport.SetRenderer(&TerminalRenderer{})
 			if buff.Filename != "" {
 				// The user must have clicked on a filename and opened it.
 				// Stop the Shell.
 				stdin.Close()
 				break
 			}
-			termline := make([]byte, 1024)
 
 			//fmt.Printf("reading from stdout\n")
 			n, _ := stdOut.Read(termline)
@@ -177,7 +201,7 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 				//fmt.Printf("Requesting rerender\n")
 				viewport.Rerender()
 			} else {
-				time.Sleep(300 * time.Millisecond)
+				time.Sleep(100 * time.Millisecond)
 			}
 		}
 		c.Wait()
