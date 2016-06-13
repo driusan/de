@@ -102,7 +102,7 @@ func ResetTagline(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 func SwitchRenderer(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	r := renderer.GetNamedRenderer(args)
 	if r == nil || v == nil {
-		fmt.Printf("R: %s V %s", r, v)
+		fmt.Printf("R: %s V %s\n", r, v)
 		return
 	}
 	v.SetRenderer(r)
