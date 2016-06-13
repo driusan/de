@@ -109,14 +109,15 @@ func main() {
 	defer buff.SaveSnarfBuffer()
 	var MouseButtonMask [6]bool
 
-	// hack so that things don't get confused on DirRelease when a button transitions keyboard modes
-	//var lastKeyboardMode demodel.Map = kbmap.NormalMode
-
 	viewport := &viewer.Viewport{
 		Map:      kbmap.NormalMode,
 		Renderer: renderer.GetRenderer(&buff),
 	}
 
+	// the renderer wasn't set yet when OpenFile was called, so do it now
+	actions.FocusViewport(buff.Dot.Start, &buff, viewport)
+
+	// hack so that things don't get confused on DirRelease when a button transitions keyboard modes
 	lastKeyboardMode := viewport.GetKeyboardMode()
 
 	imap := viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
