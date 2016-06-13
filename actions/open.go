@@ -239,9 +239,12 @@ func FocusViewport(idx uint, buff *demodel.CharBuffer, v demodel.Viewport) error
 	if vp, ok := v.(*viewer.Viewport); ok {
 		vp.Location = rect.Min
 
-		// don't put the character *directly* at the top. If the screen is less
-		// than 100px tall, this probably isn't the only thing that will break.
-		vp.Location.Y -= 100
+		// don't put the character *directly* at the top unless it's the very start
+		// of the file. If the screen is less than 100px tall, this probably isn't
+		//the only thing that will break.
+		if vp.Location.Y > 100 {
+			vp.Location.Y -= 100
+		}
 		return nil
 	}
 	return fmt.Errorf("Could not set viewport location.")
