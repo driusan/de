@@ -205,7 +205,7 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 			}
 		}
 		c.Wait()
-		fmt.Fprintf(os.Stderr, "Shell exited")
+		fmt.Fprintf(os.Stderr, "Shell exited\n")
 		viewport.UnlockKeyboardMode(kbMap)
 		viewport.SetKeyboardMode(kbmap.NormalMode)
 	}()
