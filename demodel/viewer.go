@@ -1,9 +1,12 @@
 package demodel
 
 import (
+	"errors"
 	"image"
 	"image/draw"
 )
+
+var UnsupportedOption error = errors.New("Unsupported Option")
 
 // A Renderer takes a character buffer and renders it to an image to be displayed in a viewport.
 type Renderer interface {
@@ -50,6 +53,8 @@ type Viewport interface {
 	Rerender()
 
 	ResetLocation() error
+
+	SetOption(option string, value interface{}) error
 }
 
 // An ImageMap represents a way to convert points in an image into indexes into a

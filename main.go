@@ -69,7 +69,7 @@ func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf *demodel.C
 	//	draw.Draw(dst, contentBounds, buf, viewport.Location, draw.Over)
 	//	draw.Draw(dst, tagBounds, tagimage, image.ZP, draw.Over)
 	tagline.RenderInto(dst.SubImage(image.Rectangle{image.ZP, image.Point{s.X, tagBounds.Max.Y}}).(*image.RGBA), buf.Tagline, clipRectangle(sz, viewport))
-	viewport.Renderer.RenderInto(dst.SubImage(image.Rectangle{image.Point{0, tagBounds.Max.Y}, s}).(*image.RGBA), buf, clipRectangle(sz, viewport))
+	viewport.RenderInto(dst.SubImage(image.Rectangle{image.Point{0, tagBounds.Max.Y}, s}).(*image.RGBA), buf, clipRectangle(sz, viewport))
 
 	w.Upload(image.Point{0, 0}, b, dst.Bounds())
 	w.Publish()
@@ -113,6 +113,7 @@ func main() {
 		Map:      kbmap.NormalMode,
 		Renderer: renderer.GetRenderer(&buff),
 	}
+	viewport.SetOption("TermWidth", 80)
 
 	// the renderer wasn't set yet when OpenFile was called, so do it now
 	actions.FocusViewport(buff.Dot.Start, &buff, viewport)
