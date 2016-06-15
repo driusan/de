@@ -2,7 +2,6 @@ package demodel
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -63,7 +62,6 @@ func (c *CharBuffer) LoadSnarfBuffer() {
 func (c *CharBuffer) SaveSnarfBuffer() {
 	dir := getSnarfSaveDir()
 	if dir == "" {
-		fmt.Printf("No directory to save buffer?\n")
 		return
 	}
 	//fmt.Printf("Saving %s\n", c.SnarfBuffer)

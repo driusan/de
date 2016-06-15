@@ -37,7 +37,7 @@ func PerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v demode
 	dot.End = i
 
 	cmd := string(buff.Buffer[dot.Start : dot.End+1])
-	runOrExec(cmd, buff, v)
+	RunOrExec(cmd, buff, v)
 }
 
 func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
@@ -73,7 +73,7 @@ func PerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer, v dem
 
 	// now that the command has been extracted from the tagline, perform the command
 	// on the real buffer.
-	runOrExec(cmd, buff, v)
+	RunOrExec(cmd, buff, v)
 }
 
 func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
@@ -105,7 +105,7 @@ func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v 
 		return
 	}
 
-	runOrExec(cmd, buff, v)
+	RunOrExec(cmd, buff, v)
 }
 
 type replaceMode uint8
@@ -116,7 +116,7 @@ const (
 	replaceDot
 )
 
-func runOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
+func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	var actionCmd, actionArgs string = cmd, ""
 	if i := strings.Index(cmd, ":"); i >= 0 {
 		actionCmd = cmd[:i]
@@ -206,7 +206,9 @@ func runOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		fmt.Fprintf(tagBuf, "\n%s", erroutput)
 		buff.Tagline.Buffer = tagBuf.Bytes()
 	}
-	fmt.Fprintf(os.Stderr, "Error: %s\n", erroutput)
+	if len(erroutput) > 0 {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", erroutput)
+	}
 	exiterr := gocmd.Wait()
 
 	if exiterr != nil && ignoreReturnCode == false {

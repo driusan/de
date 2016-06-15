@@ -17,7 +17,10 @@ import (
 	"golang.org/x/mobile/event/size"
 	"image"
 	"image/draw"
+	"io/ioutil"
 	"os"
+	"os/user"
+	"strings"
 	//"runtime/pprof"
 )
 
@@ -74,6 +77,24 @@ func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf *demodel.C
 	w.Upload(image.Point{0, 0}, b, dst.Bounds())
 	w.Publish()
 	return
+}
+
+func runStartupCommands(b *demodel.CharBuffer, v demodel.Viewport) {
+	u, err := user.Current()
+	if err != nil {
+		return
+	}
+	file := u.HomeDir + "/.de/startup"
+
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		actions.RunOrExec(strings.TrimSpace(line), b, v)
+	}
 }
 
 func main() {
@@ -138,6 +159,8 @@ func main() {
 	// when hitting enter from the tagline. If the mouse is still over
 	// the tagline, we should stay in tagmode.
 	var screenBuffer screen.Buffer
+
+	runStartupCommands(&buff, viewport)
 	driver.Main(func(s screen.Screen) {
 
 		w, err := s.NewWindow(nil)

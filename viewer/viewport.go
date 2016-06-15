@@ -97,11 +97,9 @@ func (v *Viewport) SetOption(opt string, val interface{}) error {
 	switch opt {
 	case "TermWidth":
 		if i, ok := val.(int); ok {
-			fmt.Printf("%d\n", i)
 			v.termwidth = i
 			return nil
 		}
-		fmt.Printf("????")
 		return fmt.Errorf("TermWidth must be an integer")
 	case "WarnAlpha":
 		if i, ok := val.(uint8); ok {
