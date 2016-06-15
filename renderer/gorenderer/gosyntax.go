@@ -91,18 +91,18 @@ func (rd *GoSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport
 			}
 			//}
 		case '/':
-			if string(runes[i:i+2]) == "//" {
+			if i+2 < len(runes) && string(runes[i:i+2]) == "//" {
 				if !inCharString && !inMultilineComment && !inString {
 					inLineComment = true
 					writer.Src = &image.Uniform{renderer.CommentColour}
 				}
-			} else if string(runes[i:i+2]) == "/*" {
+			} else if i+2 < len(runes) && string(runes[i:i+2]) == "/*" {
 				if !inCharString && !inString {
 					inMultilineComment = true
 					writer.Src = &image.Uniform{renderer.CommentColour}
 				}
 			}
-			if i > 1 && inMultilineComment && string(runes[i-1:i+1]) == "*/" {
+			if i > 1 && inMultilineComment && i+1 < len(runes) && string(runes[i-1:i+1]) == "*/" {
 				nextColor = &image.Uniform{renderer.TextColour}
 				inMultilineComment = false
 			}
