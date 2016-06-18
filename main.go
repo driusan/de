@@ -78,6 +78,28 @@ func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf *demodel.C
 	w.Publish()
 	return
 }
+func getKbScrollSizeY(e key.Event, wSize image.Point) int {
+	switch e.Modifiers {
+	case (key.ModControl | key.ModAlt):
+		return 1
+	case key.ModControl, key.ModAlt:
+		return renderer.MonoFontFace.Metrics().Height.Ceil()
+	default:
+		return wSize.Y / 2
+	}
+
+}
+func getKbScrollSizeX(e key.Event, wSize image.Point) int {
+	switch e.Modifiers {
+	case (key.ModControl | key.ModAlt):
+		return 1
+	case key.ModControl, key.ModAlt:
+		return renderer.MonoFontFace.Metrics().Height.Ceil()
+	default:
+		return wSize.X / 2
+	}
+
+}
 
 func runStartupCommands(b *demodel.CharBuffer, v demodel.Viewport) {
 	u, err := user.Current()
@@ -197,28 +219,29 @@ func main() {
 						return
 					}
 				case kbmap.ScrollUp:
-					scrollSize := sz.Size().Y / 2
+					scrollSize := getKbScrollSizeY(e, wSize)
+
 					viewport.Location.Y -= scrollSize
 					if viewport.Location.Y < 0 {
 						viewport.Location.Y = 0
 					}
 				case kbmap.ScrollDown:
-					scrollSize := sz.Size().Y / 2
-					viewport.Location.Y += scrollSize
+					scrollSize := getKbScrollSizeY(e, wSize)
 
+					viewport.Location.Y += scrollSize
 					if viewport.Location.Y+wSize.Y > imgSize.Max.Y+50 {
 						// we can scroll a *little* past the end, so that it's easier to read
 						// the last
 						viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 					}
 				case kbmap.ScrollLeft:
-					scrollSize := sz.Size().X / 2
+					scrollSize := getKbScrollSizeX(e, wSize)
 					viewport.Location.X -= scrollSize
 					if viewport.Location.X < 0 {
 						viewport.Location.X = 0
 					}
 				case kbmap.ScrollRight:
-					scrollSize := sz.Size().X / 2
+					scrollSize := getKbScrollSizeX(e, wSize)
 					viewport.Location.X += scrollSize
 					// we've scrolled too far down
 
