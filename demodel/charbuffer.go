@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
+	"unicode"
 )
 
 var NoTagline = errors.New("No tagline exists for buffer")
@@ -59,6 +60,48 @@ func (c *CharBuffer) LoadSnarfBuffer() {
 	c.SnarfBuffer = sbuf
 }
 
+func (c *CharBuffer) JoinLines(from, to uint) {
+	var replaced []byte
+	if to >= uint(len(c.Buffer)) {
+		to = uint(len(c.Buffer)) - 1
+	}
+	if from < 0 {
+		from = 0
+	}
+	lineStart := false
+	for i := from; i < to; i++ {
+		chr := c.Buffer[i]
+		switch chr {
+		case '\n':
+			replaced = append(replaced, ' ')
+			lineStart = true
+		case '\r':
+			// ignore, just in case someone does something
+			// stupid like use \n\r for a line ending, we
+			// don't want to duplicate spaces.
+		default:
+			if lineStart && unicode.IsSpace(rune(chr)) {
+				continue
+			}
+			replaced = append(replaced, chr)
+			lineStart = false
+		}
+	}
+
+	newSize := uint(len(replaced))
+	newBuffer := make([]byte, from+newSize+uint(len(c.Buffer))-to)
+	copy(newBuffer, c.Buffer[:from])
+	copy(newBuffer[from:from+newSize], replaced)
+	copy(newBuffer[from+newSize:], c.Buffer[to:])
+
+	c.Undo = &CharBuffer{
+		Buffer: c.Buffer,
+		Dot:    c.Dot,
+		Undo:   c.Undo,
+	}
+	c.Buffer = newBuffer
+	c.Dot.End = c.Dot.Start + uint(len(replaced))
+}
 func (c *CharBuffer) SaveSnarfBuffer() {
 	dir := getSnarfSaveDir()
 	if dir == "" {

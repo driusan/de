@@ -100,6 +100,35 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 
 		return NormalMode, demodel.DirectionDown, nil
 	case key.CodeJ:
+		if e.Modifiers&key.ModShift != 0 {
+			// 'J' for Join
+
+			undoDot := -1
+			if buff.Dot.Start == buff.Dot.End {
+				if Repeat <= 1 {
+					Repeat = 2
+				}
+				undoDot = int(buff.Dot.Start)
+				// Join n lines
+				actions.MoveCursor(position.StartOfLine, position.DotEnd, buff)
+				for ; Repeat > 1; Repeat-- {
+					actions.MoveCursor(position.DotStart, position.NextLine, buff)
+				}
+				actions.MoveCursor(position.DotStart, position.EndOfLine, buff)
+			}
+
+			buff.JoinLines(buff.Dot.Start, buff.Dot.End)
+			if undoDot >= 0 {
+				buff.Undo.Dot.Start = uint(undoDot)
+				buff.Undo.Dot.End = uint(undoDot)
+				buff.Dot = buff.Undo.Dot
+			}
+			v.GetRenderer().InvalidateCache()
+			Repeat = 0
+			return NormalMode, demodel.DirectionNone, nil
+		}
+
+		// 'j' for movement
 		if Repeat == 0 {
 			Repeat = 1
 
