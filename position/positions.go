@@ -201,7 +201,7 @@ func EndOfLine(buff demodel.CharBuffer) (uint, error) {
 	}
 	for i := buff.Dot.End; i < uint(len(buff.Buffer)); i++ {
 		if buff.Buffer[i] == '\n' {
-			return i - 1, nil
+			return i, nil
 		}
 	}
 	return uint(len(buff.Buffer) - 1), nil
@@ -213,11 +213,11 @@ func EndOfLineWithNewline(buff demodel.CharBuffer) (uint, error) {
 	}
 
 	if buff.Buffer[buff.Dot.End] == '\n' {
-		return buff.Dot.End, nil
+		return buff.Dot.End + 1, nil
 	}
 	for i := buff.Dot.End; i < uint(len(buff.Buffer)); i++ {
 		if buff.Buffer[i] == '\n' {
-			return i, nil
+			return i + 1, nil
 		}
 	}
 	return uint(len(buff.Buffer) - 1), nil

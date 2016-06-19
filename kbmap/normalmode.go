@@ -245,11 +245,15 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 					// better to stop now.
 					if lineNo >= Repeat {
 						// we're on the \n itself, so add 1 to get to the actual line.
-						buff.Dot.Start = uint(i + 1)
+						if Repeat == 1 {
+							buff.Dot.Start = 0
+						} else {
+							buff.Dot.Start = uint(i + 1)
+						}
 						buff.Dot.End = buff.Dot.Start
 						Repeat = 0
 						// select the line.
-						actions.MoveCursor(position.DotStart, position.EndOfLineWithNewline, buff)
+						actions.MoveCursor(position.DotStart, position.EndOfLine, buff)
 						break
 					}
 				}
