@@ -33,9 +33,20 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	case key.CodeI:
 		return InsertMode, demodel.DirectionNone, nil
 	case key.CodeA:
+		if buff.Buffer[buff.Dot.End] == '\n' {
+			// vi doesn't actually let you navigate your cursor *on top*
+			// of the newline, while de does.
+			// It feels weird to push 'a' there and end up on the next
+			// line, so if we append to the end of a line, just leave
+			// the cursor end where it is,
+			actions.MoveCursor(position.DotEnd, position.DotEnd, buff)
+		} else {
+			actions.MoveCursor(position.NextChar, position.NextChar, buff)
+
+		}
+
 		// There's a potentially we pressed 'a' at the very end of the screen and
 		// need to scroll down
-		actions.MoveCursor(position.NextChar, position.NextChar, buff)
 		return InsertMode, demodel.DirectionDown, nil
 	case key.CodeK:
 		if Repeat == 0 {
@@ -270,12 +281,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	case key.CodeD:
 		return DeleteMode, demodel.DirectionNone, nil
 	case key.CodeU:
-		if buff.Undo != nil {
-			buff.Buffer = buff.Undo.Buffer
-			buff.Dot = buff.Undo.Dot
-			buff.Undo = buff.Undo.Undo
-			v.Rerender()
-		}
+		actions.Do("Undo", buff, v)
 		return NormalMode, demodel.DirectionNone, nil
 	case key.CodeSlash:
 		if buff.Dot.Start == buff.Dot.End {

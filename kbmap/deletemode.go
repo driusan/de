@@ -135,11 +135,13 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		// don't need to handle Repeat = 0 case, because the first movement will
 		// take care of it.
 		actions.MoveCursor(position.StartOfLine, position.DotEnd, buff)
-		for ; Repeat > 0; Repeat-- {
+
+		for ; Repeat > 1; Repeat-- {
 			actions.MoveCursor(position.DotStart, position.NextLine, buff)
 		}
 		actions.DeleteCursor(position.DotStart, position.EndOfLineWithNewline, buff)
 		buff.Undo.Dot = undoDot
+		Repeat = 0
 		return NormalMode, demodel.DirectionUp, nil
 	}
 	return DeleteMode, demodel.DirectionNone, Invalid
