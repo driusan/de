@@ -33,6 +33,9 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	case key.CodeI:
 		return InsertMode, demodel.DirectionNone, nil
 	case key.CodeA:
+		if buff.Dot.End >= uint(len(buff.Buffer)) {
+			return InsertMode, demodel.DirectionDown, nil
+		}
 		if buff.Buffer[buff.Dot.End] == '\n' {
 			// vi doesn't actually let you navigate your cursor *on top*
 			// of the newline, while de does.
