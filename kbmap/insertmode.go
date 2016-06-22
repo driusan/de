@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/driusan/de/actions"
+	"github.com/driusan/de/actions/defaults"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
 	"golang.org/x/mobile/event/key"
@@ -103,9 +104,17 @@ func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	}
 
 	// These events don't seem to have the rune set properly, so add it as a hack.
+	var linePrefix []byte
 	if e.Code == key.CodeReturnEnter {
 		e.Rune = '\n'
+		if defaults.AutoIndentEnabled {
+			actions.MoveCursor(position.StartOfLine, position.SemanticStartOfLine, buff)
+			linePrefix = buff.Buffer[buff.Dot.Start:buff.Dot.End]
+			actions.MoveCursor(position.EndOfLine, position.EndOfLine, buff)
+		}
+
 	}
+
 	if e.Code == key.CodeTab {
 		e.Rune = '\t'
 	}
@@ -144,14 +153,15 @@ func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		buff.Dot.Start = uint(i)
 		buff.Dot.End = buff.Dot.Start
 	} else {
-		newBuffer := make([]byte, len(buff.Buffer)+i)
+		newBuffer := make([]byte, len(buff.Buffer)+i+len(linePrefix))
 		copy(newBuffer, buff.Buffer)
 		copy(newBuffer[buff.Dot.Start:], runeBytes[:i])
-		copy(newBuffer[buff.Dot.Start+uint(i):], buff.Buffer[buff.Dot.End:])
+		copy(newBuffer[buff.Dot.Start+uint(i):], linePrefix)
+		copy(newBuffer[buff.Dot.Start+uint(len(linePrefix))+uint(i):], buff.Buffer[buff.Dot.End:])
 		//copy(newBuffer[:buff.Dot.Start+uint(i)+1], buff.Buffer[buff.Dot.End:])
 
 		buff.Buffer = newBuffer
-		buff.Dot.Start += uint(i)
+		buff.Dot.Start += uint(i + len(linePrefix))
 		buff.Dot.End = buff.Dot.Start
 	}
 	buff.Dirty = true

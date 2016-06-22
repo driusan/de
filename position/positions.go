@@ -243,6 +243,38 @@ func StartOfLine(buff demodel.CharBuffer) (uint, error) {
 	return 0, nil
 }
 
+// The SemanticStartOfLine is the first character of content on the line, not
+// including whitespace or delimiters such as comment delimiters or list bullet
+// points.
+func SemanticStartOfLine(buff demodel.CharBuffer) (uint, error) {
+	if len(buff.Buffer) == 0 {
+		return 0, Invalid
+	}
+
+	i, _ := StartOfLine(buff)
+	for ; i < uint(len(buff.Buffer)); i++ {
+		if !unicode.IsSpace(rune(buff.Buffer[i])) || buff.Buffer[i] == '\n' {
+			// handle special cases for line starts that get carried forward
+			// with autoindent on, such as comments or lists.
+			switch buff.Buffer[i] {
+			case '/':
+				if (i+2) < uint(len(buff.Buffer)) && string(buff.Buffer[i:i+2]) == "//" {
+					if (i+3) < uint(len(buff.Buffer)) && unicode.IsSpace(rune(buff.Buffer[i+2])) && buff.Buffer[i+2] != '\n' {
+						return i + 3, nil
+					}
+					return i + 2, nil
+				}
+			case '*':
+				if i+2 < uint(len(buff.Buffer)) && buff.Buffer[i+1] != '\n' && unicode.IsSpace(rune(buff.Buffer[i+1])) {
+					return i + 2, nil
+				}
+				return i + 1, nil
+			}
+			return uint(i), nil
+		}
+	}
+	return uint(len(buff.Buffer)), nil
+}
 func CurWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, ErrInvalid
