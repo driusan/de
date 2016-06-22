@@ -46,7 +46,6 @@ func DeleteCursor(From, To demodel.Position, buff *demodel.CharBuffer) {
 			buff.Dot.Start -= 1
 			buff.Dot.End = buff.Dot.Start
 		}
-		return
 	} else {
 		// delete the selected text.
 		buff.SnarfBuffer = make([]byte, dot.End-dot.Start)
