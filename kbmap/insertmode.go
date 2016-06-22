@@ -24,10 +24,8 @@ func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			return NormalMode, demodel.DirectionNone, nil
 		}
 	case key.CodeDeleteBackspace:
-		if e.Direction == key.DirPress {
-			if e.Direction == key.DirPress {
-				actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
-			}
+		if e.Direction != key.DirRelease {
+			actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
 			return InsertMode, demodel.DirectionUp, nil
 		}
 	case key.CodeLeftArrow:
@@ -85,7 +83,7 @@ func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		e.Rune = '\t'
 	}
 
-	if e.Direction != key.DirPress {
+	if e.Direction == key.DirRelease {
 		// add the character if it's a key release or a repeat, but not
 		// if it's being released. For some reason, release seems more reliable
 		// than press when typing fast.

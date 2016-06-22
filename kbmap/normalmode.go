@@ -13,7 +13,7 @@ var Repeat uint
 func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {
 	// things only happen on key press in normal mode, if it's a release
 	// or a repeat, ignore it. It's not an error
-	if e.Direction != key.DirPress {
+	if e.Direction == key.DirRelease {
 		return NormalMode, demodel.DirectionNone, nil
 	}
 	if buff == nil {

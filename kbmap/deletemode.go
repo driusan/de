@@ -10,7 +10,7 @@ import (
 func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {
 	// things only happen on key press in normal mode, if it's a release
 	// or a repeat, ignore it. It's not an error
-	if e.Direction != key.DirPress {
+	if e.Direction == key.DirRelease {
 		return DeleteMode, demodel.DirectionNone, nil
 	}
 	if buff == nil {
@@ -26,10 +26,10 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	case key.CodeEscape:
 		return NormalMode, demodel.DirectionNone, nil
 	case key.CodeDeleteBackspace:
-		if e.Direction == key.DirPress {
+		if e.Direction != key.DirRelease {
 			actions.DeleteCursor(position.DotStart, position.DotEnd, buff)
 		}
-		return NormalMode, demodel.DirectionUp, nil
+		return DeleteMode, demodel.DirectionUp, nil
 	case key.CodeK:
 		if Repeat == 0 {
 			Repeat = 1
