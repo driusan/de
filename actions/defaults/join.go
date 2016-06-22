@@ -25,8 +25,8 @@ func Join(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		if args == "" {
 			LinesArg = 2
 		} else if LinesArg, err = strconv.Atoi(args); err != nil {
-				buff.AppendTag("\nInvalid argument to Join. Must be number: " + err.Error())
-				return
+			buff.AppendTag("\nInvalid argument to Join. Must be number: " + err.Error())
+			return
 
 		}
 

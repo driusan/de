@@ -315,6 +315,16 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 	case key.CodeU:
 		actions.Do("Undo", buff, v)
 		return NormalMode, demodel.DirectionNone, nil
+	case key.CodeO:
+		actions.MoveCursor(position.EndOfLineWithNewline, position.EndOfLineWithNewline, buff)
+
+		newBuffer := make([]byte, len(buff.Buffer)+1)
+		copy(newBuffer, buff.Buffer[:buff.Dot.Start])
+		newBuffer[buff.Dot.Start] = '\n'
+		copy(newBuffer[buff.Dot.Start+1:], buff.Buffer[buff.Dot.End:])
+
+		buff.Buffer = newBuffer
+		return InsertMode, demodel.DirectionDown, nil
 	case key.CodeSlash:
 		if buff.Dot.Start == buff.Dot.End {
 			actions.FindNext(position.CurWordStart, position.CurWordEnd, buff)

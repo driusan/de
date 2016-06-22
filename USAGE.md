@@ -31,6 +31,7 @@ Add new text by entering Insert mode with `i` or `a`.
 
 -   `i`: insert before current selection
 -   `a`: insert after current selection
+-   `o`: open a new line after the current line.
 
 Delete existing text can either happen with shorthands like Backspace or
 `x`, or with full Delete mode.
@@ -45,6 +46,7 @@ Some other common commands:
 
 -   `p`: Paste
 -   `u`: Undo
+-   `J`: Join the selected lines together into a single line.
 -   `;`: Give keyboard focus to tagline (see below for tagline usage)
 -   `:`: Give keyboard focus to end of tagline (see below)
 -   Up: scroll viewport up half a screen

@@ -211,7 +211,9 @@ func EndOfLineWithNewline(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, Invalid
 	}
-
+	if buff.Dot.End >= uint(len(buff.Buffer)) {
+		return uint(len(buff.Buffer)), nil
+	}
 	if buff.Buffer[buff.Dot.End] == '\n' {
 		return buff.Dot.End + 1, nil
 	}
