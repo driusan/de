@@ -195,7 +195,9 @@ func EndOfLine(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, Invalid
 	}
-
+	if buff.Dot.End >= uint(len(buff.Buffer)) {
+		return uint(len(buff.Buffer)) - 1, Invalid
+	}
 	if buff.Buffer[buff.Dot.End] == '\n' {
 		return buff.Dot.End, nil
 	}
@@ -232,7 +234,7 @@ func StartOfLine(buff demodel.CharBuffer) (uint, error) {
 		return 0, nil
 	}
 
-	for i := buff.Dot.Start - 1; i > 0; i-- {
+	for i := buff.Dot.Start - 1; i > 0 && i < uint(len(buff.Buffer)); i-- {
 		if buff.Buffer[i] == '\n' {
 			return i + 1, nil
 		}
@@ -247,7 +249,7 @@ func CurWordStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Dot.Start == 0 {
 		return 0, nil
 	}
-	for i := buff.Dot.Start - 1; i > 0; i-- {
+	for i := buff.Dot.Start - 1; i > 0 && i < uint(len(buff.Buffer)); i-- {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
 			return i + 1, nil
 		}
@@ -293,7 +295,7 @@ func CurExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Dot.Start == 0 {
 		return 0, nil
 	}
-	for i := buff.Dot.Start - 1; i > 0; i-- {
+	for i := buff.Dot.Start - 1; i > 0 && i < uint(len(buff.Buffer)); i-- {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
 			return i + 1, nil
 		}
