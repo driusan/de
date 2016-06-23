@@ -100,7 +100,7 @@ laptop doesn't have a three button mouse.
 Words that are selected or clicked on can be "executed" to control the editor, either by
 selecting the word and then pressing the Enter key, or by clicking with the middle mouse button.
 (When executing with the keyboard, it will first check if the file exists and open it if applicable,
-similarly to searching with the mouse.)
+similarly to searching with the mouse.) See COMMANDS.md for a list of built in commands.
 
 If executing a point in a word instead of a selection, that word will be executed.
 

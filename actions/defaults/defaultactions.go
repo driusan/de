@@ -15,6 +15,7 @@ func init() {
 	// Basic Save and Discard
 	actions.RegisterAction("Put", Put)
 	actions.RegisterAction("Save", Put)
+	actions.RegisterAction("w", Put)
 
 	actions.RegisterAction("Get", Get)
 	actions.RegisterAction("Discard", Get)
@@ -22,14 +23,19 @@ func init() {
 	// Quit if clean, provide a warning otherwise
 	actions.RegisterAction("Quit", Exit)
 	actions.RegisterAction("Exit", Exit)
+	actions.RegisterAction("q", Exit)
 
 	// Quit regardless of cleanliness
 	actions.RegisterAction("ForceExit", ForceQuit)
 	actions.RegisterAction("ForceQuit", ForceQuit)
+	actions.RegisterAction("q!", ForceQuit)
 
 	// Save AND Exit
 	actions.RegisterAction("SaveExit", SaveAndExit)
 	actions.RegisterAction("SaveQuit", SaveAndExit)
+	actions.RegisterAction("wq", SaveAndExit)
+	actions.RegisterAction("wq!", SaveAndExit)
+	actions.RegisterAction("x", SaveAndExit)
 
 	// Save OR Exit, depending on dirty buffer status,
 	// default for Escape key.
