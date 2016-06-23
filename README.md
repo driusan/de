@@ -34,7 +34,7 @@ See [USAGE.md](USAGE.md) for usage instructions.
 It should be installable with the standard go tools:
 
 ```
-go get github.com/driusan/de
+go get -u github.com/driusan/de
 ```
 
 Then as long as $GOPATH/bin is in your path, you can launch with `de [filename]`
