@@ -1,6 +1,7 @@
 package kbmap
 
 import (
+	//"fmt"
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
@@ -73,6 +74,32 @@ func insertMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			}
 		}
 		return InsertMode, demodel.DirectionUp, nil
+	case key.CodeV:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			insertStartCharBuffer = &demodel.CharBuffer{
+				Buffer: buff.Buffer,
+				Dot:    buff.Dot,
+				Undo:   buff.Undo,
+			}
+			actions.PasteClipboard(position.DotStart, position.DotEnd, buff)
+			return InsertMode, demodel.DirectionNone, nil
+		}
+	case key.CodeC:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.CopyClipboard(position.DotStart, position.DotEnd, buff)
+			return InsertMode, demodel.DirectionNone, nil
+		}
+	case key.CodeX:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			insertStartCharBuffer = &demodel.CharBuffer{
+				Buffer: buff.Buffer,
+				Dot:    buff.Dot,
+				Undo:   buff.Undo,
+			}
+			actions.CutClipboard(position.DotStart, position.DotEnd, buff)
+			return InsertMode, demodel.DirectionNone, nil
+		}
+
 	}
 
 	// These events don't seem to have the rune set properly, so add it as a hack.

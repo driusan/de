@@ -143,6 +143,11 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 
 		return NormalMode, demodel.DirectionDown, nil
 	case key.CodeX:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.CutClipboard(position.DotStart, position.DotEnd, buff)
+			return NormalMode, demodel.DirectionNone, nil
+		}
+
 		if Repeat == 0 {
 			Repeat = 1
 		}
@@ -354,6 +359,16 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			}
 		}
 		return TagMode, demodel.DirectionNone, nil
+	case key.CodeV:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.PasteClipboard(position.DotStart, position.DotEnd, buff)
+			return NormalMode, demodel.DirectionNone, nil
+		}
+	case key.CodeC:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.CopyClipboard(position.DotStart, position.DotEnd, buff)
+			return NormalMode, demodel.DirectionNone, nil
+		}
 	}
 	return NormalMode, demodel.DirectionNone, Invalid
 }

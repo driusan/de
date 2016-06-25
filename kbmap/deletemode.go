@@ -73,6 +73,10 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeX:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.CutClipboard(position.DotStart, position.DotEnd, buff)
+			return DeleteMode, demodel.DirectionNone, nil
+		}
 		// x just deletes the selected text, similar to vi. Repeat only does
 		// anything in normal mode.
 		Repeat = 0
@@ -143,6 +147,16 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		buff.Undo.Dot = undoDot
 		Repeat = 0
 		return NormalMode, demodel.DirectionUp, nil
+	case key.CodeV:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.PasteClipboard(position.DotStart, position.DotEnd, buff)
+			return DeleteMode, demodel.DirectionNone, nil
+		}
+	case key.CodeC:
+		if e.Direction == key.DirPress && isCopyModifier(e) {
+			actions.CopyClipboard(position.DotStart, position.DotEnd, buff)
+			return DeleteMode, demodel.DirectionNone, nil
+		}
 	}
 	return DeleteMode, demodel.DirectionNone, Invalid
 }
