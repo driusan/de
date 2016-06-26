@@ -56,6 +56,11 @@ executing words.
 	*	Renderer:image - directly display PNG or JPEG files in `de`.
 			(behaviour on other file types is undefined.)
 	*	Renderer:hex - render hex dump of current buffer
+* `LineNumbers`: Sets the printing of line numbers in the viewport. Options are
+	LineNumbers:off to disable printing line numbers, LineNumbers:relative
+	to print line numbers relative to the cursor, or LineNumbers:absolute to
+	print absolute line numbers. LineNumbers with no arguments will toggle
+	the mode in the order off->relative->absolute->off
 
 ## Experimental Commands
 

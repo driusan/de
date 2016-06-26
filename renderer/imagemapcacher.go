@@ -28,16 +28,15 @@ func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport im
 	imap.LastBufSize = len(buf.Buffer)
 	imap.LastBuf = buf
 
-	imap.IMap = &ImageMap{make([]ImageLoc, len(buf.Buffer)), buf}
-	lineSize := MonoFontHeight
+	imap.IMap = &ImageMap{make([]ImageLoc, 0, len(buf.Buffer)), buf}
 
-	runeRectangle := fixed.R(0, 0, MonoFontAdvance.Ceil(), lineSize.Ceil())
+	runeRectangle := fixed.R(0, 0, MonoFontAdvance.Ceil(), MonoFontHeight.Ceil())
 	runes := bytes.Runes(buf.Buffer)
 	afterLF := false
 	for i, r := range runes {
 		if afterLF {
-			runeRectangle.Min.Y += lineSize
-			runeRectangle.Max.Y += lineSize
+			runeRectangle.Min.Y += MonoFontHeight
+			runeRectangle.Max.Y += MonoFontHeight
 		}
 		switch r {
 		case '\t':
@@ -66,6 +65,7 @@ func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport im
 			}
 			afterLF = true
 		default:
+
 			// Move over 1 character from the last character, unless the last
 			// character was a newlie.
 			if afterLF || i == 0 {

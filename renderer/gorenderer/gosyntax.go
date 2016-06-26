@@ -166,7 +166,7 @@ func (rd *GoSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport
 			continue
 		case '\n':
 			writer.Dot.Y += renderer.MonoFontHeight
-			writer.Dot.X = 0
+			writer.Dot.X = fixed.I(bounds.Min.X)
 			continue
 		}
 

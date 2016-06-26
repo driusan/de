@@ -143,7 +143,7 @@ func (rd *PHPSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewpor
 			continue
 		case '\n':
 			writer.Dot.Y += renderer.MonoFontHeight
-			writer.Dot.X = 0
+			writer.Dot.X = fixed.I(bounds.Min.X)
 			continue
 		}
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/viewer"
 )
 
 func init() {
@@ -13,6 +14,7 @@ func init() {
 	// here instead.
 	actions.RegisterAction("TermWidth", TermWidth)
 	actions.RegisterAction("WarnAlpha", WarnAlpha)
+	actions.RegisterAction("LineNumbers", LineNumberMode)
 
 }
 
@@ -36,4 +38,17 @@ func WarnAlpha(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		return
 	}
 	v.SetOption("WarnAlpha", uint8(i))
+}
+
+func LineNumberMode(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	switch args {
+	case "absolute":
+		v.SetOption("LineNumbers", viewer.AbsoluteLineNumbers)
+	case "relative":
+		v.SetOption("LineNumbers", viewer.RelativeLineNumbers)
+	case "off":
+		v.SetOption("LineNumbers", viewer.NoLineNumbers)
+	default:
+		v.SetOption("RotateLineNumbers", nil)
+	}
 }
