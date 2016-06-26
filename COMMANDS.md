@@ -61,6 +61,11 @@ executing words.
 	to print line numbers relative to the cursor, or LineNumbers:absolute to
 	print absolute line numbers. LineNumbers with no arguments will toggle
 	the mode in the order off->relative->absolute->off
+* `BackgroundMode`: Sets whether or not the background should change colour to
+	indicate the keyboard mode. BackgroundMode:stable will prevent the
+	background from changing colour. Anything else will restore the default
+	mode where delete mode is red, and insert mode is a light greenish/blue
+	colour.
 
 ## Experimental Commands
 

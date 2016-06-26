@@ -47,12 +47,19 @@ func (w *dewindow) realpaint(buf *demodel.CharBuffer, viewport *viewer.Viewport)
 
 	// Fill the buffer with the window background colour before
 	// drawing the web page on top of it.
-	switch viewport.GetKeyboardMode() {
-	case kbmap.InsertMode:
-		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.InsertBackground}, image.ZP, draw.Src)
-	case kbmap.DeleteMode:
-		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.DeleteBackground}, image.ZP, draw.Src)
-	default:
+	// This should logically be in the viewport code itself, but importing
+	// kbmap to switch on the mode sentinals would result in a cyclical
+	// import.
+	if viewport.BackgroundMode != viewer.StableBackground {
+		switch viewport.GetKeyboardMode() {
+		case kbmap.InsertMode:
+			draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.InsertBackground}, image.ZP, draw.Src)
+		case kbmap.DeleteMode:
+			draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.DeleteBackground}, image.ZP, draw.Src)
+		default:
+			draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.NormalBackground}, image.ZP, draw.Src)
+		}
+	} else {
 		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.NormalBackground}, image.ZP, draw.Src)
 	}
 

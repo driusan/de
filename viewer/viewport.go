@@ -25,6 +25,18 @@ const (
 	AbsoluteLineNumbers
 )
 
+// BackgroundMode represents whether or not the viewport background should
+// change colour depending on the mode. It can be disabled by setting the
+// viewport mode to StableBackground.
+type BackgroundMode uint8
+
+const (
+	// Background is context-sensitive
+	DefaultBackground = BackgroundMode(iota)
+	// background does not change colour
+	StableBackground
+)
+
 type Viewport struct {
 	demodel.Map
 	demodel.Renderer
@@ -39,6 +51,7 @@ type Viewport struct {
 	warnalpha uint8
 
 	lineNumberMode LineNumberMode
+	BackgroundMode BackgroundMode
 }
 
 type RequestRerender struct{}
@@ -129,11 +142,17 @@ func (v *Viewport) SetOption(opt string, val interface{}) error {
 			v.lineNumberMode = NoLineNumbers
 		}
 		return nil
+	case "BackgroundMode":
+		if m, ok := val.(BackgroundMode); ok {
+			v.BackgroundMode = m
+		} else {
+			v.BackgroundMode = DefaultBackground
+		}
+		return nil
 	default:
 		return demodel.ErrUnsupportedOption
 	}
 }
-
 func mult(x, y fixed.Int26_6) fixed.Int26_6 {
 	// multiplying two fixed-point precision values requires shifting
 	// the decimal 6 places to get it back to the right place. This will

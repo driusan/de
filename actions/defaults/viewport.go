@@ -15,7 +15,7 @@ func init() {
 	actions.RegisterAction("TermWidth", TermWidth)
 	actions.RegisterAction("WarnAlpha", WarnAlpha)
 	actions.RegisterAction("LineNumbers", LineNumberMode)
-
+	actions.RegisterAction("BackgroundMode", BackgroundMode)
 }
 
 func TermWidth(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
@@ -50,5 +50,14 @@ func LineNumberMode(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		v.SetOption("LineNumbers", viewer.NoLineNumbers)
 	default:
 		v.SetOption("RotateLineNumbers", nil)
+	}
+}
+
+func BackgroundMode(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	switch args {
+	case "stable":
+		v.SetOption("BackgroundMode", viewer.StableBackground)
+	default:
+		v.SetOption("BackgroundMode", viewer.DefaultBackground)
 	}
 }
