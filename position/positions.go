@@ -161,10 +161,11 @@ func NextLine(buff demodel.CharBuffer) (uint, error) {
 	for i := buff.Dot.End; i < uint(len(buff.Buffer)); i++ {
 		if buff.Buffer[i] == '\n' {
 			if nextLineStart == -1 {
-				// the line starts after the newline character, not on it.
 				nextLineStart = int(i)
 			} else {
-				subsequentLine = int(i)
+				// the line starts after the newline character,
+				// not on it, so add one to account for the \n.
+				subsequentLine = int(i + 1)
 				break
 			}
 		}
