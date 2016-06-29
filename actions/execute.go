@@ -161,7 +161,8 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 
 	//fmt.Printf("Running %s (%s)\n", cmd, newCmd)
 	// it wasn't an internal command, so run it through a shell.
-	gocmd := exec.Command("sh", "-c", string(newCmd))
+	shellCmd, shellArgs := getShellCmd()
+	gocmd := exec.Command(shellCmd, shellArgs, string(newCmd))
 	stdout, err := gocmd.StdoutPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
