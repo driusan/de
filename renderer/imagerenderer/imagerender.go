@@ -26,21 +26,21 @@ func (r ImageRenderer) Bounds(buf *demodel.CharBuffer) image.Rectangle {
 }
 func (r ImageRenderer) CanRender(buf *demodel.CharBuffer) bool {
 	// Check for a PNG signature
-	if len(buf.Buffer) > 8 && bytes.Compare(buf.Buffer[:8], []byte{
+	if len(buf.Buffer) > 8 && bytes.Equal(buf.Buffer[:8], []byte{
 		// PNG magic bytes/signature according to wikipedia.
 		0x89,
 		0x50, 0x4E, 0x47, // PNG
 		0x0D, 0x0A, // \r\n
 		0x1A,
 		0x0A,
-	}) == 0 {
+	}) {
 		return true
 	}
 
 	// Check for a JPEG signature.
-	if len(buf.Buffer) > 3 && bytes.Compare(buf.Buffer[:3], []byte{
+	if len(buf.Buffer) > 3 && bytes.Equal(buf.Buffer[:3], []byte{
 		0xFF, 0xD8, 0xFF,
-	}) == 0 {
+	}) {
 		// technically there's more to the signature than this, but different variations
 		// of JPEG have different signatures according to wikipedia and this is the part
 		// that's in common. It should be enough, since the high bit it set it's unlikely to

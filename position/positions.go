@@ -370,7 +370,7 @@ func NextWordStart(buff demodel.CharBuffer) (uint, error) {
 			foundSpace = true
 			continue
 		} else {
-			if foundSpace == true {
+			if foundSpace {
 				return i, nil
 			}
 		}
@@ -389,11 +389,11 @@ func PrevWordStart(buff demodel.CharBuffer) (uint, error) {
 	foundNonSpaceBeforeSpace := false
 	for i := buff.Dot.Start; i > 0; i-- {
 		if unicode.IsSpace(rune(buff.Buffer[i])) {
-			if foundNonSpaceBeforeSpace == true {
+			if foundNonSpaceBeforeSpace {
 				return i + 1, nil
 			}
 			foundSpace = true
-		} else if foundSpace == true {
+		} else if foundSpace {
 			foundNonSpaceBeforeSpace = true
 		}
 

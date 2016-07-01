@@ -95,7 +95,7 @@ func setOpenDot(buff *demodel.CharBuffer, params string) {
 				}
 			}
 
-			if currentLine >= lineNo && endNext == false {
+			if currentLine >= lineNo && !endNext {
 				// a column was provided, to set the cursor to that point
 				if columnNo > 0 {
 					buff.Dot.Start = uint(i + columnNo)
@@ -108,7 +108,7 @@ func setOpenDot(buff *demodel.CharBuffer, params string) {
 			}
 		}
 		// was the last line, so set the end to the end of the buffer.
-		if endNext == true {
+		if endNext {
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 		}
 	}

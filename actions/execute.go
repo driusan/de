@@ -212,7 +212,7 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	}
 	exiterr := gocmd.Wait()
 
-	if exiterr != nil && ignoreReturnCode == false {
+	if exiterr != nil && !ignoreReturnCode {
 		// Something went wrong, so log it and return without modifying the real
 		// buffer.
 		fmt.Fprintf(os.Stderr, "%s\n", exiterr)

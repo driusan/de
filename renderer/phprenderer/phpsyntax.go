@@ -180,10 +180,7 @@ func StartsLanguageDeliminator(r rune) bool {
 		',', ';':
 		return true
 	}
-	if unicode.IsSpace(r) {
-		return true
-	}
-	return false
+	return unicode.IsSpace(r)
 }
 
 // IsLanguageKeyword determins if a word starts a language keyword.
