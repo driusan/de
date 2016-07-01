@@ -1,4 +1,4 @@
-# The de Editor
+# The de Editor [![Build Status](https://travis-ci.org/driusan/de.svg?branch=master)](https://travis-ci.org/driusan/de)
 
 de is a programmer's editor. (Where that programmer happens to be [driusan](https://github.com/driusan/).)
 
