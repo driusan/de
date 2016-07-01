@@ -6,7 +6,7 @@ import (
 	"image/draw"
 )
 
-var UnsupportedOption error = errors.New("Unsupported Option")
+var ErrUnsupportedOption = errors.New("Unsupported Option")
 
 // A Renderer takes a character buffer and renders it to an image to be displayed in a viewport.
 type Renderer interface {

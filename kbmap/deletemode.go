@@ -14,7 +14,7 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		return DeleteMode, demodel.DirectionNone, nil
 	}
 	if buff == nil {
-		return NormalMode, demodel.DirectionNone, Invalid
+		return NormalMode, demodel.DirectionNone, ErrInvalid
 	}
 
 	// since some keys we're modify dot before calling DeleteCursor, we need to back it up
@@ -104,13 +104,13 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		buff.Undo.Dot = undoDot
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeRightArrow:
-		return DeleteMode, demodel.DirectionUp, ScrollRight
+		return DeleteMode, demodel.DirectionUp, ErrScrollRight
 	case key.CodeLeftArrow:
-		return DeleteMode, demodel.DirectionUp, ScrollLeft
+		return DeleteMode, demodel.DirectionUp, ErrScrollLeft
 	case key.CodeDownArrow:
-		return DeleteMode, demodel.DirectionUp, ScrollDown
+		return DeleteMode, demodel.DirectionUp, ErrScrollDown
 	case key.CodeUpArrow:
-		return DeleteMode, demodel.DirectionUp, ScrollUp
+		return DeleteMode, demodel.DirectionUp, ErrScrollUp
 	case key.Code4:
 		// $ is pressed, in most key maps..
 
@@ -158,5 +158,5 @@ func deleteMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			return DeleteMode, demodel.DirectionNone, nil
 		}
 	}
-	return DeleteMode, demodel.DirectionNone, Invalid
+	return DeleteMode, demodel.DirectionNone, ErrInvalid
 }

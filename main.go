@@ -214,18 +214,18 @@ func main() {
 				// special error codes that a keystroke can send to control the
 				// program
 				switch err {
-				case kbmap.ExitProgram:
+				case kbmap.ErrExitProgram:
 					if !buff.Dirty {
 						return
 					}
-				case kbmap.ScrollUp:
+				case kbmap.ErrScrollUp:
 					scrollSize := getKbScrollSizeY(e, wSize)
 
 					viewport.Location.Y -= scrollSize
 					if viewport.Location.Y < 0 {
 						viewport.Location.Y = 0
 					}
-				case kbmap.ScrollDown:
+				case kbmap.ErrScrollDown:
 					scrollSize := getKbScrollSizeY(e, wSize)
 
 					viewport.Location.Y += scrollSize
@@ -234,13 +234,13 @@ func main() {
 						// the last
 						viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
 					}
-				case kbmap.ScrollLeft:
+				case kbmap.ErrScrollLeft:
 					scrollSize := getKbScrollSizeX(e, wSize)
 					viewport.Location.X -= scrollSize
 					if viewport.Location.X < 0 {
 						viewport.Location.X = 0
 					}
-				case kbmap.ScrollRight:
+				case kbmap.ErrScrollRight:
 					scrollSize := getKbScrollSizeX(e, wSize)
 					viewport.Location.X += scrollSize
 					// we've scrolled too far down
@@ -375,7 +375,7 @@ func main() {
 				// mouse button. Left or right clicking uses the normal dot, middle uses
 				// the alternate so that things can be executed with parameters other than
 				// themselves.
-				var eDot *demodel.Dot = &evtBuff.Dot
+				var eDot = &evtBuff.Dot
 				/*
 						This doesn't seem to be working well enough to use yet.
 					if e.Button == mouse.ButtonMiddle {

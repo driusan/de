@@ -7,7 +7,7 @@ import (
 	"image"
 )
 
-// An DefaultImageMapper is a type that can be mixed in to
+// DefaultImageMapper is a type that can be mixed in to
 // renderers to provide a default implementation of
 // GetImageMap() equivalent to what would be used by the
 // NoSyntaxRenderer.
@@ -17,8 +17,8 @@ type DefaultImageMapper struct {
 	IMap        *ImageMap
 }
 
-func (i *DefaultImageMapper) InvalidateCache() {
-	i.IMap = nil
+func (imap *DefaultImageMapper) InvalidateCache() {
+	imap.IMap = nil
 }
 func (imap *DefaultImageMapper) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle) demodel.ImageMap {
 	if imap.IMap != nil && imap.LastBuf == buf && imap.LastBufSize == len(buf.Buffer) {

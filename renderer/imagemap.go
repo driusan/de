@@ -7,7 +7,7 @@ import (
 	"image"
 )
 
-var NoCharacter error = errors.New("No character under the mouse cursor.")
+var ErrNoCharacter = errors.New("No character under the mouse cursor.")
 
 type ImageLoc struct {
 	Loc fixed.Rectangle26_6
@@ -28,7 +28,7 @@ func (im ImageMap) At(x, y int) (uint, error) {
 			return m.Idx, nil
 		}
 	}
-	return 0, NoCharacter
+	return 0, ErrNoCharacter
 }
 
 // Returns the bounding rectangle for the character at index idx
@@ -42,5 +42,5 @@ func (im ImageMap) Get(idx uint) (image.Rectangle, error) {
 			}, nil
 		}
 	}
-	return image.ZR, NoCharacter
+	return image.ZR, ErrNoCharacter
 }

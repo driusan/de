@@ -8,12 +8,12 @@ import (
 	//"os"
 )
 
-var NoFile error = errors.New("Can not save empty filename or nil buffer.")
+var ErrNoFile = errors.New("Can not save empty filename or nil buffer.")
 
 func SaveFile(From, To demodel.Position, buff *demodel.CharBuffer) error {
 	if buff == nil || buff.Filename == "" {
 		buff.AppendTag("\nNo file to Save")
-		return NoFile
+		return ErrNoFile
 	}
 
 	// we don't care about positions, just write the file

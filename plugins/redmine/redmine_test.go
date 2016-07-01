@@ -16,7 +16,7 @@ import (
 func TestParseRedmineProjectsJSON(t *testing.T) {
 	// Use a string form of the output from http://www.redmine.org/projects.json for
 	// a test
-	var rpTest string = `{"projects":[{"id":1,"name":"Redmine","identifier":"redmine","description":"Redmine is a flexible project management web application written using Ruby on Rails framework.","status":1,"created_on":"2007-09-29T10:03:04Z","updated_on":"2009-03-15T11:35:11Z"}],"total_count":1,"offset":0,"limit":25}`
+	var rpTest = `{"projects":[{"id":1,"name":"Redmine","identifier":"redmine","description":"Redmine is a flexible project management web application written using Ruby on Rails framework.","status":1,"created_on":"2007-09-29T10:03:04Z","updated_on":"2009-03-15T11:35:11Z"}],"total_count":1,"offset":0,"limit":25}`
 	projects, err := parseRedmineProjectJSON(strings.NewReader(rpTest))
 	if err != nil {
 		t.Errorf("Error while parsing basic Redmine projects.json output %v\n", err)
@@ -30,8 +30,8 @@ func TestParseRedmineProjectsJSON(t *testing.T) {
 	if projects.Projects[0].Identifier != "redmine" {
 		t.Errorf("Unxpected name for Project 1. Expected redmine got %s\n", projects.Projects[0].Identifier)
 	}
-	if projects.Projects[0].Id != 1 {
-		t.Errorf("Unxpected name for Project 1. Expected redmine got %d\n", projects.Projects[0].Id)
+	if projects.Projects[0].ID != 1 {
+		t.Errorf("Unxpected name for Project 1. Expected redmine got %d\n", projects.Projects[0].ID)
 	}
 }
 
@@ -52,8 +52,8 @@ func TestParseRedmineIssuesJSON(t *testing.T) {
 		t.Errorf("Unexpected number of issues parsed. Expected 25 got %d\n", len(issues.Issues))
 
 	}
-	if issues.Issues[0].Id != 22943 {
-		t.Errorf("Incorrect Id for first issue. Expect 22943 but got %d\n", issues.Issues[0].Id)
+	if issues.Issues[0].ID != 22943 {
+		t.Errorf("Incorrect Id for first issue. Expect 22943 but got %d\n", issues.Issues[0].ID)
 	}
 	if issues.Issues[0].Subject != "Transfer " {
 		t.Errorf("Unexpected subject for first issue. Expected \"Transfer \" got \"%s\"", issues.Issues[0].Subject)
@@ -70,8 +70,8 @@ func TestParseRedmineIssueJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal("Could not load JSON for test issue.")
 	}
-	if issue.Id != 22944 {
-		t.Errorf("Unexpected Id for issue. Expected 22944 got %d", issue.Id)
+	if issue.ID != 22944 {
+		t.Errorf("Unexpected Id for issue. Expected 22944 got %d", issue.ID)
 	}
 	if issue.Subject != "EDI Faturamento FIAT" {
 		t.Errorf("Incorrect title for parsed issue.")
