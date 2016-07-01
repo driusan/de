@@ -6,14 +6,14 @@ package viewer
 import (
 	"errors"
 	"fmt"
-	"github.com/driusan/de/demodel"
-	"github.com/driusan/de/renderer"
-	"golang.org/x/image/math/fixed"
-	//	"github.com/driusan/de/kbmap"
-	"golang.org/x/exp/shiny/screen"
 	"image"
 	"image/color"
 	"image/draw"
+
+	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/renderer"
+	"golang.org/x/exp/shiny/screen"
+	"golang.org/x/image/math/fixed"
 )
 
 type Viewport struct {

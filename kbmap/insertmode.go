@@ -1,13 +1,13 @@
 package kbmap
 
 import (
-	//"fmt"
+	"unicode"
+	"unicode/utf8"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
 	"golang.org/x/mobile/event/key"
-	"unicode"
-	"unicode/utf8"
 )
 
 // Since we don't want to update the undo buffer for every single keystroke in

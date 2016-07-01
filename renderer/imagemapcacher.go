@@ -2,9 +2,10 @@ package renderer
 
 import (
 	"bytes"
+	"image"
+
 	"github.com/driusan/de/demodel"
 	"golang.org/x/image/math/fixed"
-	"image"
 )
 
 // DefaultImageMapper is a type that can be mixed in to

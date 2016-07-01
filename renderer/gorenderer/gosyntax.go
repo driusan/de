@@ -2,16 +2,15 @@ package renderer
 
 import (
 	"bytes"
-	//"fmt"
+	"image"
+	"image/draw"
+	"strings"
+	"unicode"
+
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
-	"image"
-	"unicode"
-	//	"image/color"
-	"image/draw"
-	"strings"
 )
 
 type GoSyntax struct {

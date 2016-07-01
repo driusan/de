@@ -2,12 +2,13 @@ package renderer
 
 import (
 	"bytes"
-	"github.com/driusan/de/demodel"
-	"golang.org/x/image/font"
-	"golang.org/x/image/math/fixed"
 	"image"
 	"image/color"
 	"image/draw"
+
+	"github.com/driusan/de/demodel"
+	"golang.org/x/image/font"
+	"golang.org/x/image/math/fixed"
 )
 
 // TaglineRenderer is like the default renderer which doesn't

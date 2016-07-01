@@ -3,9 +3,9 @@ package actions
 import (
 	"errors"
 	"fmt"
-	"github.com/driusan/de/demodel"
 	"io/ioutil"
-	//"os"
+
+	"github.com/driusan/de/demodel"
 )
 
 var ErrNoFile = errors.New("Can not save empty filename or nil buffer.")

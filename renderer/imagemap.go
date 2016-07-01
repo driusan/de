@@ -2,9 +2,10 @@ package renderer
 
 import (
 	"errors"
+	"image"
+
 	"github.com/driusan/de/demodel"
 	"golang.org/x/image/math/fixed"
-	"image"
 )
 
 var ErrNoCharacter = errors.New("No character under the mouse cursor.")

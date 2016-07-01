@@ -4,6 +4,7 @@ package renderer
 
 import (
 	"fmt"
+
 	"github.com/driusan/fonts"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"

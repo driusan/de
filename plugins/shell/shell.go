@@ -1,22 +1,19 @@
 package shell
 
 import (
-	//"bufio"
 	"bytes"
 	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"runtime"
+	"sync"
+	"time"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/kbmap"
-	"sync"
-	//"github.com/driusan/de/viewer"
 	"golang.org/x/mobile/event/key"
-	"io"
-	//"io/ioutil"
-	"os"
-	"os/exec"
-	"time"
-	//	"unicode/utf8"
-	"runtime"
 )
 
 // Create a thread safe wrapper around bytes.Buffer, so that our go routine can read

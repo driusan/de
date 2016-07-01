@@ -3,12 +3,13 @@ package actions
 import (
 	"bytes"
 	"fmt"
-	"github.com/driusan/de/demodel"
-	"github.com/driusan/de/position"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/position"
 )
 
 // Do does a built in action that's been registered.

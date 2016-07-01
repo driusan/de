@@ -2,16 +2,15 @@ package renderer
 
 import (
 	"bytes"
-	"github.com/driusan/de/demodel"
+	"image"
+	"image/draw"
+	"strings"
 	"unicode"
-	//"fmt"
+
+	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
-	"image"
-	//	"image/color"
-	"image/draw"
-	"strings"
 )
 
 type PHPSyntax struct {

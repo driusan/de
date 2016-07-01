@@ -1,13 +1,13 @@
 package kbmap
 
 import (
-	//"fmt"
+	"unicode"
+	"unicode/utf8"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
 	"golang.org/x/mobile/event/key"
-	"unicode"
-	"unicode/utf8"
 )
 
 func tagMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {

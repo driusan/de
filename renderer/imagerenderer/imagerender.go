@@ -2,13 +2,13 @@ package imagerenderer
 
 import (
 	"bytes"
-	//"fmt"
-	"github.com/driusan/de/demodel"
-	"github.com/driusan/de/renderer"
 	"image"
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
+
+	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/renderer"
 )
 
 type ImageRenderer struct {
