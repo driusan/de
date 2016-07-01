@@ -17,7 +17,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		return NormalMode, demodel.DirectionNone, nil
 	}
 	if buff == nil {
-		return NormalMode, demodel.DirectionNone, Invalid
+		return NormalMode, demodel.DirectionNone, ErrInvalid
 	}
 	switch e.Code {
 	case key.CodeEscape:
@@ -187,13 +187,13 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		// Arrow keys indicate their scroll direction via the error return value,
 		// they return demodel.DirectionNone to make sure both code paths don't accidentally
 		// get triggered
-		return NormalMode, demodel.DirectionNone, ScrollRight
+		return NormalMode, demodel.DirectionNone, ErrScrollRight
 	case key.CodeLeftArrow:
-		return NormalMode, demodel.DirectionNone, ScrollLeft
+		return NormalMode, demodel.DirectionNone, ErrScrollLeft
 	case key.CodeDownArrow:
-		return NormalMode, demodel.DirectionNone, ScrollDown
+		return NormalMode, demodel.DirectionNone, ErrScrollDown
 	case key.CodeUpArrow:
-		return NormalMode, demodel.DirectionNone, ScrollUp
+		return NormalMode, demodel.DirectionNone, ErrScrollUp
 	case key.Code0:
 		if e.Modifiers == 0 {
 			Repeat *= 10
@@ -370,5 +370,5 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 			return NormalMode, demodel.DirectionNone, nil
 		}
 	}
-	return NormalMode, demodel.DirectionNone, Invalid
+	return NormalMode, demodel.DirectionNone, ErrInvalid
 }

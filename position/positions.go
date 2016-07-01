@@ -7,7 +7,7 @@ import (
 	"unicode"
 )
 
-var Invalid error = errors.New("Invalid Position")
+var ErrInvalid = errors.New("Invalid Position")
 
 // DotStart can be used as a demodel.Position argument
 // to actions
@@ -35,27 +35,27 @@ func AltDotEnd(buff demodel.CharBuffer) (uint, error) {
 
 func TagDotStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return buff.Tagline.Dot.Start, nil
 }
 
 func TagDotEnd(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return buff.Tagline.Dot.End, nil
 }
 
 func TagAltDotStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return buff.Tagline.AltDot.Start, nil
 }
 func TagAltDotEnd(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return buff.Tagline.AltDot.End, nil
 }
@@ -64,18 +64,18 @@ func BuffStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) > 0 {
 		return 0, nil
 	}
-	return 0, Invalid
+	return 0, ErrInvalid
 }
 func BuffEnd(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) > 0 {
 		return uint(len(buff.Buffer) - 1), nil
 	}
-	return 0, Invalid
+	return 0, ErrInvalid
 }
 
 func PrevChar(buff demodel.CharBuffer) (uint, error) {
 	if buff.Dot.Start == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 
 	// BUG: This doesn't deal with multibyte UTF-8 runes.
@@ -83,21 +83,21 @@ func PrevChar(buff demodel.CharBuffer) (uint, error) {
 }
 func NextChar(buff demodel.CharBuffer) (uint, error) {
 	if buff.Dot.End >= uint(len(buff.Buffer)) {
-		return uint(len(buff.Buffer)) - 1, Invalid
+		return uint(len(buff.Buffer)) - 1, ErrInvalid
 	}
 	return buff.Dot.End + 1, nil
 }
 
 func PrevLine(buff demodel.CharBuffer) (uint, error) {
 	// how far into the current line is the current character?
-	var lineIdx int = -1
+	var lineIdx = -1
 
 	// where does the previous line start, so that we can index
 	// lineIdx into it at the end?
 	var prevLineStart, curLineStart int = -1, -1
 	for i := buff.Dot.Start; i > 0; i-- {
 		if uint(len(buff.Buffer)) <= i {
-			return buff.Dot.End, Invalid
+			return buff.Dot.End, ErrInvalid
 		}
 		if buff.Buffer[i] == '\n' {
 			if lineIdx == -1 {
@@ -126,22 +126,22 @@ func PrevLine(buff demodel.CharBuffer) (uint, error) {
 func NextLine(buff demodel.CharBuffer) (uint, error) {
 	// special case. We're at a newline, so the next line is just the next character..
 	if len(buff.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.End >= uint(len(buff.Buffer)) {
-		return uint(len(buff.Buffer) - 1), Invalid
+		return uint(len(buff.Buffer) - 1), ErrInvalid
 	}
 	if buff.Buffer[buff.Dot.End] == '\n' {
 		return buff.Dot.End + 1, nil
 	}
 	// how far into the current line is the current character?
-	var lineIdx int = -1
+	var lineIdx = -1
 
 	// calculate how far we are into the current line.
 	var nextLineStart, subsequentLine int = -1, -1
 	for i := buff.Dot.End; i > 0; i-- {
 		if uint(len(buff.Buffer)) <= i {
-			return buff.Dot.End, Invalid
+			return buff.Dot.End, ErrInvalid
 		}
 		if buff.Buffer[i] == '\n' {
 			if lineIdx == -1 {
@@ -185,7 +185,7 @@ func NextLine(buff demodel.CharBuffer) (uint, error) {
 
 	if pos >= uint(len(buff.Buffer)) {
 		// overflowed the buffer somehow, so return the end of the buffer
-		return uint(len(buff.Buffer)) - 1, Invalid
+		return uint(len(buff.Buffer)) - 1, ErrInvalid
 	}
 
 	// the line starts at the character after the \n, not on the \n itself.
@@ -194,10 +194,10 @@ func NextLine(buff demodel.CharBuffer) (uint, error) {
 
 func EndOfLine(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.End >= uint(len(buff.Buffer)) {
-		return uint(len(buff.Buffer)) - 1, Invalid
+		return uint(len(buff.Buffer)) - 1, ErrInvalid
 	}
 	if buff.Buffer[buff.Dot.End] == '\n' {
 		return buff.Dot.End, nil
@@ -212,7 +212,7 @@ func EndOfLine(buff demodel.CharBuffer) (uint, error) {
 
 func EndOfLineWithNewline(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.End >= uint(len(buff.Buffer)) {
 		return uint(len(buff.Buffer)), nil
@@ -229,7 +229,7 @@ func EndOfLineWithNewline(buff demodel.CharBuffer) (uint, error) {
 }
 func StartOfLine(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.Start == 0 {
 		return 0, nil
@@ -245,7 +245,7 @@ func StartOfLine(buff demodel.CharBuffer) (uint, error) {
 
 func CurWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.Start == 0 {
 		return 0, nil
@@ -270,7 +270,7 @@ func CurWordStart(buff demodel.CharBuffer) (uint, error) {
 func CurWordEnd(buff demodel.CharBuffer) (uint, error) {
 	switch len(buff.Buffer) {
 	case 0:
-		return 0, Invalid
+		return 0, ErrInvalid
 	case 1:
 		return 0, nil
 	}
@@ -291,7 +291,7 @@ func CurWordEnd(buff demodel.CharBuffer) (uint, error) {
 }
 func CurExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.Start == 0 {
 		return 0, nil
@@ -316,7 +316,7 @@ func CurExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
 func CurExecutionWordEnd(buff demodel.CharBuffer) (uint, error) {
 	switch len(buff.Buffer) {
 	case 0:
-		return 0, Invalid
+		return 0, ErrInvalid
 	case 1:
 		return 0, nil
 	}
@@ -337,28 +337,28 @@ func CurExecutionWordEnd(buff demodel.CharBuffer) (uint, error) {
 }
 func CurTagExecutionWordStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return CurExecutionWordStart(*buff.Tagline)
 }
 
 func CurTagExecutionWordEnd(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return CurExecutionWordEnd(*buff.Tagline)
 
 }
 func CurTagWordStart(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return CurWordStart(*buff.Tagline)
 }
 
 func CurTagWordEnd(buff demodel.CharBuffer) (uint, error) {
 	if buff.Tagline == nil || len(buff.Tagline.Buffer) == 0 {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	return CurWordEnd(*buff.Tagline)
 
@@ -375,12 +375,12 @@ func NextWordStart(buff demodel.CharBuffer) (uint, error) {
 			}
 		}
 	}
-	return buff.Dot.End, Invalid
+	return buff.Dot.End, ErrInvalid
 }
 
 func PrevWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 || buff.Dot.Start >= uint(len(buff.Buffer)) {
-		return 0, Invalid
+		return 0, ErrInvalid
 	}
 	if buff.Dot.Start == 0 {
 		return 0, nil

@@ -8,11 +8,11 @@ import (
 	"unicode"
 )
 
-var NoTagline = errors.New("No tagline exists for buffer")
+var ErrNoTagline = errors.New("No tagline exists for buffer")
 
 func (c *CharBuffer) AppendTag(val string) error {
 	if c == nil || c.Tagline == nil {
-		return NoTagline
+		return ErrNoTagline
 	}
 
 	c.Tagline.Buffer = append(c.Tagline.Buffer, []byte(val)...)

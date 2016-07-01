@@ -43,7 +43,7 @@ func DeleteCursor(From, To demodel.Position, buff *demodel.CharBuffer) {
 
 		// now adjust dot if it was inside the deleted range..
 		if buff.Dot.Start == dot.Start {
-			buff.Dot.Start -= 1
+			buff.Dot.Start--
 			buff.Dot.End = buff.Dot.Start
 		}
 	} else {

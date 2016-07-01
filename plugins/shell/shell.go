@@ -63,22 +63,22 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		// they return demodel.DirectionNone to make sure both code paths don't accidentally
 		// get triggered
 		if e.Direction == key.DirPress {
-			return s, demodel.DirectionNone, kbmap.ScrollRight
+			return s, demodel.DirectionNone, kbmap.ErrScrollRight
 		}
 		return s, demodel.DirectionNone, nil
 	case key.CodeLeftArrow:
 		if e.Direction == key.DirPress {
-			return s, demodel.DirectionNone, kbmap.ScrollLeft
+			return s, demodel.DirectionNone, kbmap.ErrScrollLeft
 		}
 		return s, demodel.DirectionNone, nil
 	case key.CodeDownArrow:
 		if e.Direction == key.DirPress {
-			return s, demodel.DirectionNone, kbmap.ScrollDown
+			return s, demodel.DirectionNone, kbmap.ErrScrollDown
 		}
 		return s, demodel.DirectionNone, nil
 	case key.CodeUpArrow:
 		if e.Direction == key.DirPress {
-			return s, demodel.DirectionNone, kbmap.ScrollUp
+			return s, demodel.DirectionNone, kbmap.ErrScrollUp
 		}
 		return s, demodel.DirectionNone, nil
 	// Special cases for control characters.

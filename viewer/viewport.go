@@ -40,12 +40,12 @@ func (v *Viewport) GetKeyboardMode() demodel.Map {
 	return v.Map
 }
 
-var KBLockedError error = errors.New("Keyboard mode is locked")
-var InvalidViewport error = errors.New("Invalid viewport")
+var ErrKBLocked = errors.New("Keyboard mode is locked")
+var ErrInvalidViewport = errors.New("Invalid viewport")
 
 func (v *Viewport) ResetLocation() error {
 	if v == nil {
-		return InvalidViewport
+		return ErrInvalidViewport
 	}
 	v.Location.X = 0
 	v.Location.Y = 0
@@ -56,7 +56,7 @@ func (v *Viewport) ResetLocation() error {
 // will fail.
 func (v *Viewport) LockKeyboardMode(m demodel.Map) error {
 	if v.kbLocked {
-		return KBLockedError
+		return ErrKBLocked
 	}
 	v.kbLocked = true
 	v.Map = m
@@ -67,17 +67,17 @@ func (v *Viewport) LockKeyboardMode(m demodel.Map) error {
 // parameter to ensure that it's the same caller that locked it.
 // It's not secure, but it prevents plugins from accidentally unlocking
 // someone else's locked keyboard.
-// Returns KBLockedError if d doesn't equal the mode that it's locked to.
+// Returns ErrKBLocked if d doesn't equal the mode that it's locked to.
 func (v *Viewport) UnlockKeyboardMode(d demodel.Map) error {
 	if v.Map == d {
 		v.kbLocked = false
 		return nil
 	}
-	return KBLockedError
+	return ErrKBLocked
 }
 func (v *Viewport) SetKeyboardMode(m demodel.Map) error {
 	if v.kbLocked {
-		return KBLockedError
+		return ErrKBLocked
 	}
 	v.Map = m
 	//fmt.Print("Set keyboard mode!")
@@ -109,7 +109,7 @@ func (v *Viewport) SetOption(opt string, val interface{}) error {
 		return fmt.Errorf("WarnAlpha must be in the range 0-255")
 
 	default:
-		return demodel.UnsupportedOption
+		return demodel.ErrUnsupportedOption
 	}
 }
 

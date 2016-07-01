@@ -27,11 +27,11 @@ type redmineIssueList struct {
 	Issues []redmineIssue `json:"issues"`
 }
 type redmineField struct {
-	Id   int    `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 type redmineIssue struct {
-	Id          int `json:"id"`
+	ID          int `json:"id"`
 	Subject     string
 	Description string
 	Priority    redmineField `json:"priority"`
@@ -64,7 +64,7 @@ type redmineProjects struct {
 	Projects []redmineProject `json:"projects"`
 }
 type redmineProject struct {
-	Id          int    `json:"id"`
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Identifier  string `json:"identifier"`
 	Description string `json:"description"`
@@ -197,7 +197,7 @@ func Redmine(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 			buff.AppendTag(err.Error())
 			return
 		}
-		fmt.Fprintf(&newBuffer, "Full URL: %s\nRedmine:%d\nAuthor:%s\nAssignee:%s\nPriority: %s\nStatus:%s\nSubject:%s\n\nDescription:\n%s\n", strings.TrimSuffix(url, ".json"+"?apikey="+apikey)+"/", issue.Id, issue.Author.Name, issue.AssignedTo.Name, issue.Priority.Name, issue.Status.Name, issue.Subject, strings.Replace(issue.Description, "\r", "", -1))
+		fmt.Fprintf(&newBuffer, "Full URL: %s\nRedmine:%d\nAuthor:%s\nAssignee:%s\nPriority: %s\nStatus:%s\nSubject:%s\n\nDescription:\n%s\n", strings.TrimSuffix(url, ".json"+"?apikey="+apikey)+"/", issue.ID, issue.Author.Name, issue.AssignedTo.Name, issue.Priority.Name, issue.Status.Name, issue.Subject, strings.Replace(issue.Description, "\r", "", -1))
 		buff.Filename = ""
 		buff.Buffer = newBuffer.Bytes()
 
@@ -238,7 +238,7 @@ func Redmine(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		}
 		fmt.Fprintf(&newBuffer, "\n")
 		for _, issue := range issues.Issues {
-			fmt.Fprintf(&newBuffer, "Redmine:%d (%s)\n", issue.Id, issue.Subject)
+			fmt.Fprintf(&newBuffer, "Redmine:%d (%s)\n", issue.ID, issue.Subject)
 		}
 		buff.Filename = ""
 		buff.Buffer = newBuffer.Bytes()
