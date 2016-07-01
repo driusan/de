@@ -17,42 +17,50 @@ position, like vi. Unlike vi, holding CTRL and typing a movement command
 instead expands the selection by that much movement similar to visual
 mode in vi.
 
--   `h`: move cursor left one char
--   `j`: move cursor down one char
--   `k`: move cursor up one char
--   `l`: move cursor right one char
--   `w`: move cursor to next word
--   `b`: move cursor to previous word start
--   `$`: move cursor to end of line
--   `^`: move cursor to start of line
--   `G`: go to line, or end of file with no prefix
+-   `h`: move left by *count* columns
+-   `j`: move down by *count* lines
+-   `k`: move up by *count *lines
+-   `l`: move right by *count* columns
 
-Add new text by entering Insert mode with `i` or `a`.
+-   `w`: move forward *count* words
+-   `b`: move back *count* words
+-   `$`: move to end of line
+-   `^`: move to start of line
+-   `G`: move to line, or last line without a prefix
 
--   `i`: insert before current selection
--   `a`: insert after current selection
+Add new text by entering Insert mode with `i`, `a` or `o`.
+
+-   `i`: insert before cursor
+-   `a`: append after cursor
 -   `o`: open a new line after the current line.
 
 Delete existing text can either happen with shorthands like Backspace or
 `x`, or with full Delete mode.
 
 -   `d`: enter Delete mode
--   `dd`: delete current line
--   `x`: delete current char
--   Backspace: delete durrently selected text (or previous character if
-    nothing is selected)
+-   `x`: delete currently selected text, or *count* characters forward
+-   Backspace: deletecurrently selected text, or previous character if
+    nothing is selected
 
 Some other common commands:
 
--   `p`: Paste
--   `u`: Undo
--   `J`: Join the selected lines together into a single line.
--   `;`: Give keyboard focus to tagline (see below for tagline usage)
--   `:`: Give keyboard focus to end of tagline (see below)
--   Up: scroll viewport up half a screen
--   Down: scroll viewport down half a screen
--   Esc: Save if buffer has been modified, Exit if buffer has not been
-    modified (so hitting Escape twice will Save and Exit)
+-   `p`: **Paste**
+-   `u`: **Undo**
+-   `J`: **Join** the selected lines together into a single line.
+-   `;`: give keyboard focus to tagline (see below for tagline usage)
+-   `:`: give keyboard focus to end of tagline (see below)
+-   Enter: open or perform action on currently selected text, or current
+    word if nothing is selected
+-   `/`: move to next occurence of currently selected text, or current
+    word if nothing is selected
+
+-   Left: scroll viewport left
+-   Up: scroll viewport up
+-   Down: scroll viewport down
+-   Right: scroll viewport right
+
+-   Esc: **SaveOrExit**: **Save** if buffer has been modified, **Exit** if buffer has not been
+    modified (so hitting Escape twice will **Save** and **Exit**)
 
 ### Insert Mode
 
@@ -67,6 +75,8 @@ location of the file.
 -   Down: move cursor down one line
 -   Right: move cursor right one char
 
+-   Escape: exit Insert mode to Normal mode
+
 ### Delete Mode
 
 Delete mode is similar to Normal mode, except the selected text plus the
@@ -76,7 +86,27 @@ a forward or backwards movement command.)
 The most recently deleted text will be put in the snarf buffer (or
 "clipboard", if you prefer), overwriting what was there previously.
 
--   Escape: exit Delete mode (without deleting anything)
+-   `h`: delete left *count* chars
+-   `j`: delete down *count* char
+-   `k`: delete up *count* chars
+-   `l`: delete right *count* char
+
+-   `x`: delete selected text, or current char if nothing selected
+-   `w`: delete to next *count* words
+-   `b`: delete to previous *count* words start
+-   `$`: delete to end of line
+-   `^`: delete to start of line
+-   `G`: delete to line, or end of file with no prefix
+
+-   `d`: delete *count* entire lines
+-   Backspace: delete selected text, or previous char if nothing selected
+
+-   Left: scroll viewport left
+-   Up: scroll viewport up
+-   Down: scroll viewport down
+-   Right: scroll viewport right
+
+-   Escape: exit Delete mode to Normal mode (without deleting anything)
 
 ## Mouse Usage
 
@@ -125,14 +155,7 @@ filename there is only for reference, and updated when a new file is opened if t
 happens to be a prefix. There is currently no way to change the filename and save the file to another
 name.
 
-Currently understood internal commands:
-Get (or Discard): Reload the current file from disk and discard changes
-Put (or Save): Save the current character buffer to disk, overwriting the existing file.
-Paste: Paste the Snarf buffer into the current location of the character buffer.
-Exit (or Quit): Quit de, discarding any changes.
-
-To be implemented:
-Copy (or Snarf), Cut, File:newfilename, Load:somefile, New:filename, etc.
+For details about all available commands, see COMMANDS.md.
 
 When the word (or selection) isn't an internal plugin command (generally commands with a capital first
 letter by convention, although that's not enforced), de will try to execute the shell command selected

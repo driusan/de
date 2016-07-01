@@ -74,3 +74,9 @@ These commands are still under development and are likely to have problems.
 	command line command that can be executed from `de` at some point in 
 	the future.)
 
+## To be Implemented
+
+* Copy (Snarf)
+* File:newfilename
+* Load:somefile
+* New:filename
