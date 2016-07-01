@@ -2,13 +2,14 @@ package hex
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
-	"image"
-	"image/color"
-	"image/draw"
 )
 
 type HexRenderer struct{}

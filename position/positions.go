@@ -2,9 +2,9 @@ package position
 
 import (
 	"errors"
-	//"fmt"
-	"github.com/driusan/de/demodel"
 	"unicode"
+
+	"github.com/driusan/de/demodel"
 )
 
 var Invalid error = errors.New("Invalid Position")

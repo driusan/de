@@ -2,16 +2,14 @@ package shell
 
 import (
 	"bytes"
-	//"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
-	"image"
-	//"unicode"
-	"image/color"
-	"image/draw"
-	//"strings"
 )
 
 type TerminalRenderer struct {

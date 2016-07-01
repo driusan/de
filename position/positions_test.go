@@ -1,8 +1,9 @@
 package position
 
 import (
-	"github.com/driusan/de/demodel"
 	"testing"
+
+	"github.com/driusan/de/demodel"
 )
 
 func TestPositionsDontOverflow(t *testing.T) {

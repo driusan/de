@@ -3,14 +3,15 @@ package actions
 import (
 	"bytes"
 	"fmt"
-	"github.com/driusan/de/demodel"
-	"github.com/driusan/de/viewer"
 	"image"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/driusan/de/demodel"
+	"github.com/driusan/de/viewer"
 )
 
 // setOpenDot sets dot when opening a file to the spec defined by

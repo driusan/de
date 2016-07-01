@@ -2,6 +2,7 @@ package kbmap
 
 import (
 	"errors"
+
 	"github.com/driusan/de/demodel"
 	"golang.org/x/mobile/event/key"
 )

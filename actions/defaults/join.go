@@ -1,10 +1,11 @@
 package defaults
 
 import (
+	"strconv"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
-	"strconv"
 )
 
 func init() {

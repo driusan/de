@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/driusan/de/actions"
-	"github.com/driusan/de/demodel"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/driusan/de/actions"
+	"github.com/driusan/de/demodel"
 )
 
 var configurl, apikey string

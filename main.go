@@ -2,6 +2,13 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/draw"
+	"io/ioutil"
+	"os"
+	"os/user"
+	"strings"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/kbmap"
@@ -15,13 +22,6 @@ import (
 	"golang.org/x/mobile/event/mouse"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
-	"image"
-	"image/draw"
-	"io/ioutil"
-	"os"
-	"os/user"
-	"strings"
-	//"runtime/pprof"
 )
 
 const (

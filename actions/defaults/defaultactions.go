@@ -2,13 +2,13 @@ package defaults
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
-	//"github.com/driusan/de/viewer"
 	"github.com/driusan/de/renderer"
-	"io/ioutil"
-	"os"
 )
 
 func init() {
