@@ -27,6 +27,14 @@ func (c *CharBuffer) ResetTagline() error {
 	return nil
 }
 
+func (c *CharBuffer) SetTagline(val string) error {
+	c.Tagline = &CharBuffer{Buffer: []byte(c.Filename)}
+	c.AppendTag(" | " + val)
+	c.Tagline.Dot.Start = uint(len(c.Tagline.Buffer))
+	c.Tagline.Dot.End = c.Tagline.Dot.Start
+	return nil
+}
+
 func getSnarfSaveDir() string {
 	u, err := user.Current()
 	if err != nil {
