@@ -200,10 +200,7 @@ func StartsLanguageDeliminator(r rune) bool {
 		',', ';':
 		return true
 	}
-	if unicode.IsSpace(r) {
-		return true
-	}
-	return false
+	return unicode.IsSpace(r)
 }
 func IsLanguageKeyword(pos int, runes []rune) bool {
 	if pos > 0 {

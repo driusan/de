@@ -228,13 +228,13 @@ func Redmine(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		// include the command that was used at the top, so it can just be modified to get
 		// somewhere else.
 		fmt.Fprintf(&newBuffer, "Redmine:%s\n", args)
-		if strings.Index(args, "assigned_to") == -1 {
+		if strings.Contains(args, "assigned_to") {
 			fmt.Fprintf(&newBuffer, "Redmine:%s,assigned_to_id=me\n", args)
 		}
-		if strings.Index(args, "limit") == -1 {
+		if strings.Contains(args, "limit") {
 			fmt.Fprintf(&newBuffer, "Redmine:%s,limit=50,offset=0\n", args)
 		}
-		if strings.Index(args, "sort") == -1 {
+		if strings.Contains(args, "sort") {
 			fmt.Fprintf(&newBuffer, "Redmine:%s,sort=priority\n", args)
 		}
 		fmt.Fprintf(&newBuffer, "\n")

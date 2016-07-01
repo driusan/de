@@ -65,7 +65,7 @@ func (rd *HTMLSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewpo
 				inStringDQ = false
 			} else {
 				// the " starts a string, but only if it's inside a tag.
-				if inTag == true {
+				if inTag {
 					writer.Src = &image.Uniform{renderer.StringColour}
 					inStringDQ = true
 				}
@@ -81,7 +81,7 @@ func (rd *HTMLSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewpo
 				}
 				inStringSQ = false
 			} else {
-				if inTag == true {
+				if inTag {
 					writer.Src = &image.Uniform{renderer.StringColour}
 					inStringSQ = true
 				}
@@ -91,13 +91,13 @@ func (rd *HTMLSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewpo
 				writer.Src = &image.Uniform{renderer.OperatorColour}
 			}
 		case '<':
-			if inTag == false && !inString {
+			if !inTag && !inString {
 				writer.Src = &image.Uniform{renderer.TagDelimitorColour}
 				inTag = true
 				nextColor = &image.Uniform{renderer.TagColour}
 			}
 		case '>':
-			if inTag == true && !inString {
+			if inTag && !inString {
 				writer.Src = &image.Uniform{renderer.TagDelimitorColour}
 				nextColor = &image.Uniform{renderer.TextColour}
 				inTag = false
