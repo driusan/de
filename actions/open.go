@@ -148,32 +148,7 @@ func OpenFile(filename string, buff *demodel.CharBuffer, v demodel.Viewport) err
 	// filename has been stat'ed and can generally be considered good to open.
 consideredgood:
 
-	switch fstat.IsDir() {
-	case false:
-		// it's a file
-
-		b, ferr := ioutil.ReadFile(filename)
-		if ferr != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			return ferr
-		}
-
-		oldFilename := buff.Filename
-		buff.Buffer = b
-		buff.Filename = filename
-		buff.Dot.Start = 0
-		buff.Dot.End = 0
-		buff.Dirty = false
-		if buff.Tagline.Buffer == nil {
-			buff.Tagline.Buffer = make([]byte, 0)
-		}
-		// if the tagline starts with the filename, update it, otherwise,
-		// add it as a prefix.
-		buff.Tagline.Buffer = append(
-			[]byte(filename+" "),
-			bytes.TrimPrefix(buff.Tagline.Buffer, []byte(oldFilename))...,
-		)
-	case true:
+	if fstat.IsDir() {
 		// it's a directory
 		files, err := ioutil.ReadDir(filename)
 		if err != nil {
@@ -205,7 +180,30 @@ consideredgood:
 			[]byte(filename+" "),
 			bytes.TrimPrefix(buff.Tagline.Buffer, []byte(oldFilename))...,
 		)
+	} else {
+		// it's a file
 
+		b, ferr := ioutil.ReadFile(filename)
+		if ferr != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", err)
+			return ferr
+		}
+
+		oldFilename := buff.Filename
+		buff.Buffer = b
+		buff.Filename = filename
+		buff.Dot.Start = 0
+		buff.Dot.End = 0
+		buff.Dirty = false
+		if buff.Tagline.Buffer == nil {
+			buff.Tagline.Buffer = make([]byte, 0)
+		}
+		// if the tagline starts with the filename, update it, otherwise,
+		// add it as a prefix.
+		buff.Tagline.Buffer = append(
+			[]byte(filename+" "),
+			bytes.TrimPrefix(buff.Tagline.Buffer, []byte(oldFilename))...,
+		)
 	}
 
 	// new file, nothing to undo yet..
