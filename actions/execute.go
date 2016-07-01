@@ -108,6 +108,37 @@ func OpenOrPerformAction(From, To demodel.Position, buff *demodel.CharBuffer, v 
 
 	RunOrExec(cmd, buff, v)
 }
+func OpenOrPerformTagAction(From, To demodel.Position, buff *demodel.CharBuffer, v demodel.Viewport) {
+	if buff == nil {
+		return
+	}
+
+	dot := demodel.Dot{}
+	i, err := From(*buff)
+	if err != nil {
+		return
+	}
+
+	dot.Start = i
+	i, err = To(*buff)
+	if err != nil {
+		return
+	}
+	dot.End = i
+
+	var cmd string
+	if dot.End+1 >= uint(len(buff.Buffer)) {
+		cmd = string(buff.Tagline.Buffer[dot.Start:])
+	} else {
+		cmd = string(buff.Tagline.Buffer[dot.Start : dot.End+1])
+	}
+
+	if err := OpenFile(cmd, buff, v); err == nil {
+		return
+	}
+
+	RunOrExec(cmd, buff, v)
+}
 
 type replaceMode uint8
 
