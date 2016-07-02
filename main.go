@@ -313,29 +313,28 @@ func main() {
 				}
 				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case mouse.Event:
-				// Some drivers (notable Mac and Windows)
-				// seem to only send scroll events as a DirNone event,
-				// which trips up by the code that tries to ensure we don't
-				// do anything if nothing changed. As a result, this hack
-				// fakes a DirPress event by just modifying the event struct
-				// before we do anything.
-				if e.Direction == mouse.DirNone &&
-					(e.Button == mouse.ButtonWheelUp ||
-						e.Button == mouse.ButtonWheelDown) {
-					e.Direction = mouse.DirPress
-				}
-
-				// No button changed state, and nothing is pressed.
-				// Skip doing anything in this mouse event, because
-				// there's nothing that could have changed which needs
-				// a rerender.
-
-				if e.Direction == mouse.DirNone &&
-					!MouseButtonMask[ButtonLeft] &&
-					!MouseButtonMask[ButtonMiddle] &&
-					!MouseButtonMask[ButtonRight] {
+				switch e.Direction {
+				case mouse.DirStep:
+					// Scroll wheel events don't really share
+					// much in common with other mouse wheel events,
+					// so just handle them and repaint
+					if viewport.HandleMouseWheel(e, &buff, clipRectangle(sz, viewport).Size()) {
+						paintWindow(screenBuffer, w, sz, &buff, viewport)
+					}
 					continue
+				case mouse.DirNone:
+					// If no button changed state, and nothing is pressed,
+					// then skip doing anything in this mouse event, because
+					// there's nothing that could have changed which needs
+					// a rerender.
+					if !MouseButtonMask[ButtonLeft] &&
+						!MouseButtonMask[ButtonMiddle] &&
+						!MouseButtonMask[ButtonRight] {
+						continue
+					}
+
 				}
+
 				tagEnd := tagSize.Max.Y
 
 				// the buffer that the mouse is over. Generally either the tagline,
@@ -418,35 +417,10 @@ func main() {
 							eDot.End = charIdx
 						}
 						MouseButtonMask[ButtonRight] = pressed
-					case mouse.ButtonWheelUp:
-						viewport.Location.Y -= 50
-						if viewport.Location.Y < 0 {
-							viewport.Location.Y = 0
-						}
-						paintWindow(screenBuffer, w, sz, &buff, viewport)
-
-					case mouse.ButtonWheelDown:
-						viewport.Location.Y += 50
-						wSize := sz.Size()
-
-						if viewport.Location.Y+wSize.Y > imgSize.Max.Y+50 {
-							// we can scroll a *little* past the end, so that it's easier to read
-							// the last
-							viewport.Location.Y = imgSize.Max.Y - wSize.Y + 50
-						}
-						//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
-						imgSize = viewport.Bounds(&buff)
-						paintWindow(screenBuffer, w, sz, &buff, viewport)
 					}
+
 				}
 
-				// nothing is pressed, so don't rerender. There's no possibility of something having changed in the view.
-				if e.Direction == mouse.DirNone &&
-					!MouseButtonMask[ButtonLeft] &&
-					!MouseButtonMask[ButtonRight] &&
-					!MouseButtonMask[ButtonMiddle] {
-					continue
-				}
 				if MouseButtonMask[ButtonLeft] || MouseButtonMask[ButtonRight] || MouseButtonMask[ButtonMiddle] {
 					// if it's outside the current selection, expand the selection.
 					if charIdx < eDot.Start {
@@ -533,13 +507,11 @@ func main() {
 					}
 					paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
-				//paintWindow(s, w, sz, buff)
 			case paint.Event:
 				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
-				//tagline.Width = wSize.X
 				if dpi == 0 {
 					dpi = float64(sz.PixelsPerPt) * 72
 					renderer.RecalculateFontFace(dpi)
@@ -556,15 +528,7 @@ func main() {
 				}
 				imgSize = viewport.Bounds(&buff)
 				tagSize = tagline.Bounds(buff.Tagline)
-				/*
-					img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
-					imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
-					imgSize = viewport.Bounds(&buff)
-					if buff.Tagline != nil {
-						tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
-						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
-					}
-				*/
+
 				if screenBuffer != nil {
 					// Release the old buffer.
 					screenBuffer.Release()
@@ -576,13 +540,10 @@ func main() {
 				}
 				paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case viewer.RequestRerender:
-				//fmt.Printf("Requesting rerender\n")
-				//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)
 				if buff.Tagline != nil {
 					tagSize = tagline.Bounds(buff.Tagline)
-					//tagimg, _ = tagline.Render(buff.Tagline, clipRectangle(sz, viewport))
 					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 				}
 				wSize := sz.Size()
@@ -598,7 +559,6 @@ func main() {
 				if wSize.Y >= imgSize.Max.Y {
 					viewport.Location.Y = 0
 				}
-
 				paintWindow(screenBuffer, w, sz, &buff, viewport)
 
 			}
