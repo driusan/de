@@ -50,73 +50,80 @@ func (rd *GoSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport
 		// Do this inside the loop anyways, in case someone changes it to a
 		// variable width font..
 		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
-		switch r {
-		case '\n':
-			if inLineComment && !inMultilineComment && !inString {
-				inLineComment = false
-				writer.Src = &image.Uniform{renderer.TextColour}
-			}
-		case '\'':
-			if !IsEscaped(i, runes) {
-				if inCharString {
-					// end of a string, colourize the quote too.
-					nextColor = &image.Uniform{renderer.TextColour}
-					inCharString = false
-				} else if !inLineComment && !inMultilineComment && !inString && !inStringLiteral {
-					inCharString = true
-					writer.Src = &image.Uniform{renderer.StringColour}
-				}
-			}
-		case '"':
-			if !IsEscaped(i, runes) {
-				if inString {
-					inString = false
-					nextColor = &image.Uniform{renderer.TextColour}
-				} else if !inLineComment && !inMultilineComment && !inCharString && !inStringLiteral {
-					inString = true
-					writer.Src = &image.Uniform{renderer.StringColour}
-				}
-			}
-		case '`':
-			// \ doesn't mean anything special inside of a string literal in Go. Don't check if it's
-			// escaped.
-			//if !IsEscaped(i, runes) {
-			if inStringLiteral {
+		if inStringLiteral {
+			if r == '`' {
+				nextColor = &image.Uniform{renderer.TextColour}
 				inStringLiteral = false
-				nextColor = &image.Uniform{renderer.TextColour}
-			} else if !inLineComment && !inMultilineComment && !inCharString && !inString {
-				inStringLiteral = true
-				writer.Src = &image.Uniform{renderer.StringColour}
 			}
-			//}
-		case '/':
-			if i+2 < len(runes) && string(runes[i:i+2]) == "//" {
-				if !inCharString && !inMultilineComment && !inString {
-					inLineComment = true
-					writer.Src = &image.Uniform{renderer.CommentColour}
-				}
-			} else if i+2 < len(runes) && string(runes[i:i+2]) == "/*" {
-				if !inCharString && !inString {
-					inMultilineComment = true
-					writer.Src = &image.Uniform{renderer.CommentColour}
-				}
-			}
-			if i > 1 && inMultilineComment && i+1 < len(runes) && string(runes[i-1:i+1]) == "*/" {
-				nextColor = &image.Uniform{renderer.TextColour}
-				inMultilineComment = false
-			}
-		case ' ', '\t':
-			if !inCharString && !inMultilineComment && !inString && !inLineComment {
-				writer.Src = &image.Uniform{renderer.TextColour}
-			}
-		default:
-			if !inCharString && !inMultilineComment && !inString && !inLineComment && !inStringLiteral {
-				if IsLanguageKeyword(i, runes) {
-					writer.Src = &image.Uniform{renderer.KeywordColour}
-				} else if IsLanguageType(i, runes) {
-					writer.Src = &image.Uniform{renderer.BuiltinTypeColour}
-				} else if StartsLanguageDeliminator(r) {
+		} else {
+			switch r {
+			case '\n':
+				if inLineComment && !inMultilineComment && !inString {
+					inLineComment = false
 					writer.Src = &image.Uniform{renderer.TextColour}
+				}
+			case '\'':
+				if !IsEscaped(i, runes) {
+					if inCharString {
+						// end of a string, colourize the quote too.
+						nextColor = &image.Uniform{renderer.TextColour}
+						inCharString = false
+					} else if !inLineComment && !inMultilineComment && !inString && !inStringLiteral {
+						inCharString = true
+						writer.Src = &image.Uniform{renderer.StringColour}
+					}
+				}
+			case '"':
+				if !IsEscaped(i, runes) {
+					if inString {
+						inString = false
+						nextColor = &image.Uniform{renderer.TextColour}
+					} else if !inLineComment && !inMultilineComment && !inCharString && !inStringLiteral {
+						inString = true
+						writer.Src = &image.Uniform{renderer.StringColour}
+					}
+				}
+			case '`':
+				// \ doesn't mean anything special inside of a string literal in Go. Don't check if it's
+				// escaped.
+				//if !IsEscaped(i, runes) {
+				if inStringLiteral {
+					inStringLiteral = false
+					nextColor = &image.Uniform{renderer.TextColour}
+				} else if !inLineComment && !inMultilineComment && !inCharString && !inString {
+					inStringLiteral = true
+					writer.Src = &image.Uniform{renderer.StringColour}
+				}
+				//}
+			case '/':
+				if i+2 < len(runes) && string(runes[i:i+2]) == "//" {
+					if !inCharString && !inMultilineComment && !inString {
+						inLineComment = true
+						writer.Src = &image.Uniform{renderer.CommentColour}
+					}
+				} else if i+2 < len(runes) && string(runes[i:i+2]) == "/*" {
+					if !inCharString && !inString {
+						inMultilineComment = true
+						writer.Src = &image.Uniform{renderer.CommentColour}
+					}
+				}
+				if i > 1 && inMultilineComment && i+1 < len(runes) && string(runes[i-1:i+1]) == "*/" {
+					nextColor = &image.Uniform{renderer.TextColour}
+					inMultilineComment = false
+				}
+			case ' ', '\t':
+				if !inCharString && !inMultilineComment && !inString && !inLineComment {
+					writer.Src = &image.Uniform{renderer.TextColour}
+				}
+			default:
+				if !inCharString && !inMultilineComment && !inString && !inLineComment && !inStringLiteral {
+					if IsLanguageKeyword(i, runes) {
+						writer.Src = &image.Uniform{renderer.KeywordColour}
+					} else if IsLanguageType(i, runes) {
+						writer.Src = &image.Uniform{renderer.BuiltinTypeColour}
+					} else if StartsLanguageDeliminator(r) {
+						writer.Src = &image.Uniform{renderer.TextColour}
+					}
 				}
 			}
 		}
