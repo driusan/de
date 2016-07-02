@@ -27,36 +27,46 @@ func (c *CharBuffer) ResetTagline() error {
 	return nil
 }
 
-func getSnarfSaveDir() string {
+// getHomeDir always returns some sort of home directory
+func getHomeDir() string {
 	u, err := user.Current()
 	if err != nil {
-		return ""
+		return os.Getenv("HOME")
 	}
-	return u.HomeDir + "/.de/snarf/"
+	return u.HomeDir
+}
+
+// ConfigHome returns the directory where configuration files are written
+func ConfigHome() string {
+	return getHomeDir() + "/.de"
+}
+
+// DataHome returns the directory where data files may be written
+func DataHome() string {
+	return getHomeDir() + "/.de"
+}
+
+func getSnarfSaveDir() string {
+	return DataHome() + "/snarf"
+}
+
+func getSnarfFile() string {
+	return getSnarfSaveDir() + "/default"
 }
 
 func getDefaultTagline() string {
-	u, err := user.Current()
-	if err != nil {
-		return ""
-	}
-	file := u.HomeDir + "/.de/tagline"
-	content, err := ioutil.ReadFile(file)
+	content, err := ioutil.ReadFile(ConfigHome() + "/tagline")
 	if err != nil {
 		return "Save Discard Cut Copy Paste Undo Exit"
 	}
 	return string(content)
 }
+
 func (c *CharBuffer) LoadSnarfBuffer() {
-	dir := getSnarfSaveDir()
-	if dir == "" {
-		return
-	}
-	sbuf, err := ioutil.ReadFile(dir + "default")
+	sbuf, err := ioutil.ReadFile(getSnarfFile())
 	if err != nil {
 		return
 	}
-	//fmt.Printf("Loading %s into snarf\n", sbuf)
 	c.SnarfBuffer = sbuf
 }
 
@@ -102,12 +112,8 @@ func (c *CharBuffer) JoinLines(from, to uint) {
 	c.Buffer = newBuffer
 	c.Dot.End = c.Dot.Start + uint(len(replaced))
 }
+
 func (c *CharBuffer) SaveSnarfBuffer() {
-	dir := getSnarfSaveDir()
-	if dir == "" {
-		return
-	}
-	//fmt.Printf("Saving %s\n", c.SnarfBuffer)
 	os.MkdirAll(getSnarfSaveDir(), 0700)
-	ioutil.WriteFile(dir+"default", c.SnarfBuffer, 0600)
+	ioutil.WriteFile(getSnarfFile(), c.SnarfBuffer, 0600)
 }

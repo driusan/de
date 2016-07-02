@@ -2,18 +2,13 @@ package redmine
 
 import (
 	"io/ioutil"
-	"os/user"
 	"strings"
-	//	"fmt"
+
+	"github.com/driusan/de/demodel"
 )
 
 func parseRedminePluginConfig() {
-	u, err := user.Current()
-	if err != nil {
-		return
-	}
-
-	config, err := ioutil.ReadFile(u.HomeDir + "/.de/redmine.ini")
+	config, err := ioutil.ReadFile(demodel.ConfigHome() + "/redmine.ini")
 	if err != nil {
 		return
 	}
