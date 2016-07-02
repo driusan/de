@@ -43,7 +43,7 @@ func PasteClipboard(From, To demodel.Position, buff *demodel.CharBuffer) {
 	copy(newBuffer[dot.Start+clipLen:], buff.Buffer[dot.End:])
 
 	buff.Buffer = newBuffer
-	buff.Dot.End = dot.Start + clipLen
+	buff.Dot.End = dot.Start + clipLen - 1
 	buff.Dirty = true
 
 }
@@ -64,7 +64,7 @@ func CopyClipboard(From, To demodel.Position, buff *demodel.CharBuffer) {
 	if err != nil {
 		return
 	}
-	dot.End = i
+	dot.End = i + 1
 	if err := clipboard.WriteAll(string(buff.Buffer[dot.Start:dot.End])); err != nil {
 		buff.AppendTag("\nError writing clipboard: " + err.Error())
 	}
@@ -86,7 +86,7 @@ func CutClipboard(From, To demodel.Position, buff *demodel.CharBuffer) {
 	if err != nil {
 		return
 	}
-	dot.End = i
+	dot.End = i + 1
 
 	if err := clipboard.WriteAll(string(buff.Buffer[dot.Start:dot.End])); err != nil {
 		buff.AppendTag("\nError cutting to clipboard: " + err.Error())
