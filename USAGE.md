@@ -130,7 +130,9 @@ laptop doesn't have a three button mouse.
 Words that are selected or clicked on can be "executed" to control the editor, either by
 selecting the word and then pressing the Enter key, or by clicking with the middle mouse button.
 (When executing with the keyboard, it will first check if the file exists and open it if applicable,
-similarly to searching with the mouse.) See COMMANDS.md for a list of built in commands.
+similarly to searching with the mouse.)
+
+For details about all built in commands, see COMMANDS.md.
 
 If executing a point in a word instead of a selection, that word will be executed.
 
@@ -155,8 +157,6 @@ filename there is only for reference, and updated when a new file is opened if t
 happens to be a prefix. There is currently no way to change the filename and save the file to another
 name.
 
-For details about all available commands, see COMMANDS.md.
-
 When the word (or selection) isn't an internal plugin command (generally commands with a capital first
 letter by convention, although that's not enforced), de will try to execute the shell command selected
 and pass the selected text (or the whole file if nothing is selected) to the processes's STDIN.
@@ -174,3 +174,8 @@ the return code, and insert the output even if the process reports an error.
 
 Finally, the scripts directory contains some wrapper scripts that may be useful to put in your path
 and execute from the tagline.
+
+## Startup Commands
+
+At startup, de will run any Commands in `~/.de/startup`. At the moment, this is
+probably only useful for setting **TermWidth**.

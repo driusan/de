@@ -43,6 +43,7 @@ func init() {
 	actions.RegisterAction("SaveOrQuit", SaveOrExit)
 	actions.RegisterAction("Paste", Paste)
 	actions.RegisterAction("ResetTagline", ResetTagline)
+	actions.RegisterAction("Tagline", Tagline)
 
 	// Change the renderer by name
 	actions.RegisterAction("Renderer", SwitchRenderer)
@@ -103,6 +104,10 @@ func Paste(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 
 func ResetTagline(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	buff.ResetTagline()
+}
+
+func Tagline(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	buff.SetTagline(args)
 }
 
 func SwitchRenderer(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
