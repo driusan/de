@@ -6,7 +6,6 @@ import (
 	"image/draw"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"strings"
 
 	"github.com/driusan/de/actions"
@@ -102,13 +101,7 @@ func getKbScrollSizeX(e key.Event, wSize image.Point) int {
 }
 
 func runStartupCommands(b *demodel.CharBuffer, v demodel.Viewport) {
-	u, err := user.Current()
-	if err != nil {
-		return
-	}
-	file := u.HomeDir + "/.de/startup"
-
-	data, err := ioutil.ReadFile(file)
+	data, err := ioutil.ReadFile(demodel.ConfigHome() + "/startup")
 	if err != nil {
 		return
 	}
