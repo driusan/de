@@ -30,26 +30,24 @@ func (r *DefaultSizeCalcer) Bounds(buf *demodel.CharBuffer) image.Rectangle {
 	r.LastBufSize = len(buf.Buffer)
 	r.LastBuf = buf
 
-	metrics := MonoFontFace.Metrics()
 	runes := bytes.Runes(buf.Buffer)
-	_, glyphWidth, _ := MonoFontFace.GlyphBounds('a')
 	rt := image.ZR
 	var lineSize fixed.Int26_6
 	for _, r := range runes {
 		switch r {
 		case '\t':
-			lineSize += glyphWidth * 8
+			lineSize += MonoFontGlyphWidth * 8
 		case '\n':
-			rt.Max.Y += metrics.Height.Ceil()
+			rt.Max.Y += MonoFontHeight.Ceil()
 			lineSize = 0
 		default:
-			lineSize += glyphWidth
+			lineSize += MonoFontGlyphWidth
 		}
 		if lineSize.Ceil() > rt.Max.X {
 			rt.Max.X = lineSize.Ceil()
 		}
 	}
-	rt.Max.Y += metrics.Height.Ceil() + 1
+	rt.Max.Y += MonoFontHeight.Ceil() + 1
 	r.SizeCache = rt
 	return rt
 }

@@ -27,35 +27,28 @@ func (r NoSyntaxRenderer) CanRender(*demodel.CharBuffer) bool {
 }
 
 func (r NoSyntaxRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
-	metrics := renderer.MonoFontFace.Metrics()
 	bounds := dst.Bounds()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
 		Face: renderer.MonoFontFace,
-		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+renderer.MonoFontAscent.Floor()),
 	}
 	runes := bytes.Runes(buf.Buffer)
 
-	// it's a monospace font, so only do this once outside of the for loop..
-	// use an M so that space characters are based on an em-quad if we change
-	// to a non-monospace font.
-	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
-
 	for i, r := range runes {
-		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
-		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
+		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - renderer.MonoFontAscent.Floor() + 1
 		switch r {
 		case '\t':
-			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
+			runeRectangle.Max.X = runeRectangle.Min.X + 8*renderer.MonoFontGlyphWidth.Ceil()
 		case '\n':
 			runeRectangle.Max.X = viewport.Max.X
 		default:
-			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
+			runeRectangle.Max.X = runeRectangle.Min.X + renderer.MonoFontGlyphWidth.Ceil()
 		}
-		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
+		runeRectangle.Max.Y = runeRectangle.Min.Y + renderer.MonoFontHeight.Ceil() + 1
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			return nil
@@ -76,10 +69,10 @@ func (r NoSyntaxRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, vi
 		}
 		switch r {
 		case '\t':
-			writer.Dot.X += glyphWidth * 8
+			writer.Dot.X += renderer.MonoFontGlyphWidth * 8
 			continue
 		case '\n':
-			writer.Dot.Y += metrics.Height
+			writer.Dot.Y += renderer.MonoFontHeight
 			writer.Dot.X = 0
 			continue
 		}

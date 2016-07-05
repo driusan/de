@@ -28,27 +28,20 @@ func (rd *MarkdownSyntax) CanRender(buf *demodel.CharBuffer) bool {
 }
 
 func (rd *MarkdownSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
-	metrics := renderer.MonoFontFace.Metrics()
 	bounds := dst.Bounds()
 	writer := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{renderer.TextColour},
-		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+renderer.MonoFontAscent.Floor()),
 		Face: renderer.MonoFontFace,
 	}
 	runes := bytes.Runes(buf.Buffer)
-
-	// Used for calculating the size of a tab.
-	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
 
 	var nextColor image.Image
 	// the beginning of a file is the start of the first line..
 	lineStart := true
 
 	for i, r := range runes {
-		// Do this inside the loop anyways, in case someone changes it to a
-		// variable width font..
-		_, glyphWidth, _ := renderer.MonoFontFace.GlyphBounds(r)
 		switch r {
 		case '\n':
 			lineStart = true
@@ -79,7 +72,7 @@ func (rd *MarkdownSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, vi
 
 		runeRectangle := image.Rectangle{}
 		runeRectangle.Min.X = writer.Dot.X.Ceil()
-		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
+		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - renderer.MonoFontAscent.Floor() + 1
 
 		if runeRectangle.Min.Y > viewport.Max.Y {
 			// no point in rendering past the end of the viewport
@@ -87,13 +80,13 @@ func (rd *MarkdownSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, vi
 		}
 		switch r {
 		case '\t':
-			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
+			runeRectangle.Max.X = runeRectangle.Min.X + 8*renderer.MonoFontGlyphWidth.Ceil()
 		case '\n':
 			runeRectangle.Max.X = viewport.Max.X
 		default:
-			runeRectangle.Max.X = runeRectangle.Min.X + glyphWidth.Ceil()
+			runeRectangle.Max.X = runeRectangle.Min.X + renderer.MonoFontGlyphWidth.Ceil()
 		}
-		runeRectangle.Max.Y = runeRectangle.Min.Y + metrics.Height.Ceil() + 1
+		runeRectangle.Max.Y = runeRectangle.Min.Y + renderer.MonoFontHeight.Ceil() + 1
 
 		if runeRectangle.Intersect(viewport) != image.ZR {
 			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
@@ -114,10 +107,10 @@ func (rd *MarkdownSyntax) RenderInto(dst draw.Image, buf *demodel.CharBuffer, vi
 
 		switch r {
 		case '\t':
-			writer.Dot.X += glyphWidth * 8
+			writer.Dot.X += renderer.MonoFontGlyphWidth * 8
 			continue
 		case '\n':
-			writer.Dot.Y += metrics.Height
+			writer.Dot.Y += renderer.MonoFontHeight
 			writer.Dot.X = 0
 			continue
 		}

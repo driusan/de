@@ -34,4 +34,10 @@ func RecalculateFontFace(dpi float64) {
 	if MonoFontFace == nil {
 		panic("Could not get font face.")
 	}
+
+	metrics := MonoFontFace.Metrics()
+	MonoFontHeight = metrics.Height
+	MonoFontAscent = metrics.Ascent
+	MonoFontAdvance, _ = MonoFontFace.GlyphAdvance('M')
+	_, MonoFontGlyphWidth, _ = MonoFontFace.GlyphBounds('a')
 }

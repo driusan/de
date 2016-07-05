@@ -28,13 +28,10 @@ func (r HexRenderer) Bounds(buf *demodel.CharBuffer) image.Rectangle {
 	//    So 65*glyphAdvance = Max.X
 	// We know that the number of rows is len(buf.Buffer) / 16 + 1, since there's 16
 	// bytes represented per line. So numRows * glyphHeight gives us the Max.Y.
-	metrics := renderer.MonoFontFace.Metrics()
 	numRows := (len(buf.Buffer) / 16) + 1
-	glyphSize, _ := renderer.MonoFontFace.GlyphAdvance('M') // arbitrary character
-	glyphHeight := metrics.Height.Ceil()
 	return image.Rectangle{
 		Min: image.ZP,
-		Max: image.Point{glyphSize.Ceil() * 65, numRows * glyphHeight},
+		Max: image.Point{renderer.MonoFontAdvance.Ceil() * 65, numRows * renderer.MonoFontHeight.Ceil()},
 	}
 }
 
@@ -42,13 +39,12 @@ func (r HexRenderer) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectang
 	return nil
 }
 func (r HexRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewport image.Rectangle) error {
-	metrics := renderer.MonoFontFace.Metrics()
 	bounds := dst.Bounds()
 	hexwriter := font.Drawer{
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
 		Face: renderer.MonoFontFace,
-		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X, bounds.Min.Y+renderer.MonoFontAscent.Floor()),
 	}
 
 	charStart := 500
@@ -56,7 +52,7 @@ func (r HexRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewpor
 		Dst:  dst,
 		Src:  &image.Uniform{color.Black},
 		Face: renderer.MonoFontFace,
-		Dot:  fixed.P(bounds.Min.X+charStart, bounds.Min.Y+metrics.Ascent.Floor()),
+		Dot:  fixed.P(bounds.Min.X+charStart, bounds.Min.Y+renderer.MonoFontAscent.Floor()),
 	}
 
 	for i, b := range buf.Buffer {
@@ -65,8 +61,8 @@ func (r HexRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, viewpor
 			charwriter.Dot.X = fixed.I(charStart)
 
 			if i > 0 {
-				hexwriter.Dot.Y += metrics.Height
-				charwriter.Dot.Y += metrics.Height
+				hexwriter.Dot.Y += renderer.MonoFontHeight
+				charwriter.Dot.Y += renderer.MonoFontHeight
 			}
 
 			offsetDraw(&hexwriter, fmt.Sprintf("%0.8x ", i), viewport)

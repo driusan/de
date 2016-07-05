@@ -82,7 +82,7 @@ func getKbScrollSizeY(e key.Event, wSize image.Point) int {
 	case (key.ModControl | key.ModAlt):
 		return 1
 	case key.ModControl, key.ModAlt:
-		return renderer.MonoFontFace.Metrics().Height.Ceil()
+		return renderer.MonoFontHeight.Ceil()
 	default:
 		return wSize.Y / 2
 	}
@@ -93,7 +93,7 @@ func getKbScrollSizeX(e key.Event, wSize image.Point) int {
 	case (key.ModControl | key.ModAlt):
 		return 1
 	case key.ModControl, key.ModAlt:
-		return renderer.MonoFontFace.Metrics().Height.Ceil()
+		return renderer.MonoFontHeight.Ceil()
 	default:
 		return wSize.X / 2
 	}
