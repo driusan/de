@@ -2,12 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image"
-	"image/draw"
-	"io/ioutil"
-	"os"
-	"strings"
-
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/kbmap"
@@ -21,6 +15,12 @@ import (
 	"golang.org/x/mobile/event/mouse"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
+	"image"
+	"image/draw"
+	"io/ioutil"
+	"os"
+	"strings"
+	"sync"
 )
 
 const (
@@ -40,7 +40,11 @@ func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
 var tagline demodel.Renderer
 var tagSize image.Rectangle
 
+var paintMutex sync.Mutex
+
 func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf *demodel.CharBuffer, viewport *viewer.Viewport) {
+	paintMutex.Lock()
+	defer paintMutex.Unlock()
 	if b == nil {
 		return
 	}
@@ -311,7 +315,7 @@ func main() {
 					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					tagSize = tagline.Bounds(buff.Tagline)
 				}
-				paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case mouse.Event:
 				switch e.Direction {
 				case mouse.DirStep:
@@ -319,7 +323,7 @@ func main() {
 					// much in common with other mouse wheel events,
 					// so just handle them and repaint
 					if viewport.HandleMouseWheel(e, &buff, clipRectangle(sz, viewport).Size()) {
-						paintWindow(screenBuffer, w, sz, &buff, viewport)
+						go paintWindow(screenBuffer, w, sz, &buff, viewport)
 					}
 					continue
 				case mouse.DirNone:
@@ -445,7 +449,7 @@ func main() {
 					// reviewport everything.
 					//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 					imgSize = viewport.Bounds(&buff)
-					paintWindow(screenBuffer, w, sz, &buff, viewport)
+					go paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
@@ -477,7 +481,7 @@ func main() {
 						tagSize = tagline.Bounds(buff.Tagline)
 						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					}
-					paintWindow(screenBuffer, w, sz, &buff, viewport)
+					go paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
 					if evtBuff == buff.Tagline {
@@ -505,10 +509,10 @@ func main() {
 						tagSize = tagline.Bounds(buff.Tagline)
 						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					}
-					paintWindow(screenBuffer, w, sz, &buff, viewport)
+					go paintWindow(screenBuffer, w, sz, &buff, viewport)
 				}
 			case paint.Event:
-				paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
@@ -538,7 +542,7 @@ func main() {
 					fmt.Fprintf(os.Stderr, "%v\n", err)
 					continue
 				}
-				paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go paintWindow(screenBuffer, w, sz, &buff, viewport)
 			case viewer.RequestRerender:
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)
@@ -559,7 +563,7 @@ func main() {
 				if wSize.Y >= imgSize.Max.Y {
 					viewport.Location.Y = 0
 				}
-				paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go paintWindow(screenBuffer, w, sz, &buff, viewport)
 
 			}
 		}

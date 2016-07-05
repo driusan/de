@@ -2,7 +2,6 @@ package viewer
 
 import (
 	"github.com/driusan/de/demodel"
-	"github.com/driusan/de/renderer"
 	"golang.org/x/mobile/event/mouse"
 	"image"
 )
@@ -12,26 +11,26 @@ import (
 func (v *Viewport) HandleMouseWheel(e mouse.Event, buff *demodel.CharBuffer, wSize image.Point) bool {
 	var scrollAmt int
 	var scrollAxis *int
-	lineSize := renderer.MonoFontFace.Metrics().Height.Ceil()
+
 	switch e.Button {
 	case mouse.ButtonWheelUp:
 		if v.Location.Y == 0 {
 			return false
 		}
 		scrollAxis = &v.Location.Y
-		scrollAmt = -lineSize
+		scrollAmt = -getScrollAmt()
 	case mouse.ButtonWheelDown:
 		if v.Location.Y == wSize.Y-50 {
 			return false
 		}
 		scrollAxis = &v.Location.Y
-		scrollAmt = lineSize
+		scrollAmt = getScrollAmt()
 	case mouse.ButtonWheelLeft:
 		scrollAxis = &v.Location.X
-		scrollAmt = -lineSize
+		scrollAmt = -getScrollAmt()
 	case mouse.ButtonWheelRight:
 		scrollAxis = &v.Location.X
-		scrollAmt = lineSize
+		scrollAmt = getScrollAmt()
 	default:
 		scrollAmt = 0
 		scrollAxis = nil
