@@ -532,6 +532,8 @@ func main() {
 				}
 				imgSize = viewport.Bounds(&buff)
 				tagSize = tagline.Bounds(buff.Tagline)
+				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
+				tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 
 				if screenBuffer != nil {
 					// Release the old buffer.
