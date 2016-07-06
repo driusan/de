@@ -2,6 +2,11 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"io/ioutil"
+	"os"
+	"strings"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/kbmap"
@@ -15,12 +20,6 @@ import (
 	"golang.org/x/mobile/event/mouse"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
-	"image"
-	"image/draw"
-	"io/ioutil"
-	"os"
-	"strings"
-	"sync"
 )
 
 const (
@@ -40,47 +39,6 @@ func clipRectangle(sz size.Event, viewport *viewer.Viewport) image.Rectangle {
 var tagline demodel.Renderer
 var tagSize image.Rectangle
 
-var paintMutex sync.Mutex
-
-func paintWindow(b screen.Buffer, w screen.Window, sz size.Event, buf *demodel.CharBuffer, viewport *viewer.Viewport) {
-	paintMutex.Lock()
-	defer paintMutex.Unlock()
-	if b == nil {
-		return
-	}
-	dst := b.RGBA()
-
-	// Fill the buffer with the window background colour before
-	// drawing the web page on top of it.
-	switch viewport.GetKeyboardMode() {
-	case kbmap.InsertMode:
-		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.InsertBackground}, image.ZP, draw.Src)
-	case kbmap.DeleteMode:
-		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.DeleteBackground}, image.ZP, draw.Src)
-	default:
-		draw.Draw(dst, dst.Bounds(), &image.Uniform{renderer.NormalBackground}, image.ZP, draw.Src)
-	}
-
-	s := sz.Size()
-
-	contentBounds := dst.Bounds()
-	tagBounds := tagSize
-	// ensure that the tag takes no more than half the window, so that the content doesn't get
-	// drowned out by commands that output more to stderr than they should.
-	if wHeight := sz.Size().Y; tagBounds.Max.Y > wHeight/2 {
-		tagBounds.Max.Y = wHeight / 2
-	}
-	contentBounds.Min.Y = tagBounds.Max.Y
-
-	//	draw.Draw(dst, contentBounds, buf, viewport.Location, draw.Over)
-	//	draw.Draw(dst, tagBounds, tagimage, image.ZP, draw.Over)
-	tagline.RenderInto(dst.SubImage(image.Rectangle{image.ZP, image.Point{s.X, tagBounds.Max.Y}}).(*image.RGBA), buf.Tagline, clipRectangle(sz, viewport))
-	viewport.RenderInto(dst.SubImage(image.Rectangle{image.Point{0, tagBounds.Max.Y}, s}).(*image.RGBA), buf, clipRectangle(sz, viewport))
-
-	w.Upload(image.Point{0, 0}, b, dst.Bounds())
-	w.Publish()
-	return
-}
 func getKbScrollSizeY(e key.Event, wSize image.Point) int {
 	switch e.Modifiers {
 	case (key.ModControl | key.ModAlt):
@@ -177,7 +135,6 @@ func main() {
 	var dpi float64
 	// when hitting enter from the tagline. If the mouse is still over
 	// the tagline, we should stay in tagmode.
-	var screenBuffer screen.Buffer
 
 	runStartupCommands(&buff, viewport)
 	driver.Main(func(s screen.Screen) {
@@ -187,6 +144,9 @@ func main() {
 			return
 		}
 		defer w.Release()
+		window := dewindow{
+			Window: w,
+		}
 		viewport.Window = w
 
 		for {
@@ -315,7 +275,7 @@ func main() {
 					tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					tagSize = tagline.Bounds(buff.Tagline)
 				}
-				go paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go window.paint(&buff, viewport)
 			case mouse.Event:
 				switch e.Direction {
 				case mouse.DirStep:
@@ -323,7 +283,7 @@ func main() {
 					// much in common with other mouse wheel events,
 					// so just handle them and repaint
 					if viewport.HandleMouseWheel(e, &buff, clipRectangle(sz, viewport).Size()) {
-						go paintWindow(screenBuffer, w, sz, &buff, viewport)
+						go window.paint(&buff, viewport)
 					}
 					continue
 				case mouse.DirNone:
@@ -449,7 +409,7 @@ func main() {
 					// reviewport everything.
 					//img, _ = viewport.Render(&buff, clipRectangle(sz, viewport))
 					imgSize = viewport.Bounds(&buff)
-					go paintWindow(screenBuffer, w, sz, &buff, viewport)
+					go window.paint(&buff, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
@@ -481,7 +441,7 @@ func main() {
 						tagSize = tagline.Bounds(buff.Tagline)
 						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					}
-					go paintWindow(screenBuffer, w, sz, &buff, viewport)
+					go window.paint(&buff, viewport)
 				}
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
 					if evtBuff == buff.Tagline {
@@ -509,10 +469,10 @@ func main() {
 						tagSize = tagline.Bounds(buff.Tagline)
 						tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 					}
-					go paintWindow(screenBuffer, w, sz, &buff, viewport)
+					go window.paint(&buff, viewport)
 				}
 			case paint.Event:
-				go paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go window.paint(&buff, viewport)
 			case size.Event:
 				sz = e
 				wSize := e.Size()
@@ -535,16 +495,11 @@ func main() {
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				tagmap = tagline.GetImageMap(buff.Tagline, clipRectangle(sz, viewport))
 
-				if screenBuffer != nil {
-					// Release the old buffer.
-					screenBuffer.Release()
-				}
-				screenBuffer, err = s.NewBuffer(wSize)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "%v\n", err)
+				if err := window.setSize(sz, s); err != nil {
+					fmt.Fprintf(os.Stderr, "Error: allocating buffer: %v\n", err)
 					continue
 				}
-				go paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go window.paint(&buff, viewport)
 			case viewer.RequestRerender:
 				imap = viewport.GetImageMap(&buff, clipRectangle(sz, viewport))
 				imgSize = viewport.Bounds(&buff)
@@ -565,7 +520,7 @@ func main() {
 				if wSize.Y >= imgSize.Max.Y {
 					viewport.Location.Y = 0
 				}
-				go paintWindow(screenBuffer, w, sz, &buff, viewport)
+				go window.paint(&buff, viewport)
 
 			}
 		}
