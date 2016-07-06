@@ -36,5 +36,4 @@ I also wouldn't be opposed to anyone doing work that makes progress on GitHub Is
 faithful vi key bindings.) The more I use de instead of vi, the more I get used to the idiosyncrasies,
 and the less likely I am to remember how it's supposed to work. (Similarly, if you're a long time
 acme user, I'm not opposed to any changes that make the mouse usage less surprising to acme users,
-although since de is cross-platform and can't assume p9p is installed, we can't assume the plumber
-is installed.)
+either.

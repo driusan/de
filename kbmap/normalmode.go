@@ -350,9 +350,17 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		return NormalMode, demodel.DirectionDown, nil
 	case key.CodeReturnEnter:
 		if buff.Dot.Start == buff.Dot.End {
-			actions.OpenOrPerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, buff, v)
+			// If the plumbing is ready to go, Plumb will add a click
+			// attribute. Otherwise, fall back on our executionword
+			// heuristic.
+			if actions.PlumbingReady {
+				actions.PlumbExecuteOrFindNext(position.DotStart, position.DotEnd, buff, v)
+			} else {
+				actions.OpenOrPerformAction(position.CurExecutionWordStart, position.CurExecutionWordEnd, buff, v)
+				//actions.PlumbExecuteOrFindNext(position.CurExecutionWordStart, position.CurExecutionWordEnd, buff, v)
+			}
 		} else {
-			actions.OpenOrPerformAction(position.DotStart, position.DotEnd, buff, v)
+			actions.PlumbExecuteOrFindNext(position.DotStart, position.DotEnd, buff, v)
 		}
 		// There's a possibility OpenOrPerformAction opened a new file, in which case
 		// we should scroll to the top, or inserted text, in which case we should scroll

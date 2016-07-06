@@ -20,6 +20,7 @@ See [USAGE.md](USAGE.md) for usage instructions.
 * vi-like keybindings and philosophy.
 * acme-like mouse bindings and philosophy.
 * Ability to write plugins in Go. See [PLUGINS.md](PLUGINS.md).
+* Ability to plumb with p9p plumber. See [PLUMBING.md](PLUMBING.md)
 
 ![de screenshot](https://driusan.github.io/de/descreenshot_code.png)
 
@@ -36,7 +37,7 @@ See [USAGE.md](USAGE.md) for usage instructions.
 It should be installable with the standard go tools:
 
 ```
-go get -u github.com/driusan/de
+go get -u github.com/driusan/de/...
 ```
 
 Then as long as $GOPATH/bin is in your path, you can launch with `de [filename]`

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
@@ -76,11 +77,11 @@ func runStartupCommands(b *demodel.CharBuffer, v demodel.Viewport) {
 }
 
 func main() {
-	/*
-		f, _ := os.Create("test.profile")
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	*/
+	dirtyChan := make(chan bool)
+
+	plumber := &plumbService{}
+	plumber.Connect(dirtyChan)
+
 	var sz size.Event
 	var filename string
 
@@ -124,6 +125,7 @@ func main() {
 
 	buff.LoadSnarfBuffer()
 	defer buff.SaveSnarfBuffer()
+
 	var MouseButtonMask [6]bool
 
 	viewport := &viewer.Viewport{
@@ -164,12 +166,84 @@ func main() {
 	// the tagline, we should stay in tagmode.
 
 	runStartupCommands(&buff, viewport)
+
+	// cache the last dirty status, so that we only send a message when
+	// it changes, instead of every single event
+	lastDirty := buff.Dirty
+
+	var w screen.Window
+
+	// Monitor the plumber service, and send it the buffer status
+	// as soon as it's available.
+	go func() {
+		// If it's not ready yet, wait for either an error or it to
+		// become available.
+		for !plumber.Available() {
+			// Select on the different channels that the plumbService
+			// may have sent on, and convert them to.
+			select {
+			case err := <-plumber.ErrorChan:
+				// If there was an error connecting before
+				// it became available, print it and abort
+				// the goroutine.
+				buff.AppendTag("\n" + err.Error())
+				return
+			default:
+				// Wait 200 milliseconds before trying again,
+				// there's no reason to be too greedy.
+				time.Sleep(200 * time.Millisecond)
+			}
+		}
+
+		// Buffer must be available if we got here, so make sure the buffer
+		// dirty status is up to date.
+		dirtyChan <- buff.Dirty
+		lastDirty = buff.Dirty
+
+		actions.PlumbingReady = true
+
+		// All that's left to do is continually wait for messages
+		// on either OpenChan or ErrorChan and act on them.
+		for {
+			select {
+			case err := <-plumber.ErrorChan:
+				// Print any errors that come in to the tagline.
+				buff.AppendTag("\n" + err.Error())
+			case filename := <-plumber.OpenChan:
+				// Open the requested file if we got something on openChan.
+				if err := actions.OpenFile(filename, &buff, viewport); err != nil {
+					buff.AppendTag("\n" + err.Error())
+					continue
+				}
+
+				// Reset the viewport to 0,0, get a new
+				// renderer for the correct content type,
+				// and request a new render of the
+				// current window.
+				viewport.Location.X = 0
+				viewport.Location.Y = 0
+
+				viewport.SetRenderer(
+					renderer.GetRenderer(&buff),
+				)
+				if w != nil {
+					w.Send(viewer.RequestRerender{})
+				}
+
+			}
+		}
+	}()
+
+	// Main shiny event loop
 	driver.Main(func(s screen.Screen) {
 
-		w, err := s.NewWindow(nil)
+		win, err := s.NewWindow(nil)
 		if err != nil {
 			return
 		}
+		// We need to store the window as w, so that it's available
+		// for the plumbService to use.
+		w = win
 		defer w.Release()
 		window := dewindow{
 			Window: w,
@@ -177,9 +251,24 @@ func main() {
 		viewport.Window = w
 
 		for {
+			if plumber.Available() {
+				// Send the dirty status if it changes.
+				if buff.Dirty != lastDirty {
+					dirtyChan <- buff.Dirty
+					lastDirty = buff.Dirty
+				}
+			}
+
+			// Handle the next actual event
 			switch e := w.NextEvent().(type) {
 			case lifecycle.Event:
-				if e.To == lifecycle.StageDead {
+				switch e.To {
+				case lifecycle.StageFocused:
+					if plumber.Available() {
+						dirtyChan <- buff.Dirty
+						lastDirty = buff.Dirty
+					}
+				case lifecycle.StageDead:
 					return
 				}
 			case key.Event:
@@ -441,17 +530,29 @@ func main() {
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonRight {
 					oldFilename := buff.Filename
 					if evtBuff == buff.Tagline {
-						if eDot.Start == eDot.End {
-							actions.FindNextOrOpenTag(position.CurTagWordStart, position.CurTagWordEnd, &buff, viewport)
+						if plumber.Available() {
+							if eDot.Start == eDot.End {
+								actions.TagPlumbOrFindNext(position.CurTagWordStart, position.CurTagWordEnd, &buff, viewport)
+							} else {
+								actions.TagPlumbOrFindNext(position.TagDotStart, position.TagDotEnd, &buff, viewport)
+							}
 						} else {
-							actions.FindNextOrOpenTag(position.TagDotStart, position.TagDotEnd, &buff, viewport)
+							if eDot.Start == eDot.End {
+								actions.FindNextOrOpenTag(position.CurTagWordStart, position.CurTagWordEnd, &buff, viewport)
+							} else {
+								actions.FindNextOrOpenTag(position.TagDotStart, position.TagDotEnd, &buff, viewport)
+							}
 						}
 					} else {
-						if eDot.Start == eDot.End {
-							actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, evtBuff, viewport)
-
+						if plumber.Available() {
+							actions.PlumbOrFindNext(position.DotStart, position.DotEnd, evtBuff, viewport)
 						} else {
-							actions.FindNextOrOpen(position.DotStart, position.DotEnd, evtBuff, viewport)
+							if eDot.Start == eDot.End {
+								actions.FindNextOrOpen(position.CurWordStart, position.CurWordEnd, evtBuff, viewport)
+
+							} else {
+								actions.FindNextOrOpen(position.DotStart, position.DotEnd, evtBuff, viewport)
+							}
 						}
 					}
 					if oldFilename != buff.Filename {
@@ -551,5 +652,6 @@ func main() {
 
 			}
 		}
+
 	})
 }
