@@ -1,0 +1,5 @@
+When a mouse event generates a click, the message plumbed includes a click
+attribute in order to make it easier for the plumber to get things right
+from context.
+
+The keyboard should do this too, when "enter" generates a plumbing event.

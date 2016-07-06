@@ -148,7 +148,7 @@ const (
 	replaceDot
 )
 
-func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
+func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) error {
 	// replace aliases before doing anything else
 	for name, value := range aliases {
 		if strings.HasPrefix(cmd, name) {
@@ -180,10 +180,10 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 
 		// it was an internal command, so run it.
 		f(string(newArgs), buff, v)
-		return
+		return nil
 	}
 	if len(cmd) <= 0 || buff == nil {
-		return
+		return fmt.Errorf("Could not run command")
 	}
 	var ignoreReturnCode bool
 	if cmd[0] == '!' {
@@ -220,21 +220,21 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	stdout, err := gocmd.StdoutPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return
+		return fmt.Errorf("Could not open STDOUT pipe")
 	}
 	stdin, err := gocmd.StdinPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return
+		return fmt.Errorf("Could not open STDIN pipe")
 	}
 	stderr, err := gocmd.StderrPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return
+		return fmt.Errorf("Could not open STDERR pipe")
 	}
 	if err := gocmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return
+		return fmt.Errorf("Could not execute command")
 	}
 
 	// send the selection to the processes's stdin, or the file if nothing
@@ -249,7 +249,7 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	output, err := ioutil.ReadAll(stdout)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return
+		return fmt.Errorf("Could not read output of command.")
 	}
 
 	// print stderr to the tagline if anything was printed to stderr. This needs to be
@@ -270,12 +270,14 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		// Something went wrong, so log it and return without modifying the real
 		// buffer.
 		fmt.Fprintf(os.Stderr, "%s\n", exiterr)
-		return
+		// The command exited with an error, but running the command
+		// was a success, so we don't error out.
+		return nil
 	}
 
 	if len(output) <= 0 {
 		// there was no output, so we don't need to do anything
-		return
+		return nil
 	}
 
 	switch mode {
@@ -321,6 +323,7 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		buff.Buffer = newBuffer
 	}
 	buff.Dirty = true
+	return nil
 }
 
 var aliases map[string]string
