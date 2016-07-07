@@ -34,6 +34,7 @@ type Renderer interface {
 
 // A Viewport represents the state of the window being rendered.
 type Viewport interface {
+	Renderer
 	// Returns the current KBMap mode that the viewport is in.
 	GetKeyboardMode() Map
 	// Requests that the KBMap be changed to a new mode for this viewport.
@@ -47,9 +48,11 @@ type Viewport interface {
 	//unlocking someone else's lock, not for security reasons.
 	UnlockKeyboardMode(Map) error
 
-	// Request that the viewport be rerendered.
-	GetRenderer() Renderer
+	// Request a change of the renderer to be used to render the main contents
+	// of this viewport
 	SetRenderer(Renderer) error
+
+	// Request that the viewport be rerendered.
 	Rerender()
 
 	ResetLocation() error

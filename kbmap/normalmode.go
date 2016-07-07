@@ -123,7 +123,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 				buff.Undo.Dot.End = uint(undoDot)
 				buff.Dot = buff.Undo.Dot
 			}
-			v.GetRenderer().InvalidateCache()
+			v.InvalidateCache()
 			Repeat = 0
 			return NormalMode, demodel.DirectionNone, nil
 		}

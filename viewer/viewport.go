@@ -84,10 +84,6 @@ func (v *Viewport) SetKeyboardMode(m demodel.Map) error {
 	return nil
 }
 
-func (v *Viewport) GetRenderer() demodel.Renderer {
-	return v.Renderer
-}
-
 func (v *Viewport) SetRenderer(r demodel.Renderer) error {
 	v.Renderer = r
 	return nil

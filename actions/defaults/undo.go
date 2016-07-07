@@ -16,7 +16,7 @@ func Undo(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		buff.Buffer = buff.Undo.Buffer
 		buff.Dot = buff.Undo.Dot
 		buff.Undo = buff.Undo.Undo
-		v.GetRenderer().InvalidateCache()
+		v.InvalidateCache()
 		v.Rerender()
 	}
 }

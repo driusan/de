@@ -49,5 +49,5 @@ func Join(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		buff.Undo.Dot.End = uint(undoDot)
 		buff.Dot = buff.Undo.Dot
 	}
-	v.GetRenderer().InvalidateCache()
+	v.InvalidateCache()
 }

@@ -220,12 +220,8 @@ func FocusViewport(idx uint, buff *demodel.CharBuffer, v demodel.Viewport) error
 	if v == nil {
 		return fmt.Errorf("No viewport")
 	}
-	r := v.GetRenderer()
-	if r == nil {
-		return fmt.Errorf("No renderer for viewport")
-	}
 
-	im := r.GetImageMap(buff, image.ZR)
+	im := v.GetImageMap(buff, image.ZR)
 	if im == nil {
 		return fmt.Errorf("Could not get image map for buffer.")
 	}
