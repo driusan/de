@@ -2,15 +2,33 @@ package shell
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
+	"os"
 
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/renderer"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
+
+// colours to use for ANSI escape codes
+var (
+	ansiBlack   image.Image = &image.Uniform{renderer.TextColour}
+	ansiRed     image.Image = &image.Uniform{color.RGBA{0x80, 0, 0, 0xff}}
+	ansiGreen   image.Image = &image.Uniform{color.RGBA{0, 0x80, 0, 0xff}}
+	ansiYellow  image.Image = &image.Uniform{color.RGBA{0x80, 0x80, 0, 0xff}}
+	ansiBlue    image.Image = &image.Uniform{color.RGBA{0, 0, 0x80, 0xff}}
+	ansiMagenta image.Image = &image.Uniform{color.RGBA{0x80, 0, 0x80, 0xff}}
+	ansiCyan    image.Image = &image.Uniform{color.RGBA{0, 0x80, 0x80, 0xff}}
+	ansiGray    image.Image = &image.Uniform{color.RGBA{0x80, 0x80, 0x80, 0xff}}
+)
+
+func init() {
+	renderer.RegisterRenderer("xterm", &TerminalRenderer{})
+}
 
 type TerminalRenderer struct {
 	renderer.DefaultSizeCalcer
@@ -49,22 +67,63 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 		switch r {
 		case 0x1B:
 			escapeStart = i
-			//fmt.Printf("In ANSI escape sequence: %d\n", escapeStart)
+			continue
+		case 0x8:
+			// Backspace. Just move the cursor backspace, because
+			// backspace and writing over it seems to be how OpenBSD
+			// indicates bold in its man pages.
+			writer.Dot.X -= glyphWidth
 			continue
 		}
 		if escapeStart >= 0 {
 			switch runes[escapeStart+1] {
 			case ']':
-				//fmt.Printf("Should be ending on ST or \b\n. What is ST?\n")
 				switch r {
 				case '\b', '\007', '\233':
-					//fmt.Printf("Leaving ANSI escape sequence ]%s\n", string(runes[escapeStart+1:i]))
 					escapeStart = -1
 				}
 				continue
 			case '[':
-				if r >= 64 && r <= 126 {
-					//fmt.Printf("Leaving ANSI escape sequence [%s\n", string(runes[escapeStart+1:i]))
+				if r >= 64 && r <= 126 && i != escapeStart+1 {
+					switch r {
+					case 'm':
+						// escapeStart is the \033 character,
+						// +1 is the [, after that is what
+						// we care about.
+						args := string(runes[escapeStart+2 : i])
+
+						switch args {
+						case "0", "":
+							// Reset everything
+							writer.Face = renderer.MonoFontFace
+							background = renderer.NormalBackground
+							writer.Src = ansiBlack
+						case "1":
+							writer.Face = renderer.MonoFontFaceBold
+						case "22":
+							writer.Face = renderer.MonoFontFace
+						case "30", "39":
+							writer.Src = ansiBlack
+						case "31":
+							writer.Src = ansiRed
+						case "32":
+							writer.Src = ansiGreen
+						case "33":
+							writer.Src = ansiYellow
+						case "34":
+							writer.Src = ansiBlue
+						case "35":
+							writer.Src = ansiMagenta
+						case "36":
+							writer.Src = ansiCyan
+						case "37":
+							writer.Src = ansiGray
+						case "38":
+							fmt.Fprintf(os.Stderr, "ANSI extended colours not implemented\n")
+						}
+					default:
+						fmt.Fprintf(os.Stderr, "ANSI command sequence %c not yet implemented.\n", r)
+					}
 					escapeStart = -1
 				}
 				continue
@@ -129,7 +188,7 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 			continue
 		case '\n':
 			writer.Dot.Y += metrics.Height
-			writer.Dot.X = 0
+			writer.Dot.X = fixed.I(bounds.Min.X)
 			continue
 		}
 

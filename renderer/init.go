@@ -11,7 +11,7 @@ import (
 // makes it easier to use default implementations built around them, as well
 // as ensures consistency between renderers of different languages.
 var (
-	MonoFontFace                                                        font.Face
+	MonoFontFace, MonoFontFaceBold                                      font.Face
 	MonoFontHeight, MonoFontAdvance, MonoFontGlyphWidth, MonoFontAscent fixed.Int26_6
 )
 

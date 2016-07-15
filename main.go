@@ -5,6 +5,7 @@ import (
 	"image"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/driusan/de/actions"
@@ -82,10 +83,28 @@ func main() {
 	*/
 	var sz size.Event
 	var filename string
+
+	_, cmd := filepath.Split(os.Args[0])
+
+	var pager bool
+	switch cmd {
+	case "dep", "less", "more":
+		pager = true
+	}
+
 	if len(os.Args) <= 1 {
 		// no file given on the command line, so open the curent directory and give a
 		// file listing that can be clicked on.
-		filename = "."
+		//
+		// If in pager mode, read from stdin instead. Pagers are usually
+		// passed a filename in /tmp, but as long as we're here we might
+		// as well give people an easy way to invoke de so that it reads
+		// from stdin
+		if pager {
+			filename = "-"
+		} else {
+			filename = "."
+		}
 	} else {
 		filename = os.Args[1]
 	}
@@ -108,9 +127,17 @@ func main() {
 	var MouseButtonMask [6]bool
 
 	viewport := &viewer.Viewport{
-		Map:      kbmap.NormalMode,
-		Renderer: renderer.GetRenderer(&buff),
+		Map: kbmap.NormalMode,
 	}
+
+	// If invoked as a pager, assume the xterm emulating renderer which
+	// understands (at least some) ANSI escape codes.
+	if pager {
+		viewport.Renderer = renderer.GetNamedRenderer("xterm")
+	} else {
+		viewport.Renderer = renderer.GetRenderer(&buff)
+	}
+
 	viewport.SetOption("TermWidth", 80)
 
 	// the renderer wasn't set yet when OpenFile was called, so do it now

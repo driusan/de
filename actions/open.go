@@ -116,12 +116,17 @@ func setOpenDot(buff *demodel.CharBuffer, params string) {
 }
 
 func OpenFile(filename string, buff *demodel.CharBuffer, v demodel.Viewport) error {
+	var pager bool
 	fstat, err := os.Stat(filename)
 
 	// when opening a file as file:lineno or file:lineno:column: or file:regex
 	// dot params is the part after the colon, denoting where to move dot after
 	// opening the file.
 	var dotparams string
+	if filename == "-" {
+		pager = true
+		goto consideredgood
+	}
 	if err != nil {
 		// check if it's a go style pathspec and try that instead.
 		if path := strings.Index(filename, ":"); path > 0 {
@@ -148,7 +153,7 @@ func OpenFile(filename string, buff *demodel.CharBuffer, v demodel.Viewport) err
 	// filename has been stat'ed and can generally be considered good to open.
 consideredgood:
 
-	if fstat.IsDir() {
+	if !pager && fstat.IsDir() {
 		// it's a directory
 		files, err := ioutil.ReadDir(filename)
 		if err != nil {
@@ -182,8 +187,13 @@ consideredgood:
 		)
 	} else {
 		// it's a file
-
-		b, ferr := ioutil.ReadFile(filename)
+		var b []byte
+		var ferr error
+		if pager == true {
+			b, ferr = ioutil.ReadAll(os.Stdin)
+		} else {
+			b, ferr = ioutil.ReadFile(filename)
+		}
 		if ferr != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", err)
 			return ferr
