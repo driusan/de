@@ -234,6 +234,9 @@ func (v *Viewport) RenderInto(dst draw.Image, buffer *demodel.CharBuffer, viewpo
 		// LineNumbers:relative
 		im := v.Renderer.GetImageMap(buffer, viewport)
 		var p image.Rectangle
+		if im == nil {
+			return fmt.Errorf("No imagemap for viewport")
+		}
 
 		if buffer.Dot.Start >= uint(len(buffer.Buffer)) {
 			p, _ = im.Get(uint(len(buffer.Buffer)) - 1)
@@ -293,6 +296,10 @@ func (v *Viewport) RenderInto(dst draw.Image, buffer *demodel.CharBuffer, viewpo
 		b := dst.Bounds()
 
 		im := v.Renderer.GetImageMap(buffer, viewport)
+		if im == nil {
+			return fmt.Errorf("No imagemap for viewport")
+		}
+
 		startChar, err := im.At(0, viewport.Min.Y)
 		if err != nil {
 			return err

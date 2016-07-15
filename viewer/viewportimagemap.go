@@ -1,7 +1,7 @@
 package viewer
 
 import (
-	//"fmt"
+	"fmt"
 	"image"
 
 	"github.com/driusan/de/demodel"
@@ -19,13 +19,20 @@ func (v *Viewport) GetImageMap(buf *demodel.CharBuffer, viewport image.Rectangle
 }
 
 func (i *offsetImageMap) At(x, y int) (uint, error) {
+	if i == nil || i.viewport == nil || i.viewport.Renderer == nil {
+		return 0, fmt.Errorf("Viewport renderer is nil")
+	}
 	switch i.viewport.lineNumberMode {
 	case NoLineNumbers:
 		return i.viewport.Renderer.GetImageMap(i.buf, i.visibleViewport).At(x, y)
 	default:
 		lineNumberOffset := renderer.MonoFontAdvance * 6
 		if x < lineNumberOffset.Ceil() {
-			return i.viewport.Renderer.GetImageMap(i.buf, i.visibleViewport).At(lineNumberOffset.Ceil(), y)
+			imap := i.viewport.Renderer.GetImageMap(i.buf, i.visibleViewport)
+			if imap == nil {
+				return 0, fmt.Errorf("Renderer imagemap is nil")
+			}
+			return imap.At(lineNumberOffset.Ceil(), y)
 		}
 		return i.viewport.Renderer.GetImageMap(i.buf, i.visibleViewport).At(x-lineNumberOffset.Floor(), y)
 	}
