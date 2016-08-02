@@ -301,15 +301,15 @@ func IsLanguageType(pos int, runes []rune) bool {
 
 	}
 	if len(runes) > pos+6 {
-		if unicode.IsSpace(runes[pos+5]) {
+		if StartsLanguageDeliminator(runes[pos+5]) {
 			switch string(runes[pos : pos+5]) {
-			case "uint8", "int16", "int32", "int64":
+			case "uint8", "int16", "int32", "int64", "error":
 				return true
 			}
 		}
 	}
 	if len(runes) > pos+7 {
-		if unicode.IsSpace(runes[pos+6]) {
+		if StartsLanguageDeliminator(runes[pos+6]) {
 			switch string(runes[pos : pos+6]) {
 			case "uint16", "uint32", "uint64", "string":
 				return true
