@@ -111,6 +111,7 @@ func (c *CharBuffer) JoinLines(from, to uint) {
 	}
 	c.Buffer = newBuffer
 	c.Dot.End = c.Dot.Start + uint(len(replaced))
+	c.Dirty = true
 }
 
 func (c *CharBuffer) SaveSnarfBuffer() {
