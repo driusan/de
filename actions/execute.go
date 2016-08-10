@@ -149,20 +149,42 @@ const (
 )
 
 func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	// replace aliases before doing anything else
+	for name, value := range aliases {
+		if strings.HasPrefix(cmd, name) {
+			cmd = strings.Replace(cmd, name, value, 1)
+		}
+	}
+
 	var actionCmd, actionArgs string = cmd, ""
+
+	// separate the argument from the value
 	if i := strings.Index(cmd, ":"); i >= 0 {
 		actionCmd = cmd[:i]
 		actionArgs = cmd[i+1:]
 	}
+
 	if f, ok := actions[actionCmd]; ok {
+		// replace : with spaces in internal command arguments unless
+		// they're escaped, so that it's easier to click. This needs
+		// to be done here, since we escape before getting to the code
+		// otherwise.
+		newArgs := make([]byte, len(actionArgs))
+		for i, r := range []byte(actionArgs) {
+			if r == ':' && i > 0 && actionArgs[i-1] != '\\' {
+				newArgs[i] = ' '
+			} else {
+				newArgs[i] = r
+			}
+		}
+
 		// it was an internal command, so run it.
-		f(actionArgs, buff, v)
+		f(string(newArgs), buff, v)
 		return
 	}
 	if len(cmd) <= 0 || buff == nil {
 		return
 	}
-	//fmt.Printf("Wait to run %s\n", cmd)
 	var ignoreReturnCode bool
 	if cmd[0] == '!' {
 		ignoreReturnCode = true
@@ -180,6 +202,7 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 	default:
 		mode = appendDot
 	}
+
 	// replace : with spaces unless they're escaped, so that it's easier
 	// to click
 	newCmd := make([]byte, len(cmd))
@@ -191,7 +214,6 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		}
 	}
 
-	//fmt.Printf("Running %s (%s)\n", cmd, newCmd)
 	// it wasn't an internal command, so run it through a shell.
 	shellCmd, shellArgs := getShellCmd()
 	gocmd := exec.Command(shellCmd, shellArgs, string(newCmd))
@@ -299,4 +321,30 @@ func RunOrExec(cmd string, buff *demodel.CharBuffer, v demodel.Viewport) {
 		buff.Buffer = newBuffer
 	}
 	buff.Dirty = true
+}
+
+var aliases map[string]string
+
+// Alias registers an alias for execution commands. It requires two parameters:
+// a name, and a value. When a command is executed by either pressing enter or
+// middle clicking, if the name is a prefix of the command, it's replaced by
+// the value before getting executed. This allows you to make replacements such
+// as Alias:s/:|sed:s/ in order to make the command s/foo/bar/ replaced by
+// |sed:s/foo/bar/ and pipe the current selection through sed.
+// There are no restrictions on names or values, other than that the name can
+// not contain a space, since it's used as a delimiter when registering the
+// alias.
+func Alias(args string, buff *demodel.CharBuffer, v demodel.Viewport) {
+	idx := strings.Index(args, " ")
+	if idx < 1 || idx+1 >= len(args) {
+		buff.AppendTag("\nAlias requires both a name and a value.")
+		return
+	}
+	name := args[0:idx]
+	val := args[idx+1:]
+
+	if aliases == nil {
+		aliases = make(map[string]string)
+	}
+	aliases[name] = val
 }

@@ -34,6 +34,11 @@ executing words.
 	line will be joined with the next line. If an argument is provided such
 	as Join:3 it will join that number of lines (similar to a prefix
 	modifier for `J` in vi.)
+* `Alias`: Creates an alias for a command to replace any prefix matching the
+	alias name with the alias value before executing it. For instance,
+	Alias:s/:|sed:s/ makes executing s/x/y/ get replaced by |sed:s/x/y/ so
+	that you don't need to explicitly/tediously pipe through sed to do regex
+	replacement.
 
 ## Viewport Commands
 * `ResetTagline`: Reset the tagline to what it would be if you had just opened
