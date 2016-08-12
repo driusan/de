@@ -23,6 +23,10 @@ executing words.
 * `SaveOrExit`: Save the file if the buffer is dirty, and Quit if the buffer is
 	clean. This is mostly to have a command that works the same as the
 	escape key. (Alias: `SaveOrQuit` for symmetry.)
+* `File`: Changes the filename used for the active buffer. File with no
+	arguments will print the current file name to the tagline. File with
+	an argument such as File:foo will change the filename for future Save or
+	Discard commands without modifying the buffer.
 
 ## Editing Commands
 
@@ -92,6 +96,5 @@ These commands are still under development and are likely to have problems.
 ## To be Implemented
 
 * Copy (Snarf)
-* File:newfilename
 * Load:somefile
 * New:filename
