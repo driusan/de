@@ -2,12 +2,12 @@ package renderer
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/driusan/fonts"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
-	//	"golang.org/x/image/font/basicfont"
-	"os"
+	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/gofont/gomonobold"
 )
 
 func RecalculateFontFace(dpi float64) {
@@ -32,13 +32,7 @@ func RecalculateFontFace(dpi float64) {
 	} else {
 		dpi = 96
 	}
-	ff, err := fonts.Asset("DejaVuSansMono.ttf")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not retrieve font: %s\n", err)
-		os.Exit(2)
-		return
-	}
-	ft, err := truetype.Parse(ff)
+	ft, err := truetype.Parse(gomono.TTF)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not parse font: %s\n", err)
 		os.Exit(3)
@@ -59,13 +53,7 @@ func RecalculateFontFace(dpi float64) {
 	_, MonoFontGlyphWidth, _ = MonoFontFace.GlyphBounds('a')
 
 	// Assume bold has the same metrics and just calculate the face.
-	ff, err = fonts.Asset("DejaVuSansMono-Bold.ttf")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not retrieve font: %s\n", err)
-		os.Exit(2)
-		return
-	}
-	ft, err = truetype.Parse(ff)
+	ft, err = truetype.Parse(gomonobold.TTF)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not parse font: %s\n", err)
 		os.Exit(3)
