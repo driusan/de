@@ -23,6 +23,7 @@ import (
 	// Syntax highlighting plugins.
 	_ "github.com/driusan/de/renderer/gorenderer"
 	_ "github.com/driusan/de/renderer/html"
+	_ "github.com/driusan/de/renderer/jsrenderer"
 	_ "github.com/driusan/de/renderer/markdown"
 	_ "github.com/driusan/de/renderer/phprenderer"
 )
