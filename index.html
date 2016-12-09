@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="De : A Programmer&#39;s Text Editor">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>De</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/driusan/de">View on GitHub</a>
+
+          <h1 id="project_title">De</h1>
+          <h2 id="project_tagline">A Programmer&#39;s Text Editor</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/driusan/de/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/driusan/de/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="the-de-editor-" class="anchor" href="#the-de-editor-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The de Editor <a href="https://travis-ci.org/driusan/de"><img src="https://travis-ci.org/driusan/de.svg?branch=master" alt="Build Status"></a>
+</h1>
+
+<p>de is a programmer's editor. (Where that programmer happens to be <a href="https://github.com/driusan/">driusan</a>.)</p>
+
+<p>It's kind of like a bastard child of vim and Plan 9's acme editor, because vim feels inadequate on a 
+computer with a mouse after using acme, and acme feels inadequate on a computer with a keyboard after 
+using vi.</p>
+
+<p>Like vim, it's a modal editor with syntax highlighting that uses hjkl for movement.
+Like acme, it attempts to exploit your current OS environment instead of replacing it and tries to
+make the mouse useful.</p>
+
+<p>See <a href="USAGE.md">USAGE.md</a> for usage instructions.</p>
+
+<p><img src="https://driusan.github.io/de/descreenshot_readme.png" alt="de screenshot"></p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Syntax highlighting (currently only Go and PHP with some basic markdown.)</li>
+<li>vi-like keybindings and philosophy.</li>
+<li>acme-like mouse bindings and philosophy.</li>
+<li>Ability to write plugins in Go. See <a href="PLUGINS.md">PLUGINS.md</a>.</li>
+</ul>
+
+<p><img src="https://driusan.github.io/de/descreenshot_code.png" alt="de screenshot"></p>
+
+<h2>
+<a id="limitations-and-bugs" class="anchor" href="#limitations-and-bugs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Limitations and Bugs</h2>
+
+<ul>
+<li>vi-like functionality not fully implemented (most notably some movement verbs like '%' are missing,
+and see notes in issue #1.)</li>
+<li>Can not open multiple files/windows at a time. (if your workflow is like mine, it means you often
+save and quit, do something in the shell, and then relaunch your editor. The startup time should
+be fast enough to support this style of workflow.)</li>
+</ul>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>It should be installable with the standard go tools:</p>
+
+<pre><code>go get -u github.com/driusan/de
+</code></pre>
+
+<p>Then as long as $GOPATH/bin is in your path, you can launch with <code>de [filename]</code></p>
+
+<h2>
+<a id="community" class="anchor" href="#community" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Community</h2>
+
+<p>There's now a #de channel on gophers.slack.com for users of this editor.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">De maintained by <a href="https://github.com/driusan">driusan</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
