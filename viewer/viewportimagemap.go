@@ -24,7 +24,11 @@ func (i *offsetImageMap) At(x, y int) (uint, error) {
 	}
 	switch i.viewport.lineNumberMode {
 	case NoLineNumbers:
-		return i.viewport.Renderer.GetImageMap(i.buf, i.visibleViewport).At(x, y)
+		im := i.viewport.Renderer.GetImageMap(i.buf, i.visibleViewport)
+		if im == nil {
+			return 0, fmt.Errorf("Renderer does not provide an image map.")
+		}
+		return im.At(x, y)
 	default:
 		lineNumberOffset := renderer.MonoFontAdvance * 6
 		if x < lineNumberOffset.Ceil() {
