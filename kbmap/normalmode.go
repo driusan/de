@@ -2,6 +2,7 @@ package kbmap
 
 import (
 	//"fmt"
+
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
 	"github.com/driusan/de/position"
@@ -31,21 +32,30 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		// screen and may need to scroll up
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeI:
+		if e.Modifiers&key.ModShift == key.ModShift {
+			actions.MoveCursor(position.StartOfLine, position.StartOfLine, buff)
+		}
+
 		return InsertMode, demodel.DirectionNone, nil
 	case key.CodeA:
 		if buff.Dot.End >= uint(len(buff.Buffer)) {
 			return InsertMode, demodel.DirectionDown, nil
 		}
-		if buff.Buffer[buff.Dot.End] == '\n' {
-			// vi doesn't actually let you navigate your cursor *on top*
-			// of the newline, while de does.
-			// It feels weird to push 'a' there and end up on the next
-			// line, so if we append to the end of a line, just leave
-			// the cursor end where it is,
-			actions.MoveCursor(position.DotEnd, position.DotEnd, buff)
-		} else {
-			actions.MoveCursor(position.NextChar, position.NextChar, buff)
 
+		if e.Modifiers&key.ModShift == key.ModShift {
+			actions.MoveCursor(position.EndOfLine, position.EndOfLine, buff)
+		} else {
+			if buff.Buffer[buff.Dot.End] == '\n' {
+				// vi doesn't actually let you navigate your cursor *on top*
+				// of the newline, while de does.
+				// It feels weird to push 'a' there and end up on the next
+				// line, so if we append to the end of a line, just leave
+				// the cursor end where it is,
+				actions.MoveCursor(position.DotEnd, position.DotEnd, buff)
+			} else {
+				actions.MoveCursor(position.NextChar, position.NextChar, buff)
+
+			}
 		}
 
 		// There's a potentially we pressed 'a' at the very end of the screen and
