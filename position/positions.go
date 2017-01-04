@@ -243,6 +243,33 @@ func StartOfLine(buff demodel.CharBuffer) (uint, error) {
 	return 0, nil
 }
 
+// StartOfLineAfterWhitespace returns the buffer index of the first character
+// in the current line that is not whitespace, or the end of the line if the
+// line is all whitespace.
+func StartOfLineAfterWhitespace(buff demodel.CharBuffer) (uint, error) {
+	if len(buff.Buffer) == 0 {
+		return 0, ErrInvalid
+	}
+
+	start, err := StartOfLine(buff)
+	if err != nil {
+		return 0, err
+	}
+
+	for i := start; i < uint(len(buff.Buffer)); i++ {
+		if buff.Buffer[i] == '\n' {
+			// The line is all whitespace
+			return i, nil
+		}
+		if buff.Buffer[i] == '\n' || !unicode.IsSpace(rune(buff.Buffer[i])) {
+			return i, nil
+		}
+	}
+
+	return 0, nil
+
+}
+
 func CurWordStart(buff demodel.CharBuffer) (uint, error) {
 	if len(buff.Buffer) == 0 {
 		return 0, ErrInvalid
