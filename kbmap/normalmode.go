@@ -33,7 +33,7 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		return NormalMode, demodel.DirectionUp, nil
 	case key.CodeI:
 		if e.Modifiers&key.ModShift == key.ModShift {
-			actions.MoveCursor(position.StartOfLine, position.StartOfLine, buff)
+			actions.MoveCursor(position.StartOfLineAfterWhitespace, position.StartOfLineAfterWhitespace, buff)
 		}
 
 		return InsertMode, demodel.DirectionNone, nil
