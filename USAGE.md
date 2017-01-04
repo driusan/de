@@ -31,7 +31,9 @@ mode in vi.
 Add new text by entering Insert mode with `i`, `a` or `o`.
 
 -   `i`: insert before cursor
+-   'I': insert at start of line (after any whitespace characters.)
 -   `a`: append after cursor
+-   'A': append at end of the current line.
 -   `o`: open a new line after the current line.
 
 Delete existing text can either happen with shorthands like Backspace or
