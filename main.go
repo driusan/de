@@ -1,12 +1,10 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"image"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -79,9 +77,6 @@ func runStartupCommands(b *demodel.CharBuffer, v demodel.Viewport) {
 }
 
 func main() {
-	fg := flag.Bool("fg", false, "do not detach from the terminal after spawning de window")
-	flag.Parse()
-	args := flag.Args()
 	dirtyChan := make(chan bool)
 
 	plumber := &plumbService{}
@@ -96,17 +91,9 @@ func main() {
 	switch cmd {
 	case "dep", "less", "more":
 		pager = true
-	default:
-		if *fg == false {
-			arg := []string{"-fg", "true"}
-			arg = append(arg, os.Args[1:]...)
-			cmd := exec.Command(os.Args[0], arg...)
-			cmd.Start()
-			os.Exit(0)
-		}
 	}
 
-	if len(args) <= 1 {
+	if len(os.Args) <= 1 {
 		// no file given on the command line, so open the curent directory and give a
 		// file listing that can be clicked on.
 		//
@@ -120,7 +107,7 @@ func main() {
 			filename = "."
 		}
 	} else {
-		filename = args[1]
+		filename = os.Args[1]
 	}
 	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{Buffer: make([]byte, 0)}}
 	if err := actions.OpenFile(filename, &buff, nil); err != nil {
