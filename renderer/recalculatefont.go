@@ -15,6 +15,11 @@ import (
 )
 
 func RecalculateFontFace(dpi float64) {
+	if dpi == 0 {
+		// If called with the 0 value, continue to use our
+		// default.
+		return
+	}
 	ft, err := truetype.Parse(gomono.TTF)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not parse font: %s\n", err)
