@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -77,6 +78,9 @@ func runStartupCommands(b *demodel.CharBuffer, v demodel.Viewport) {
 }
 
 func main() {
+	delete := flag.Bool("delete", false, "Delete the file passed as a parameter after opening it")
+	fname := flag.String("filename", "", "Use filename as the buffer's filename after opening, instead of basing it on the file's real filename")
+
 	dirtyChan := make(chan bool)
 
 	plumber := &plumbService{}
@@ -93,7 +97,9 @@ func main() {
 		pager = true
 	}
 
-	if len(os.Args) <= 1 {
+	flag.Parse()
+	args := flag.Args()
+	if len(args) == 0 {
 		// no file given on the command line, so open the curent directory and give a
 		// file listing that can be clicked on.
 		//
@@ -107,20 +113,32 @@ func main() {
 			filename = "."
 		}
 	} else {
-		filename = os.Args[1]
+		filename = args[0]
 	}
 	buff := demodel.CharBuffer{Filename: filename, Tagline: &demodel.CharBuffer{Buffer: make([]byte, 0)}}
 	if err := actions.OpenFile(filename, &buff, nil); err != nil {
-
 		// An unhandled error occured
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "%s\n", err)
 			return
 		}
+
 		// the error was just that the file doesn't exist, it'll be created on
 		// save
 		buff.Buffer = make([]byte, 0)
 	}
+
+	// -delete was passed, so unless it's stdin or no
+	// parameters, delete it.
+	if *delete && filename != "-" && len(args) >= 1 {
+		os.Remove(filename)
+	}
+	// We were told to pretend the buffer has a different
+	// filename, so do so.
+	if *fname != "" {
+		buff.Filename = *fname
+	}
+
 	buff.ResetTagline()
 
 	buff.LoadSnarfBuffer()

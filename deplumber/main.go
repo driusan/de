@@ -1,3 +1,5 @@
+// +build !plan9
+
 // The deplumber is a service which coordinates the running de processes
 // to ensure that they don't act on the same plumber message. When it reads
 // a plumbing message from the edit port, it will open it in the active de
