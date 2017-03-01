@@ -255,7 +255,7 @@ func main() {
 	// Main shiny event loop
 	driver.Main(func(s screen.Screen) {
 
-		win, err := s.NewWindow(nil)
+		win, err := s.NewWindow(&screen.NewWindowOptions{Title: "de"})
 		if err != nil {
 			return
 		}
