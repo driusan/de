@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"runtime"
 	"sync"
+	"syscall"
 	//"time"
 
 	"github.com/kr/pty"
@@ -83,7 +84,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 	// Special cases for control characters.
 	case key.CodeTab:
 		if e.Direction != key.DirPress {
-			buff.Buffer = append(buff.Buffer, '\t')
+			//buff.Buffer = append(buff.Buffer, '\t')
 			fmt.Fprintf(s.stdin, "%c", '\t')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
@@ -92,7 +93,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		//	fmt.Printf("Pressed key %s. Rune is %x", e, e.Rune
 	case key.CodeDeleteBackspace:
 		if e.Direction != key.DirPress {
-			buff.Buffer = buff.Buffer[:len(buff.Buffer)-1] //append(buff.Buffer, "\t")
+			//buff.Buffer = buff.Buffer[:len(buff.Buffer)-1] //append(buff.Buffer, "\t")
 			fmt.Fprintf(s.stdin, "%c", '\b')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
@@ -100,7 +101,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		return s, demodel.DirectionDown, nil
 	case key.CodeReturnEnter:
 		if e.Direction != key.DirPress {
-			buff.Buffer = append(buff.Buffer, '\n')
+			//buff.Buffer = append(buff.Buffer, '\n')
 			fmt.Fprintf(s.stdin, "%c", '\n')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
@@ -154,11 +155,16 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 			}
 		}
 
-		c := exec.Command(shell, "-i")
+		c := exec.Command(shell)
 		master, slave, err := pty.Open()
 		if err != nil {
 			// FIXME: add better error handling.
 			panic(err)
+		}
+		c.SysProcAttr = &syscall.SysProcAttr{
+			Setsid:  true,
+			Setctty: true,
+			Ctty:    int(master.Fd()),
 		}
 		kbMap := &shellKbmap{slave}
 		viewport.LockKeyboardMode(kbMap)
@@ -169,6 +175,13 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 		c.Stderr = master
 		c.Stdin = master
 		c.Start()
+		defer func() {
+			viewport.UnlockKeyboardMode(kbMap)
+			viewport.SetKeyboardMode(kbmap.NormalMode)
+			c.Wait()
+			fmt.Fprintf(os.Stderr, "Shell exited\n")
+		}()
+
 		viewport.SetRenderer(&TerminalRenderer{})
 		for {
 			if buff.Filename != "" {
@@ -181,9 +194,5 @@ func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
 
 			io.Copy(buff, slave)
 		}
-		c.Wait()
-		fmt.Fprintf(os.Stderr, "Shell exited\n")
-		viewport.UnlockKeyboardMode(kbMap)
-		viewport.SetKeyboardMode(kbmap.NormalMode)
 	}()
 }
