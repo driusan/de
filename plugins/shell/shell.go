@@ -8,7 +8,9 @@ import (
 	"os/exec"
 	"runtime"
 	"sync"
-	"time"
+	//"time"
+
+	"github.com/kr/pty"
 
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
@@ -106,6 +108,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		}
 		return s, demodel.DirectionDown, nil
 	default:
+		println("Pressed", e.Rune)
 		if e.Direction != key.DirPress && e.Rune > 0 {
 			// send the rune to the buffer and to the shell
 			//rbytes := make([]byte, 4)
@@ -140,66 +143,43 @@ func init() {
 
 // Shell invokes an interactive shell terminal similarly to "win" in ACME
 func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
-	//cmd.Start()
-	//scanner := bufio.NewScanner(cmdReader)
-	//buff.KeyboardMode = &shellKbmap{}
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		switch runtime.GOOS {
-		case "plan9":
-			shell = "rc"
-		default:
-			shell = "sh"
-		}
-	}
-
-	c := exec.Command(shell, "-i")
-	//c := exec.Command("sh")
-	stdin, _ := c.StdinPipe()
-	kbMap := &shellKbmap{stdin}
-	viewport.LockKeyboardMode(kbMap)
-
-	buff.Filename = ""
-
 	go func() {
-		var stdOut TSBuffer //bytes.Buffer
-		//	var stdErr bytes.Buffer
-		c.Stdout = &stdOut
-		c.Stderr = &stdOut
-		//stdout, _ := c.StdoutPipe()
-		//stderr, _ := c.StderrPipe()
-		c.Start()
+		shell := os.Getenv("SHELL")
+		if shell == "" {
+			switch runtime.GOOS {
+			case "plan9":
+				shell = "rc"
+			default:
+				shell = "sh"
+			}
+		}
 
-		// buffer to read lines into. Allocate this out of the loop to go
-		// easier on the GC.
-		termline := make([]byte, 1024)
+		c := exec.Command(shell, "-i")
+		master, slave, err := pty.Open()
+		if err != nil {
+			// FIXME: add better error handling.
+			panic(err)
+		}
+		kbMap := &shellKbmap{slave}
+		viewport.LockKeyboardMode(kbMap)
+
+		buff.Filename = ""
+
+		c.Stdout = master
+		c.Stderr = master
+		c.Stdin = master
+		c.Start()
+		viewport.SetRenderer(&TerminalRenderer{})
 		for {
-			viewport.SetRenderer(&TerminalRenderer{})
 			if buff.Filename != "" {
 				// The user must have clicked on a filename and opened it.
 				// Stop the Shell.
-				stdin.Close()
+				master.Close()
+				slave.Close()
 				break
 			}
 
-			//fmt.Printf("reading from stdout\n")
-			n, _ := stdOut.Read(termline)
-
-			if n > 0 {
-				buff.Buffer = append(buff.Buffer, termline[:n]...)
-				if l := len(buff.Buffer); l > 65536 {
-					// be relatively conservative in how large the buffer
-					// can get, so that the rendering doesn't slow everything
-					// down.
-					buff.Buffer = buff.Buffer[l-65536:]
-				}
-				buff.Dot.End = uint(len(buff.Buffer)) - 1
-				buff.Dot.Start = buff.Dot.End
-				//fmt.Printf("Requesting rerender\n")
-				viewport.Rerender()
-			} else {
-				time.Sleep(100 * time.Millisecond)
-			}
+			io.Copy(buff, slave)
 		}
 		c.Wait()
 		fmt.Fprintf(os.Stderr, "Shell exited\n")
