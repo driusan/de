@@ -48,6 +48,10 @@ type Viewport interface {
 	//unlocking someone else's lock, not for security reasons.
 	UnlockKeyboardMode(Map) error
 
+	// Registers a channel to be notified after a mouse event is processed.
+	RegisterMouseListener(chan interface{})
+	DeregisterMouseListener(chan interface{})
+
 	// Request a change of the renderer to be used to render the main contents
 	// of this viewport
 	SetRenderer(Renderer) error

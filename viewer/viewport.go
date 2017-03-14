@@ -52,6 +52,8 @@ type Viewport struct {
 
 	lineNumberMode LineNumberMode
 	BackgroundMode BackgroundMode
+
+	mouseListeners []chan interface{}
 }
 
 type RequestRerender struct{}
@@ -62,6 +64,27 @@ func (v *Viewport) Rerender() {
 }
 func (v *Viewport) GetKeyboardMode() demodel.Map {
 	return v.Map
+}
+
+func (v *Viewport) RegisterMouseListener(callback chan interface{}) {
+	v.mouseListeners = append(v.mouseListeners, callback)
+}
+
+func (v *Viewport) DeregisterMouseListener(callback chan interface{}) {
+	nl := make([]chan interface{}, 0, len(v.mouseListeners))
+	for _, l := range v.mouseListeners {
+		if l == callback {
+			continue
+		}
+		nl = append(nl, l)
+	}
+	v.mouseListeners = nl
+}
+
+func (v *Viewport) NotifyMouseListeners(event interface{}) {
+	for _, l := range v.mouseListeners {
+		l <- event
+	}
 }
 
 var ErrKBLocked = errors.New("Keyboard mode is locked")

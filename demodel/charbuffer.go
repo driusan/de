@@ -118,3 +118,8 @@ func (c *CharBuffer) SaveSnarfBuffer() {
 	os.MkdirAll(getSnarfSaveDir(), 0700)
 	ioutil.WriteFile(getSnarfFile(), c.SnarfBuffer, 0600)
 }
+
+func (c *CharBuffer) Write(p []byte) (int, error) {
+	c.Buffer = append(c.Buffer, p...)
+	return len(p), nil
+}

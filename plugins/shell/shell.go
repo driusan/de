@@ -1,14 +1,15 @@
 package shell
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"runtime"
-	"sync"
-	"time"
+	"syscall"
+	//"time"
+
+	"github.com/kr/pty"
 
 	"github.com/driusan/de/actions"
 	"github.com/driusan/de/demodel"
@@ -16,32 +17,9 @@ import (
 	"golang.org/x/mobile/event/key"
 )
 
-// Create a thread safe wrapper around bytes.Buffer, so that our go routine can read
-// from it despite the fact that the shell might be writing to it.
-type TSBuffer struct {
-	b bytes.Buffer
-	m sync.Mutex
-}
-
-func (b *TSBuffer) Read(p []byte) (n int, err error) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.Read(p)
-}
-func (b *TSBuffer) Write(p []byte) (n int, err error) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.Write(p)
-}
-func (b *TSBuffer) String() string {
-	b.m.Lock()
-	defer b.m.Unlock()
-	return b.b.String()
-}
-
 type shellKbmap struct {
-	//runeChan chan rune
-	stdin io.Writer
+	process *os.Process
+	stdin   io.WriteCloser
 }
 
 // Keymap that sends everything to the Shell command, except Escape (quit the shell and return to
@@ -49,9 +27,10 @@ type shellKbmap struct {
 func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {
 	switch e.Code {
 	case key.CodeEscape:
-		// TODO: Quit the shell as the documentation claims happens.
 		if e.Direction != key.DirPress {
-			//return kbmap.NormalMode, demodel.DirectionNone, nil
+			//	s.stdin.Close()
+			s.process.Kill()
+			return s, demodel.DirectionNone, nil
 		}
 		return s, demodel.DirectionDown, nil
 	// Still honour the viewport manipulation keys
@@ -81,7 +60,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 	// Special cases for control characters.
 	case key.CodeTab:
 		if e.Direction != key.DirPress {
-			buff.Buffer = append(buff.Buffer, '\t')
+			//buff.Buffer = append(buff.Buffer, '\t')
 			fmt.Fprintf(s.stdin, "%c", '\t')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
@@ -90,14 +69,14 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		//	fmt.Printf("Pressed key %s. Rune is %x", e, e.Rune
 	case key.CodeDeleteBackspace:
 		if e.Direction != key.DirPress {
-			buff.Buffer = buff.Buffer[:len(buff.Buffer)-1] //append(buff.Buffer, "\t")
+			//buff.Buffer = buff.Buffer[:len(buff.Buffer)-1] //append(buff.Buffer, "\t")
 			fmt.Fprintf(s.stdin, "%c", '\b')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
 		}
 		return s, demodel.DirectionDown, nil
 	case key.CodeReturnEnter:
-		if e.Direction != key.DirPress {
+		if e.Direction != key.DirRelease {
 			buff.Buffer = append(buff.Buffer, '\n')
 			fmt.Fprintf(s.stdin, "%c", '\n')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
@@ -121,7 +100,6 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 			fmt.Fprintf(s.stdin, "%c", e.Rune)
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
-
 		} else {
 			/*
 					for debugging only. This otherwise triggers errors on things like
@@ -140,70 +118,87 @@ func init() {
 
 // Shell invokes an interactive shell terminal similarly to "win" in ACME
 func Shell(args string, buff *demodel.CharBuffer, viewport demodel.Viewport) {
-	//cmd.Start()
-	//scanner := bufio.NewScanner(cmdReader)
-	//buff.KeyboardMode = &shellKbmap{}
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		switch runtime.GOOS {
-		case "plan9":
-			shell = "rc"
-		default:
-			shell = "sh"
-		}
-	}
-
-	c := exec.Command(shell, "-i")
-	//c := exec.Command("sh")
-	stdin, _ := c.StdinPipe()
-	kbMap := &shellKbmap{stdin}
-	viewport.LockKeyboardMode(kbMap)
-
-	buff.Filename = ""
-
 	go func() {
-		var stdOut TSBuffer //bytes.Buffer
-		//	var stdErr bytes.Buffer
-		c.Stdout = &stdOut
-		c.Stderr = &stdOut
-		//stdout, _ := c.StdoutPipe()
-		//stderr, _ := c.StderrPipe()
-		c.Start()
+		shell := os.Getenv("SHELL")
+		if shell == "" {
+			switch runtime.GOOS {
+			case "plan9":
+				shell = "rc"
+			default:
+				shell = "sh"
+			}
+		}
 
-		// buffer to read lines into. Allocate this out of the loop to go
-		// easier on the GC.
-		termline := make([]byte, 1024)
+		c := exec.Command(shell)
+		master, slave, err := pty.Open()
+		if err != nil {
+			// FIXME: add better error handling.
+			panic(err)
+		}
+		c.SysProcAttr = &syscall.SysProcAttr{
+			Setsid:  true,
+			Setctty: true,
+			Ctty:    int(master.Fd()),
+		}
+
+		buff.Filename = ""
+
+		c.Stdout = master
+		c.Stderr = master
+		c.Stdin = master
+		c.Start()
+		kbMap := &shellKbmap{c.Process, slave}
+		viewport.LockKeyboardMode(kbMap)
+		defer func() {
+			println("Unlocking keyboard")
+			viewport.UnlockKeyboardMode(kbMap)
+			viewport.SetKeyboardMode(kbmap.NormalMode)
+			println("waiting")
+			c.Wait()
+			println("shell exited")
+		}()
+
+		viewport.SetRenderer(&TerminalRenderer{})
+		buf := make([]byte, 1024)
+
+		mouseChan := make(chan interface{})
+		viewport.RegisterMouseListener(mouseChan)
+		go func() {
+			for {
+				select {
+				case <-mouseChan:
+					if buff.Filename != "" {
+						viewport.DeregisterMouseListener(mouseChan)
+						// The user must have clicked on a filename and
+						// opened it. Stop the Shell.
+						c.Process.Kill()
+					}
+				}
+			}
+		}()
 		for {
-			viewport.SetRenderer(&TerminalRenderer{})
 			if buff.Filename != "" {
-				// The user must have clicked on a filename and opened it.
-				// Stop the Shell.
-				stdin.Close()
+				master.Close()
+				slave.Close()
 				break
 			}
 
-			//fmt.Printf("reading from stdout\n")
-			n, _ := stdOut.Read(termline)
-
+			n, err := slave.Read(buf)
 			if n > 0 {
-				buff.Buffer = append(buff.Buffer, termline[:n]...)
-				if l := len(buff.Buffer); l > 65536 {
-					// be relatively conservative in how large the buffer
-					// can get, so that the rendering doesn't slow everything
-					// down.
-					buff.Buffer = buff.Buffer[l-65536:]
-				}
-				buff.Dot.End = uint(len(buff.Buffer)) - 1
-				buff.Dot.Start = buff.Dot.End
-				//fmt.Printf("Requesting rerender\n")
-				viewport.Rerender()
-			} else {
-				time.Sleep(100 * time.Millisecond)
+				buff.Buffer = append(buff.Buffer, buf[:n]...)
+
 			}
+			if err != nil {
+				master.Close()
+				slave.Close()
+				break
+			}
+
+			buff.Dot.End = uint(len(buff.Buffer)) - 1
+			buff.Dot.Start = buff.Dot.End
+			viewport.Rerender()
+			buf = make([]byte, 1024)
+
 		}
-		c.Wait()
-		fmt.Fprintf(os.Stderr, "Shell exited\n")
-		viewport.UnlockKeyboardMode(kbMap)
-		viewport.SetKeyboardMode(kbmap.NormalMode)
 	}()
 }

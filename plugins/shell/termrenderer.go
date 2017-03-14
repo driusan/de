@@ -121,6 +121,21 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 						case "38":
 							fmt.Fprintf(os.Stderr, "ANSI extended colours not implemented\n")
 						}
+					case 'K':
+						args := string(runes[escapeStart+2 : i])
+						fmt.Fprintf(os.Stderr, "ANSI command sequence K args: %s\n", args)
+						switch args {
+						case "", "0":
+							fmt.Fprintf(os.Stderr, "ANSI command sequence clear to end of line: %s\n", args)
+						case "1":
+							fmt.Fprintf(os.Stderr, "ANSI command sequence clear to beginning of line: %s\n", args)
+						case "2":
+							fmt.Fprintf(os.Stderr, "ANSI command sequence clear entire line: %s\n", args)
+						default:
+							fmt.Fprintf(os.Stderr, "Invalid ANSI command sequence K, args: %s\n", args)
+
+						}
+
 					default:
 						fmt.Fprintf(os.Stderr, "ANSI command sequence %c not yet implemented.\n", r)
 					}

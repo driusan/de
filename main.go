@@ -419,6 +419,7 @@ func main() {
 					if viewport.HandleMouseWheel(e, &buff, clipRectangle(sz, viewport).Size()) {
 						go window.paint(&buff, viewport)
 					}
+					viewport.NotifyMouseListeners(e)
 					continue
 				case mouse.DirNone:
 					// If no button changed state, and nothing is pressed,
@@ -428,6 +429,7 @@ func main() {
 					if !MouseButtonMask[ButtonLeft] &&
 						!MouseButtonMask[ButtonMiddle] &&
 						!MouseButtonMask[ButtonRight] {
+						viewport.NotifyMouseListeners(e)
 						continue
 					}
 
@@ -452,12 +454,14 @@ func main() {
 				}
 
 				if charIdx == lastCharIdx && e.Direction == mouse.DirNone {
+					viewport.NotifyMouseListeners(e)
 					continue
 				} else {
 					lastCharIdx = charIdx
 				}
 
 				if err != nil {
+					viewport.NotifyMouseListeners(e)
 					continue
 				}
 
@@ -589,6 +593,7 @@ func main() {
 					}
 					go window.paint(&buff, viewport)
 				}
+
 				if e.Direction == mouse.DirRelease && e.Button == mouse.ButtonMiddle {
 					if evtBuff == buff.Tagline {
 						// executing from the tagline is a little special, because it uses the word
@@ -617,6 +622,7 @@ func main() {
 					}
 					go window.paint(&buff, viewport)
 				}
+				viewport.NotifyMouseListeners(e)
 			case paint.Event:
 				go window.paint(&buff, viewport)
 			case size.Event:
