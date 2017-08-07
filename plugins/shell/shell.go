@@ -28,7 +28,6 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 	switch e.Code {
 	case key.CodeEscape:
 		if e.Direction != key.DirPress {
-			//	s.stdin.Close()
 			s.process.Kill()
 			return s, demodel.DirectionNone, nil
 		}
@@ -48,18 +47,35 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		}
 		return s, demodel.DirectionNone, nil
 	case key.CodeDownArrow:
+		if e.Modifiers&key.ModControl != 0 {
+			if e.Direction != key.DirRelease {
+				fmt.Fprintf(s.stdin, "%c[B", '\033')
+
+				println("send up arrow")
+			}
+			return s, demodel.DirectionNone, nil
+		}
+
 		if e.Direction == key.DirPress {
 			return s, demodel.DirectionNone, kbmap.ErrScrollDown
 		}
 		return s, demodel.DirectionNone, nil
 	case key.CodeUpArrow:
+		if e.Modifiers&key.ModControl != 0 {
+			if e.Direction != key.DirRelease {
+				fmt.Fprintf(s.stdin, "%c[A", '\033')
+
+				println("send up arrow")
+			}
+			return s, demodel.DirectionNone, nil
+		}
 		if e.Direction == key.DirPress {
 			return s, demodel.DirectionNone, kbmap.ErrScrollUp
 		}
 		return s, demodel.DirectionNone, nil
 	// Special cases for control characters.
 	case key.CodeTab:
-		if e.Direction != key.DirPress {
+		if e.Direction != key.DirRelease {
 			//buff.Buffer = append(buff.Buffer, '\t')
 			fmt.Fprintf(s.stdin, "%c", '\t')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
@@ -68,8 +84,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		return s, demodel.DirectionDown, nil
 		//	fmt.Printf("Pressed key %s. Rune is %x", e, e.Rune
 	case key.CodeDeleteBackspace:
-		if e.Direction != key.DirPress {
-			//buff.Buffer = buff.Buffer[:len(buff.Buffer)-1] //append(buff.Buffer, "\t")
+		if e.Direction != key.DirRelease {
 			fmt.Fprintf(s.stdin, "%c", '\b')
 			buff.Dot.End = uint(len(buff.Buffer)) - 1
 			buff.Dot.Start = buff.Dot.End
@@ -85,7 +100,7 @@ func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.V
 		}
 		return s, demodel.DirectionDown, nil
 	default:
-		if e.Direction != key.DirPress && e.Rune > 0 {
+		if e.Direction != key.DirRelease && e.Rune > 0 {
 			// send the rune to the buffer and to the shell
 			//rbytes := make([]byte, 4)
 			//n := utf8.EncodeRune(rbytes, e.Rune)
