@@ -27,7 +27,7 @@ type shellKbmap struct {
 func (s shellKbmap) HandleKey(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demodel.Map, demodel.ScrollDirection, error) {
 	switch e.Code {
 	case key.CodeEscape:
-		if e.Direction != key.DirPress {
+		if e.Direction == key.DirPress {
 			s.process.Kill()
 			return s, demodel.DirectionNone, nil
 		}
