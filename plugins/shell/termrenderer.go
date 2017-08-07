@@ -60,6 +60,7 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 	_, MglyphWidth, _ := renderer.MonoFontFace.GlyphBounds('M')
 
 	escapeStart := -1
+	col := 0
 	for i, r := range runes {
 		// Do this inside the loop anyways, in case someone changes it to a
 		// variable width font..
@@ -131,6 +132,7 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 							fmt.Fprintf(os.Stderr, "ANSI command sequence clear to beginning of line: %s\n", args)
 						case "2":
 							fmt.Fprintf(os.Stderr, "ANSI command sequence clear entire line: %s\n", args)
+							col = 0
 						default:
 							fmt.Fprintf(os.Stderr, "Invalid ANSI command sequence K, args: %s\n", args)
 
@@ -150,7 +152,8 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 		runeRectangle.Min.Y = writer.Dot.Y.Ceil() - metrics.Ascent.Floor() + 1
 		switch r {
 		case '\t':
-			runeRectangle.Max.X = runeRectangle.Min.X + 8*MglyphWidth.Ceil()
+			tw := 8 - (col % 8)
+			runeRectangle.Max.X = runeRectangle.Min.X + tw*MglyphWidth.Ceil()
 		case '\n':
 			runeRectangle.Max.X = viewport.Max.X
 		case 27: // ESC
@@ -171,7 +174,6 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 		// highlighted)
 		//	im.IMap = append(im.IMap, renderer.ImageLoc{runeRectangle, uint(i)})
 		if runeRectangle.Intersect(viewport) != image.ZR {
-
 			if uint(i) >= buf.Dot.Start && uint(i) <= buf.Dot.End {
 				// it's in dot, so highlight the background (unless it's outside of the viewport
 				// clipping rectangle)
@@ -199,11 +201,14 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 
 		switch r {
 		case '\t':
-			writer.Dot.X += glyphWidth * 8
+			tw := 8 - (col % 8)
+			writer.Dot.X += glyphWidth * fixed.Int26_6(tw)
+			col += tw
 			continue
 		case '\n':
 			writer.Dot.Y += metrics.Height
 			writer.Dot.X = fixed.I(bounds.Min.X)
+			col = 0
 			continue
 		}
 
@@ -216,6 +221,7 @@ func (rd *TerminalRenderer) RenderInto(dst draw.Image, buf *demodel.CharBuffer, 
 			writer.Dot.X += fixed.I(viewport.Min.X)
 			writer.Dot.Y += fixed.I(viewport.Min.Y)
 		}
+		col++
 	}
 
 	return nil
