@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -162,7 +163,9 @@ consideredgood:
 		os.Chdir(filename)
 
 		var bBuff bytes.Buffer
-		fmt.Fprintf(&bBuff, "Shell\n\n./\n../\n")
+		if runtime.GOOS != "windows" {
+			fmt.Fprintf(&bBuff, "Shell\n\n./\n../\n")
+		}
 
 		for _, f := range files {
 

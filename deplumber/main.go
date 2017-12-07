@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,!windows
 
 // The deplumber is a service which coordinates the running de processes
 // to ensure that they don't act on the same plumber message. When it reads
