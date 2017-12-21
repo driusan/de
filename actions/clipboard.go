@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"github.com/atotto/clipboard"
+	"github.com/driusan/clipboard"
 	"github.com/driusan/de/demodel"
 )
 
