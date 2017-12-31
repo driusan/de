@@ -1,16 +1,10 @@
-// +build !plan9
-
 package main
 
 import (
-	"bufio"
+	//"bufio"
 	"fmt"
-	"io/ioutil"
-	"net"
 	"os"
-	"os/user"
-	"strings"
-	"time"
+	//	"strings"
 )
 
 // a plumbService coordinates communication between a de process, and a deplumber
@@ -32,8 +26,8 @@ type plumbService struct {
 	// A channel which the plumbService communicates errors over.
 	ErrorChan chan error
 
-	// The Unix Domain Socket connection to the deplumber service.
-	conn net.Conn
+	// The file used for communication with the deplumber service
+	conn *os.File
 
 	// Set to true at the end of initialization, so that Connect()
 	// doesn't need to block and Available() will work.
@@ -55,22 +49,15 @@ func (p *plumbService) Connect(dirtyChan chan bool) {
 	p.OpenChan = make(chan string)
 	p.DirtyChan = dirtyChan
 	// Read the ~/.de/deplumber file to see where we should connect
-	u, err := user.Current()
-	socket, err := ioutil.ReadFile(u.HomeDir + "/.de/deplumber")
+	file, err := os.OpenFile("/tmp/deplumber", os.O_RDWR|os.O_APPEND, 0600)
+
 	if err != nil {
 		p.ErrorChan <- fmt.Errorf("deplumber not started. Plumbing not available.")
 		close(p.ErrorChan)
 		return
 	}
 
-	// Connect.
-	// It's a Unix Domain socket. If it takes longer than a second to connect, there's a problem
-	p.conn, err = net.DialTimeout("unix", string(socket), time.Second)
-	if err != nil {
-		p.ErrorChan <- fmt.Errorf("Could not connect to deplumber at %v: %v", string(socket), err)
-		close(p.ErrorChan)
-		return
-	}
+	p.conn = file
 
 	// Monitor the dirtyChan for messages from the main thread saying
 	// our dirty bit has changed, and inform the deplumber as appropriate.
@@ -100,9 +87,9 @@ func (p *plumbService) dirtyMonitor() {
 		dirty := <-p.DirtyChan
 
 		if dirty {
-			fmt.Fprintf(p.conn, "Dirty\n")
+			fmt.Fprintf(p.conn, "%d:Dirty\n", os.Getpid())
 		} else {
-			fmt.Fprintf(p.conn, "Clean\n")
+			fmt.Fprintf(p.conn, "%d:Clean\n", os.Getpid())
 		}
 	}
 }
@@ -115,19 +102,34 @@ func (p *plumbService) dirtyMonitor() {
 func (p *plumbService) monitorOpenChan() {
 	// We've connected to the deplumber service, so send it our PID and tell
 	// it we have a clean buffer
-	fmt.Fprintf(p.conn, "%d\nClean\n", os.Getpid())
-	r := bufio.NewReader(p.conn)
+	fmt.Fprintf(p.conn, "%d:Clean\n", os.Getpid())
 
 	p.ready = true
+	c := make(chan os.Signal)
 
 	for {
-		file, err := r.ReadString('\n')
-		if err != nil {
-			p.ErrorChan <- err
-			p.ready = false
-			return
+		select {
+		case s := <-c:
+			fmt.Printf("%v", s)
+			p.ErrorChan <- fmt.Errorf("%v", s)
 		}
-		file = strings.TrimSpace(file)
-		p.OpenChan <- file
 	}
+	//r := bufio.NewReader(p.conn)
+
+	/*
+		for {
+			file, err := r.ReadString('\n')
+			switch err {
+				case io.EOF:
+			}
+			if err != nil {
+				println("foo")
+				p.ErrorChan <- err
+				p.ready = false
+				return
+			}
+			file = strings.TrimSpace(file)
+			p.OpenChan <- file
+		}
+	*/
 }

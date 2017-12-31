@@ -25,7 +25,7 @@ func plumb(content []byte, buff *demodel.CharBuffer, v demodel.Viewport, click i
 	}
 	fid, err := plumblib.Open("send", plan9.OWRITE)
 	if err != nil {
-		fmt.Printf("%v", err)
+		fmt.Printf("Plumbing error: %v", err)
 		return err
 	}
 

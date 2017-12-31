@@ -42,6 +42,9 @@ func Open(name string, mode int) (ByteReadWriteCloser, error) {
 	case plan9.OREAD:
 		f, err := os.Open("/mnt/plumb/" + name)
 		return (*byter)(f), err
+	case plan9.OWRITE:
+		f, err := os.OpenFile("/mnt/plumb/" + name, plan9.OWRITE, 0644)
+		return (*byter)(f), err
 	}
 	return nil, fmt.Errorf("Unsupported mode.")
 }

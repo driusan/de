@@ -8,16 +8,22 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 
 	"9fans.net/go/plan9"
 	"9fans.net/go/plumb"
 )
+
+const ORCLOSE = 64
 
 // We keep track of the most recent de process that we got a message from,
 // and make the assumption that that's the window that should be used for
@@ -25,7 +31,7 @@ import (
 // doing something, we can assume that the user did something in that window
 // in order to generate the message.
 var activeProcess struct {
-	Conn  net.Conn
+	Conn  *os.File
 	PID   uint64
 	Dirty bool
 }
@@ -33,7 +39,9 @@ var activeProcess struct {
 // Deletes the ~/.de/deplumber file just before dying. This should be called
 // before log.Fatal() or from any signal handler.
 func cleanupBeforeDeath() {
-	os.Remove("/tmp/deplumber")
+	if activeProcess.Conn != nil {
+		activeProcess.Conn.Close()
+	}
 }
 func plumbListener() {
 	f, err := plumb.Open("edit", plan9.OREAD)
@@ -50,14 +58,19 @@ func plumbListener() {
 			return
 		}
 
-		var filename, fakefile string
+		//fmt.Printf("%v", m)
+		var filename, fakefile, linespec string
 		for attr := m.Attr; attr != nil; attr = attr.Next {
 			// If there's a filename attribute, it's a synthetic
 			// file and Data is the content, not the filename.
-			if attr.Name == "filename" {
+			switch attr.Name {
+			case "filename":
 				filename = attr.Value
+			case "addr":
+				linespec = attr.Value
+			default:
+				//fmt.Printf("%v\n", attr)
 			}
-			fmt.Printf("Filename: %v", attr)
 		}
 		// If we've received a plumbing message from de, we determine
 		// whether or not to receive a new de window by checking if the
@@ -66,14 +79,35 @@ func plumbListener() {
 		//
 		// If the message didn't come from de, we always spawn a new
 		// window.
-		if !activeProcess.Dirty && activeProcess.PID != 0 && m.Src == "de" {
-			fmt.Fprintf(activeProcess.Conn, "%s\n", m.Data)
+		if false && !activeProcess.Dirty && activeProcess.PID != 0 && m.Src == "de" {
+			// This needs to be reworked, so for now just open everything in a new
+			// window..
+			fmt.Fprintf(activeProcess.Conn, "\n%d:%s\n", activeProcess.PID, m.Data)
+			if err := ioutil.WriteFile(
+				fmt.Sprintf("/proc/%d/note", activeProcess.PID),
+				[]byte(fmt.Sprintf("open file: %v", m.Data)),
+				0700,
+			); err != nil {
+				log.Println(err)
+			}
 		} else {
 			var cmd *exec.Cmd
+			var args []string
+			if m.Dir != "" {
+				args = append(args, "-cd", m.Dir)
+			}
 			if filename == "" {
 				// There was no filename attribute, so data
 				// is the filename.
-				cmd = exec.Command("window", "de", string(m.Data))
+				//
+				// First, make it relative to dir if possible.
+				fname := strings.TrimPrefix(string(m.Data), m.Dir+"/")
+				if linespec != "" {
+					args = append(args, "de", fname+":"+linespec)
+				} else {
+					args = append(args, "de", fname)
+				}
+				cmd = exec.Command("window", args...)
 			} else {
 				// There was a filename attribute, so data
 				// is the content of that "file"
@@ -95,8 +129,14 @@ func plumbListener() {
 				// and pretend that the filename is whatever was
 				// in the plumb message.
 				fakefile = f.Name()
-				cmd = exec.Command("window", "de", "-delete", "-filename", `'`+filename+`'`, fakefile)
+				var args []string
+				if m.Dir != "" {
+					args = append(args, "-cd", m.Dir)
+				}
+				args = append(args, "de", "-delete", "-filename", `'`+filename+`'`, fakefile)
+				cmd = exec.Command("window", args...)
 			}
+			cmd.Dir = m.Dir
 			if err := cmd.Start(); err != nil {
 				if fakefile != "" {
 					os.Remove(fakefile)
@@ -108,10 +148,15 @@ func plumbListener() {
 }
 
 func main() {
-	if data, err := ioutil.ReadFile("/tmp/deplumber"); err == nil && string(data) != "" {
+	// If there was nothing else running, it should be a not found error.
+	if _, err := os.Stat("/tmp/deplumber"); err == nil {
 		log.Fatalf("Another deplumber instance appears to already be running. If this is not correct, please delete the file /tmp/deplumber\n")
 	}
-	ioutil.WriteFile("/tmp/deplumber", []byte("I'm alive!"), 0600)
+	data, err := os.OpenFile("/tmp/deplumber", os.O_RDONLY|ORCLOSE|os.O_CREATE, 0600)
+	if err != nil {
+		log.Fatal(err)
+	}
+	activeProcess.Conn = data
 
 	// Catch any note that will kill the process, so that we can
 	// clean up.
@@ -125,5 +170,37 @@ func main() {
 		log.Fatalf("Killed by signal %s", s)
 	}()
 
-	plumbListener()
+	// Start a goroutine to listen for plumbing events
+	go plumbListener()
+	msg := make([]byte, 1024)
+	msgRE, err := regexp.Compile(`([\d]+):(.+)`)
+	if err != nil {
+		panic(err)
+	}
+	for {
+		n, err := data.Read(msg)
+		if err == io.EOF || n == 0 {
+			time.Sleep(1 * time.Second)
+		} else if err != nil {
+			panic(err)
+		} else {
+			if match := msgRE.FindStringSubmatch(string(msg)); len(match) == 3 {
+				if pid, err := strconv.Atoi(match[1]); err == nil {
+					activeProcess.PID = uint64(pid)
+				}
+				switch match[2] {
+				case "Clean":
+					activeProcess.Dirty = false
+				case "Dirty":
+					activeProcess.Dirty = true
+				default:
+					fmt.Fprintf(os.Stderr, "Unknown state for PID %v\n", match[1])
+				}
+				//fmt.Printf("%v", match)
+			} else {
+				fmt.Printf("%v %v", n, string(msg))
+			}
+
+		}
+	}
 }
