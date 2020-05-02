@@ -82,7 +82,7 @@ func PlumbExecuteOrFindNext(From, To demodel.Position, buff *demodel.CharBuffer,
 				pdot.Start = dot.Start - 100
 			}
 			if dot.End+100 < uint(len(buff.Buffer)) {
-				pdot.End = pdot.End + 100
+				pdot.End = dot.End + 100
 			} else {
 				pdot.End = uint(len(buff.Buffer))
 			}
