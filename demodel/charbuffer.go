@@ -57,7 +57,7 @@ func getSnarfFile() string {
 func getDefaultTagline() string {
 	content, err := ioutil.ReadFile(ConfigHome() + "/tagline")
 	if err != nil {
-		return "Save Discard Cut Copy Paste Undo Exit"
+		return "Save Discard ResetTagline Cut Copy Paste Undo Exit"
 	}
 	return string(content)
 }
