@@ -428,3 +428,105 @@ func PrevWordStart(buff demodel.CharBuffer) (uint, error) {
 	// Got to the start of the buffer, so this must be the start.
 	return 0, nil
 }
+
+func MatchingBracket(buff demodel.CharBuffer) (uint, error) {
+	if len(buff.Buffer) == 0 || buff.Dot.Start >= uint(len(buff.Buffer)) {
+		return 0, ErrInvalid
+	}
+	cur := buff.Buffer[buff.Dot.Start]
+
+	var forwardto, backwardto byte
+	switch cur {
+	case '{':
+		forwardto = '}'
+	case '}':
+		backwardto = '{'
+	case '(':
+		forwardto = ')'
+	case ')':
+		backwardto = '('
+	case '[':
+		forwardto = ']'
+	case ']':
+		backwardto = '['
+	case '<':
+		forwardto = '>'
+	case '>':
+		backwardto = '<'
+	}
+
+	if forwardto != 0 {
+		extralevels := 0
+		for i := buff.Dot.Start + 1; i < uint(len(buff.Buffer)); i++ {
+			if buff.Buffer[i] == cur {
+				extralevels++
+			}
+			if buff.Buffer[i] == forwardto {
+				if extralevels > 0 {
+					extralevels--
+				} else {
+					return i, nil
+				}
+			}
+		}
+	} else if backwardto != 0 {
+		extralevels := 0
+		for i := buff.Dot.Start - 1; i >= 0; i-- {
+			if buff.Buffer[i] == cur {
+				extralevels++
+			}
+
+			if buff.Buffer[i] == backwardto {
+				if extralevels > 0 {
+					extralevels--
+				} else {
+					return i, nil
+				}
+			}
+		}
+	} else {
+		// Go backwards to the start of the current block (for some
+		// definition of block.
+		extrasquigly := 0
+		extraround := 0
+		extrasquare := 0
+		extraangle := 0
+		for i := buff.Dot.Start - 1; i >= 0; i-- {
+			// If there was a block inside this block, skip it
+			if buff.Buffer[i] == '}' {
+				extrasquigly++
+			} else if buff.Buffer[i] == ')' {
+				extraround++
+			} else if buff.Buffer[i] == ']' {
+				extrasquare++
+			} else if buff.Buffer[i] == '>' {
+				extraangle++
+			} else if buff.Buffer[i] == '{' {
+				if extrasquigly > 0 {
+					extrasquigly--
+				} else {
+					return i, nil
+				}
+			} else if buff.Buffer[i] == '(' {
+				if extraround > 0 {
+					extraround--
+				} else {
+					return i, nil
+				}
+			} else if buff.Buffer[i] == '[' {
+				if extrasquare > 0 {
+					extrasquare--
+				} else {
+					return i, nil
+				}
+			} else if buff.Buffer[i] == '<' {
+				if extraangle > 0 {
+					extraangle--
+				} else {
+					return i, nil
+				}
+			}
+		}
+	}
+	return buff.Dot.Start, ErrInvalid
+}

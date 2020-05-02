@@ -39,6 +39,7 @@ func TestPositionsDontOverflow(t *testing.T) {
 	CurTagWordEnd(buff)
 	NextWordStart(buff)
 	PrevWordStart(buff)
+	MatchingBracket(buff)
 
 	// Now try with a buffer and dot.End > len(buffer)
 	buff.Buffer = []byte{'a'}
@@ -71,5 +72,6 @@ func TestPositionsDontOverflow(t *testing.T) {
 	CurTagWordEnd(buff)
 	NextWordStart(buff)
 	PrevWordStart(buff)
+	MatchingBracket(buff)
 
 }

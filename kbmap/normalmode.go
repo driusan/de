@@ -247,7 +247,12 @@ func normalMap(e key.Event, buff *demodel.CharBuffer, v demodel.Viewport) (demod
 		}
 		return NormalMode, demodel.DirectionNone, nil
 	case key.Code5:
-		if e.Modifiers == 0 {
+		if e.Modifiers&key.ModShift != 0 {
+			// '%'
+			actions.MoveCursor(position.MatchingBracket, position.MatchingBracket, buff)
+			return NormalMode, demodel.DirectionDown, nil
+
+		} else if e.Modifiers == 0 {
 			Repeat = Repeat*10 + 5
 		}
 		return NormalMode, demodel.DirectionNone, nil
