@@ -491,7 +491,7 @@ func MatchingBracket(buff demodel.CharBuffer) (uint, error) {
 		extraround := 0
 		extrasquare := 0
 		extraangle := 0
-		for i := buff.Dot.Start - 1; i >= 0; i-- {
+		for i := int(buff.Dot.Start - 1); i >= 0; i-- {
 			// If there was a block inside this block, skip it
 			if buff.Buffer[i] == '}' {
 				extrasquigly++
@@ -505,25 +505,25 @@ func MatchingBracket(buff demodel.CharBuffer) (uint, error) {
 				if extrasquigly > 0 {
 					extrasquigly--
 				} else {
-					return i, nil
+					return uint(i), nil
 				}
 			} else if buff.Buffer[i] == '(' {
 				if extraround > 0 {
 					extraround--
 				} else {
-					return i, nil
+					return uint(i), nil
 				}
 			} else if buff.Buffer[i] == '[' {
 				if extrasquare > 0 {
 					extrasquare--
 				} else {
-					return i, nil
+					return uint(i), nil
 				}
 			} else if buff.Buffer[i] == '<' {
 				if extraangle > 0 {
 					extraangle--
 				} else {
-					return i, nil
+					return uint(i), nil
 				}
 			}
 		}
